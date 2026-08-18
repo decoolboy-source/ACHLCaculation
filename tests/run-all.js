@@ -33,6 +33,7 @@ const testFiles = [
   './cases/import-equip-group',
   './cases/report-text-color',
   './cases/report-preview-css-scope',
+  './cases/motor-para-templates',
   './cases/deep-followup-fixes',
   './cases/fan-equipment-schedule',
 ];
