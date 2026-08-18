@@ -322,14 +322,28 @@
       {code:'D1200x2200-STD', name:'Cửa kho lạnh 1200×2200',      wMm:1200, hMm:2200, seal:'Standard',    gapFloorMm:5, gapFrameMm:3, aKheM2:0.02280},
     ],
 
-    // MOTOR_IE3 — Hiệu suất motor chuẩn IE3. Nguồn: IEC 60034-30-1
+    // MOTOR_IE3 — Hiệu suất motor chuẩn IE3. Nguồn: catalog kỹ thuật WEG W22 Premium
+    // Efficiency IE3 (thị trường Châu Âu), bảng IV pole - 1500 rpm - 50Hz - 400V,
+    // hiệu suất tại 100% tải định mức (tr.45-46 brochure "W22 three phase motor
+    // technical - European market"). Thay cho bảng mức tối thiểu IEC 60034-30-1
+    // trước đây bằng dữ liệu catalog thực tế của nhà sản xuất (thường cao hơn mức
+    // tối thiểu), mở rộng dải từ 0,12kW đến 500kW.
     // Nội suy tuyến tính nếu P_kW không khớp đúng mức bảng (xem calcMotorEta)
     motorIE3: [
-      {pKw:0.75,eta:0.825}, {pKw:1.1, eta:0.841}, {pKw:1.5, eta:0.853},
-      {pKw:2.2, eta:0.867}, {pKw:3.0, eta:0.877}, {pKw:4.0, eta:0.886},
-      {pKw:5.5, eta:0.896}, {pKw:7.5, eta:0.904}, {pKw:11.0,eta:0.914},
-      {pKw:15.0,eta:0.921}, {pKw:18.5,eta:0.926}, {pKw:22.0,eta:0.930},
-      {pKw:30.0,eta:0.936}, {pKw:37.0,eta:0.939}, {pKw:45.0,eta:0.942},
+      {pKw:0.12, eta:0.648}, {pKw:0.18, eta:0.699}, {pKw:0.25, eta:0.735},
+      {pKw:0.37, eta:0.773}, {pKw:0.55, eta:0.808}, {pKw:0.75, eta:0.825},
+      {pKw:1.1,  eta:0.845}, {pKw:1.5,  eta:0.855}, {pKw:2.2,  eta:0.870},
+      {pKw:3.0,  eta:0.880}, {pKw:4.0,  eta:0.888}, {pKw:5.5,  eta:0.897},
+      {pKw:7.5,  eta:0.906}, {pKw:9.2,  eta:0.910}, {pKw:11.0, eta:0.916},
+      {pKw:15.0, eta:0.923}, {pKw:18.5, eta:0.928}, {pKw:22.0, eta:0.932},
+      {pKw:30.0, eta:0.937}, {pKw:37.0, eta:0.941}, {pKw:45.0, eta:0.944},
+      {pKw:55.0, eta:0.947}, {pKw:75.0, eta:0.952}, {pKw:90.0, eta:0.954},
+      {pKw:110.0,eta:0.956}, {pKw:132.0,eta:0.958}, {pKw:150.0,eta:0.959},
+      {pKw:160.0,eta:0.960}, {pKw:185.0,eta:0.960}, {pKw:200.0,eta:0.960},
+      {pKw:220.0,eta:0.962}, {pKw:250.0,eta:0.962}, {pKw:260.0,eta:0.962},
+      {pKw:280.0,eta:0.962}, {pKw:300.0,eta:0.962}, {pKw:315.0,eta:0.963},
+      {pKw:330.0,eta:0.962}, {pKw:355.0,eta:0.965}, {pKw:400.0,eta:0.962},
+      {pKw:450.0,eta:0.962}, {pKw:500.0,eta:0.963},
     ],
 
     // U_PANEL — Hệ số truyền nhiệt vách cách nhiệt PU. Nguồn: ASHRAE Fundamentals Ch.27 (k_PU=0.022 W/m.K)
@@ -1100,7 +1114,7 @@ MATERIAL_RATES:{
 
     i18n: {
       vi: {
-        app_title:'MultiHVAC Calculator', app_subtitle:'Cleanroom · Data Center · Phòng điện',
+        app_title:'MultiHVAC Calculator', app_subtitle:'Phòng sạch · Trung tâm dữ liệu · Phòng điện',
         search_hint:'Tìm nhanh',
         tab_calc:'Tính Toán', tab_admin:'Quản Lý Dự Án & DB', tab_settings:'Cài Đặt', tab_database:'Database',
         tab_ai:'Hỗ Trợ Nhanh', tab_about:'Thông Tin', tab_report:'Xuất Báo Cáo', tab_guide:'Hướng Dẫn', tab_project:'Dự Án', tab_heatload:'Phụ Tải Nhiệt',
@@ -1155,6 +1169,7 @@ MATERIAL_RATES:{
       en: {
         app_title:'MultiHVAC Calculator', app_subtitle:'Cleanroom · Data Center · Electrical Room',
         search_hint:'Quick search',
+        'Điều hướng':'Navigation', 'Đóng menu':'Close menu',
         tab_calc:'Calc', tab_admin:'Projects & Database', tab_settings:'Settings', tab_database:'Database',
         tab_ai:'Quick Help', tab_about:'About', tab_report:'Export Report', tab_guide:'User Guide', tab_project:'Project', tab_heatload:'Heat Load',
         project_info:'Project info', import_from_hl:'Import airflow from Heat Load tab',

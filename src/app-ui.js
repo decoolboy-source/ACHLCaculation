@@ -33,6 +33,9 @@
       document.querySelectorAll('[data-i18n]').forEach(el=>{
         el.textContent = this.t(el.getAttribute('data-i18n'));
       });
+      document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+        el.setAttribute('aria-label', this.t(el.getAttribute('data-i18n-aria')));
+      });
     },
     toast(type, message){
       const colors = { ok:'border-emerald-600 text-emerald-300', warn:'border-amber-600 text-amber-300', err:'border-red-600 text-red-300', info:'border-cyan-600 text-cyan-300' };
@@ -1483,7 +1486,7 @@
           :rooms.map((r,ri)=>this._roomRowHtml(r,ri,fl.id)).join('');
         return `
         <div class="floor-group" data-floor-id="${fl.id}" style="margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #1a3050">
-          <div class="floor-header" style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(90deg,#0d2038 0%,#091825 100%);border-bottom:1px solid #1a3050;min-height:44px">
+          <div class="floor-header" style="display:flex;align-items:center;flex-wrap:wrap;row-gap:6px;gap:8px;padding:9px 14px;background:linear-gradient(90deg,#0d2038 0%,#091825 100%);border-bottom:1px solid #1a3050;min-height:44px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <input data-floor-rename="${fl.id}" value="${fl.name}" style="background:none;border:none;color:#c2d4e2;font-weight:700;font-size:13px;outline:none;min-width:80px;max-width:160px;padding:2px 4px;border-radius:4px;cursor:text" onclick="event.stopPropagation()" title="${App.ui.t('Nhấp để đổi tên tầng')}">
             <span style="color:#3a5470;font-size:11px">${App.ui.t('{n} phòng',{n:rooms.length})}</span>
@@ -2605,7 +2608,7 @@
       const rows = templates.map((t,i)=>`
         <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-pti="${i}">
           <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-            <select data-ptf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
+            <select data-ptf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs" style="max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${(App.data.parasiticTypes||[]).map(pt=>`<option value="${pt.code}" ${t.type===pt.code?'selected':''}>${pt.name}</option>`).join('')}
             </select>
             <input data-ptf="name" value="${t.name||''}" placeholder="${App.ui.t('Tên mẫu')}" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs flex-1 min-w-[120px]">
@@ -2636,7 +2639,7 @@
         const assigned=!!(p.roomId&&this.R().find(r=>r.id===p.roomId));
         return `<div class="border ${assigned?'border-slate-700/50':'border-amber-800/50'} rounded-lg p-3 mb-2" data-pi="${i}">
           <div class="flex items-center gap-2 mb-2 flex-wrap">
-            <select data-pf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
+            <select data-pf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs" style="max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${(App.data.parasiticTypes||[]).map(t=>`<option value="${t.code}" ${p.type===t.code?'selected':''}>${t.name}</option>`).join('')}
             </select>
             <input data-pf="name" value="${p.name||''}" placeholder="${App.ui.t('Tên thiết bị')}" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-36">
