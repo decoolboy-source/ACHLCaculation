@@ -37,6 +37,8 @@ const testFiles = [
   './cases/duct-branch-tree-ui',
   './cases/deep-followup-fixes',
   './cases/fan-equipment-schedule',
+  './cases/equip-select-prefer-type',
+  './cases/confirm-before-delete',
 ];
 
 (async () => {

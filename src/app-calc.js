@@ -530,7 +530,7 @@
     /* selectEquipAuto — Tự chọn FCU/AHU tối ưu từ catalog
        Logic: tìm model nhỏ nhất trong catalog có capKW ≥ Q_required × (1+margin%)
        Ưu tiên theo equipType: FCU→cassette/ducted, AHU→AHU, PAU→PAU
-       
+
        @param qCoilKW: công suất lạnh cần (kW)
        @param equipType: 'AHU'|'PAU'|'FCU'|'VENT'
        @param designMarginPct: hệ số dự phòng (%)
@@ -547,39 +547,57 @@
       let typeFilter;
       if(equipType==='AHU')  typeFilter = ['AHU'];
       else if(equipType==='PAU') typeFilter = ['PAU'];
-      else if(equipType==='FCU'||equipType==='FCU_OA') typeFilter = [preferType, 'cassette', 'ducted', 'vertical'];
+      else if(equipType==='FCU'||equipType==='FCU_OA') typeFilter = ['cassette', 'ducted', 'vertical'];
       else return null; // VENT không cần coil
 
       const candidates = catalog.filter(m=>typeFilter.includes(m.type));
       if(!candidates.length) return null;
 
-      // Tìm model nhỏ nhất đủ công suất (single unit)
-      const sorted = [...candidates].sort((a,b)=>a.capKW-b.capKW);
-      const singleUnit = sorted.find(m=>m.capKW>=required);
-
-      if(singleUnit){
+      // FIX: trước đây preferType chỉ được NHÉT CHUNG vào typeFilter cùng các loại khác
+      // (vd ['cassette','cassette','ducted','vertical']) rồi chọn model NHỎ NHẤT đủ công suất
+      // trên TOÀN BỘ các loại gộp lại — nghĩa là preferType hoàn toàn không có tác dụng ưu
+      // tiên thật sự: nếu 1 model 'vertical' tình cờ có capKW nhỏ hơn model 'cassette' đủ
+      // công suất, hàm vẫn trả về 'vertical' dù người dùng chọn preferType='cassette'. Giờ
+      // ưu tiên đúng nghĩa: thử chọn trong ĐÚNG preferType trước, chỉ khi loại đó không có
+      // model nào đủ (kể cả ghép nhiều unit) mới rơi xuống các loại còn lại.
+      const pickFrom = (pool)=>{
+        if(!pool.length) return null;
+        const sorted = [...pool].sort((a,b)=>a.capKW-b.capKW);
+        const singleUnit = sorted.find(m=>m.capKW>=required);
+        if(singleUnit){
+          return {
+            model: singleUnit,
+            qty: 1,
+            totalCapKW: singleUnit.capKW,
+            utilization: (qCoilKW/singleUnit.capKW*100).toFixed(0)+'%',
+            isOversized: singleUnit.capKW > required*1.4,
+            warning: singleUnit.capKW > required*1.4
+              ? `Oversized ${((singleUnit.capKW/required-1)*100).toFixed(0)}% — xem xét model nhỏ hơn` : null
+          };
+        }
+        // Không có single unit đủ → dùng model lớn nhất trong pool × nhiều units
+        const largest = sorted[sorted.length-1];
+        const qty = Math.ceil(required/largest.capKW);
         return {
-          model: singleUnit,
-          qty: 1,
-          totalCapKW: singleUnit.capKW,
-          utilization: (qCoilKW/singleUnit.capKW*100).toFixed(0)+'%',
-          isOversized: singleUnit.capKW > required*1.4,
-          warning: singleUnit.capKW > required*1.4
-            ? `Oversized ${((singleUnit.capKW/required-1)*100).toFixed(0)}% — xem xét model nhỏ hơn` : null
+          model: largest,
+          qty,
+          totalCapKW: largest.capKW * qty,
+          utilization: (qCoilKW/(largest.capKW*qty)*100).toFixed(0)+'%',
+          isOversized: false,
+          warning: qty > 4 ? `Cần ${qty} units — kiểm tra lại layout` : null
         };
-      }
-
-      // Không có single unit đủ → dùng model lớn nhất × nhiều units
-      const largest = sorted[sorted.length-1];
-      const qty = Math.ceil(required/largest.capKW);
-      return {
-        model: largest,
-        qty,
-        totalCapKW: largest.capKW * qty,
-        utilization: (qCoilKW/(largest.capKW*qty)*100).toFixed(0)+'%',
-        isOversized: false,
-        warning: qty > 4 ? `Cần ${qty} units — kiểm tra lại layout` : null
       };
+
+      // Chỉ thực sự dùng preferType nếu nó cho ra phương án hợp lý (≤4 unit, ngưỡng đã dùng
+      // sẵn ở warning bên trên) — nếu preferType quá nhỏ so với công suất cần (vd cần 500kW mà
+      // preferType='cassette' chỉ có model tối đa 10kW → sẽ ra 50 unit, phi thực tế), rơi
+      // xuống toàn bộ pool để có cơ hội tìm loại khác (vd 'vertical', công suất lớn hơn) hợp
+      // lý hơn — vẫn còn preferredPick làm phương án dự phòng cuối nếu pool đầy đủ cũng không
+      // khá hơn.
+      const preferredPool = candidates.filter(m=>m.type===preferType);
+      const preferredPick = pickFrom(preferredPool);
+      if(preferredPick && preferredPick.qty <= 4) return preferredPick;
+      return pickFrom(candidates) ?? preferredPick;
     },
 
     // selectFanAuto — chọn quạt tự động theo lưu lượng (m³/h) + cột áp tĩnh yêu cầu (Pa),
