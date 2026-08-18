@@ -1324,6 +1324,8 @@
     R(){ return App.state.hlRooms     || (App.state.hlRooms    =[]); },
     M(){ return App.state.hlMotors    || (App.state.hlMotors   =[]); },
     P(){ return App.state.hlParasitic || (App.state.hlParasitic=[]); },
+    MT(){ return App.state.hlMotorTemplates || (App.state.hlMotorTemplates=[]); },
+    PT(){ return App.state.hlParaTemplates  || (App.state.hlParaTemplates =[]); },
     CL(){ return App.state.hlClimate  || (App.state.hlClimate  ={tOut:35,rhOut:80,tIn:22,rhIn:55,elevationM:0}); },
     G(){ return App.state.hlEquipGroups || (App.state.hlEquipGroups=[]); },
     MODE(){ return App.state.hlCalcMode || 'Peak'; },
@@ -2414,6 +2416,52 @@
     },
 
     // ── Motor + Para HTML (giữ nguyên logic cũ) ───────────────────────────────
+    // ── Mẫu Motor (catalog) — khai báo spec 1 lần (giống nhóm thiết bị AHU/PAU),
+    // rồi gán nhanh vào từng phòng thay vì phải gõ lại P(kW)/phương pháp/vị trí/FL/FU/VFD
+    // mỗi lần thêm 1 motor mới cho phòng khác dùng cùng loại motor. Mỗi lần bấm "+ Thêm vào
+    // phòng" chỉ tạo 1 dòng motor bình thường trong App.state.hlMotors (clone từ mẫu) — mẫu
+    // không tham gia tính toán trực tiếp, chỉ là tiện ích nhập liệu.
+    _motorTemplatesHtml(){
+      const templates = this.MT();
+      const roomOpts = `<option value="">-- Chọn phòng --</option>`+
+        this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
+      const rows = templates.map((t,i)=>`
+        <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-mti="${i}">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <input data-mtf="name" value="${t.name||''}" placeholder="Tên mẫu (VD: Quạt cấp AHU)" type="text"
+              class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs flex-1 min-w-[140px]">
+            <input data-mtf="pKw" type="number" step="0.1" value="${t.pKw??''}" placeholder="P(kW)"
+              class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-16 font-mono-data text-right">
+            <input data-mtf="qty" type="number" value="${t.qty||1}" title="Số lượng mặc định"
+              class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-12 font-mono-data text-right">
+            <select data-mtf="method" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs">
+              <option value="A" ${t.method==='A'?'selected':''}>A (FL×FU)</option>
+              <option value="B" ${t.method==='B'?'selected':''}>B (đơn giản)</option>
+              <option value="C" ${t.method==='C'?'selected':''}>C (TCVN)</option>
+            </select>
+            <select data-mtf="position" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs">
+              <option value="TH1" ${t.position==='TH1'?'selected':''}>TH1</option>
+              <option value="TH2" ${t.position==='TH2'?'selected':''}>TH2</option>
+              <option value="TH3" ${t.position==='TH3'?'selected':''}>TH3</option>
+            </select>
+            <label class="flex items-center gap-1 text-[11px] text-slate-400 cursor-pointer">
+              <input data-mtf="hasVFD" type="checkbox" ${t.hasVFD?'checked':''} class="rounded"> VFD</label>
+            <button data-mtdel="${i}" class="text-slate-500 hover:text-red-400 p-1 ml-auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+          </div>
+          <div class="flex items-center gap-1.5 mt-1.5">
+            <select data-mt-room="${i}" class="bg-base-900 border border-violet-700 rounded px-1.5 py-1 text-xs flex-1">${roomOpts}</select>
+            <button data-mt-add="${i}" class="bg-violet-600 hover:bg-violet-500 text-white rounded px-2 py-1 text-[11px] font-medium whitespace-nowrap">+ Thêm vào phòng</button>
+          </div>
+        </div>`).join('');
+      return `<div class="mb-3 p-2.5 bg-violet-950/10 border border-violet-800/30 rounded-lg">
+        <p class="text-[11px] text-violet-300 font-medium mb-2">📋 Mẫu Motor — khai báo spec 1 lần, gán nhanh vào nhiều phòng</p>
+        ${rows || '<p class="text-[11px] text-slate-500 mb-1.5">Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 motor sẵn có bên dưới.</p>'}
+        <button id="hl-add-motor-template" class="text-[11px] text-violet-400 hover:text-violet-300 flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm mẫu motor
+        </button>
+      </div>`;
+    },
+
     _motorsHtml(){
       const rows = this.M();
       const roomOpts = `<option value="">⚠ Chưa gán phòng</option>`+
@@ -2452,12 +2500,16 @@
             <input data-mf="hasVFD" type="checkbox" ${m.hasVFD?'checked':''} class="rounded"> VFD</label></td>
           <td class="px-2 py-1 text-[10px] font-mono-data text-slate-400">${(eta*100).toFixed(1)}%${flag.startsWith('⚙')?` <span class="text-amber-400">${flag}</span>`:''}</td>
           <td class="px-2 py-1 text-right font-mono-data text-amber-400 text-xs">${m._qKW!=null?m._qKW.toFixed(3)+' kW':'—'}</td>
-          <td class="px-2 py-1"><button data-mdel="${i}" class="text-slate-500 hover:text-red-400 p-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+          <td class="px-2 py-1 flex items-center gap-1">
+            <button data-msave-template="${i}" title="Lưu spec motor này thành mẫu để tái sử dụng cho phòng khác" class="text-slate-500 hover:text-violet-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+            <button data-mdel="${i}" class="text-slate-500 hover:text-red-400 p-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+          </td>
         </tr>`;
       }).join('');
       const unassigned=rows.filter(m=>!m.roomId).length;
-      return `${unassigned?`<div class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5">
+      return `${this._motorTemplatesHtml()}
+      ${unassigned?`<div class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
         ${unassigned} motor chưa gán phòng (nền cam) — nhiệt tỏa sẽ không được tính vào bất kỳ phòng nào!
       </div>`:''}
@@ -2480,9 +2532,70 @@
 
 
     // ── Bind events
+    // Trường nhập liệu riêng theo từng loại tải ký sinh — dùng chung cho cả dòng thực tế
+    // (attr="data-pf", trong _paraHtml) và dòng mẫu (attr="data-ptf", trong _paraTemplatesHtml),
+    // tránh lặp lại 4 khối field theo loại (IQF/GLAZE/ICE/ROTOR) ở 2 nơi.
+    _paraTypeFieldsHtml(p, attr){
+      const doorOpts = (App.data.doorCatalog||[]).filter(d=>!(App.state.hiddenMaterialIds?.doors||[]).includes(d.code)).map(d=>({v:d.code,n:d.name}));
+      if(p.type==='IQF') return `<div class="grid grid-cols-3 md:grid-cols-6 gap-2">
+            <div><label class="text-[10px] text-slate-400">L buồng(m)</label><input ${attr}="L" type="number" step="0.1" value="${p.L||5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">W(m)</label><input ${attr}="W" type="number" step="0.1" value="${p.W||3}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">H(m)</label><input ${attr}="H" type="number" step="0.1" value="${p.H||2.5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">U vách(W/m²K)</label><input ${attr}="uPanel" type="number" step="0.01" value="${p.uPanel||0.22}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">T buồng(°C)</label><input ${attr}="tChamber" type="number" value="${p.tChamber??-35}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">Loại cửa</label><select ${attr}="doorCode" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full">${doorOpts.map(o=>`<option value="${o.v}" ${p.doorCode===o.v?'selected':''}>${o.n}</option>`).join('')}</select></div>
+          </div>
+          <p class="text-[9px] text-slate-500 mt-1">Q âm = thiết bị hút nhiệt khỏi phòng ĐHKK → giảm tải (Peak Design: không trừ vào Q_coil để an toàn)</p>`;
+      if(p.type==='GLAZE') return `<div class="grid grid-cols-3 gap-2">
+            <div><label class="text-[10px] text-slate-400">S bể mạ băng(m²)</label><input ${attr}="aBasin" type="number" step="0.1" value="${p.aBasin||10}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">T nước mạ(°C)</label><input ${attr}="tWater" type="number" value="${p.tWater??0}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">K trao đổi nhiệt</label><input ${attr}="kWater" type="number" value="${p.kWater||20}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+          </div>`;
+      if(p.type==='ICE') return `<div class="grid grid-cols-2 gap-2">
+            <div><label class="text-[10px] text-slate-400">Sản lượng đá(kg/h)</label><input ${attr}="mIceKgH" type="number" value="${p.mIceKgH||500}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">T nước đầu ra(°C)</label><input ${attr}="tWaterOut" type="number" value="${p.tWaterOut??5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+          </div>`;
+      if(p.type==='ROTOR') return `<div class="grid grid-cols-3 gap-2">
+            <div><label class="text-[10px] text-slate-400">G_gió(m³/h)</label><input ${attr}="gAirM3h" type="number" value="${p.gAirM3h||2000}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">T vào Rotor(°C)</label><input ${attr}="tInRotor" type="number" value="${p.tInRotor||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">T ra Rotor(°C)</label><input ${attr}="tOutRotor" type="number" value="${p.tOutRotor||40}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+          </div>
+          <p class="text-[9px] text-slate-500 mt-1">Rotor tỏa nhiệt vào phòng → tải dương, cộng vào Q_sensible phòng được gán.</p>`;
+      return '';
+    },
+
+    // ── Mẫu tải ký sinh (catalog) — cùng ý tưởng với Mẫu Motor: khai báo 1 lần
+    // (loại + toàn bộ thông số kỹ thuật), gán nhanh vào nhiều phòng khác nhau.
+    _paraTemplatesHtml(){
+      const templates = this.PT();
+      const roomOpts = `<option value="">-- Chọn phòng --</option>`+
+        this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
+      const rows = templates.map((t,i)=>`
+        <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-pti="${i}">
+          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+            <select data-ptf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
+              ${(App.data.parasiticTypes||[]).map(pt=>`<option value="${pt.code}" ${t.type===pt.code?'selected':''}>${pt.name}</option>`).join('')}
+            </select>
+            <input data-ptf="name" value="${t.name||''}" placeholder="Tên mẫu" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs flex-1 min-w-[120px]">
+            <button data-ptdel="${i}" class="text-slate-500 hover:text-red-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+          </div>
+          ${this._paraTypeFieldsHtml(t,'data-ptf')}
+          <div class="flex items-center gap-1.5 mt-1.5">
+            <select data-pt-room="${i}" class="bg-base-900 border border-violet-700 rounded px-1.5 py-1 text-xs flex-1">${roomOpts}</select>
+            <button data-pt-add="${i}" class="bg-violet-600 hover:bg-violet-500 text-white rounded px-2 py-1 text-[11px] font-medium whitespace-nowrap">+ Thêm vào phòng</button>
+          </div>
+        </div>`).join('');
+      return `<div class="mb-3 p-2.5 bg-violet-950/10 border border-violet-800/30 rounded-lg">
+        <p class="text-[11px] text-violet-300 font-medium mb-2">📋 Mẫu tải ký sinh — khai báo 1 lần, gán nhanh vào nhiều phòng</p>
+        ${rows || '<p class="text-[11px] text-slate-500 mb-1.5">Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 tải ký sinh sẵn có bên dưới.</p>'}
+        <button id="hl-add-para-template" class="text-[11px] text-violet-400 hover:text-violet-300 flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm mẫu tải ký sinh
+        </button>
+      </div>`;
+    },
+
     _paraHtml(){
       const rows = this.P();
-      const doorOpts = (App.data.doorCatalog||[]).filter(d=>!(App.state.hiddenMaterialIds?.doors||[]).includes(d.code)).map(d=>({v:d.code,n:d.name}));
       const roomOpts = `<option value="">⚠ Chưa gán phòng</option>`+
         this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
       const html = rows.map((p,i)=>{
@@ -2500,36 +2613,15 @@
               ${roomOpts.replace(`value="${p.roomId||''}"`,`value="${p.roomId||''}" selected`)}
             </select>
             ${qKW?`<span class="font-mono-data text-xs ${neg?'text-emerald-400':'text-amber-400'}">${qKW} kW${neg?' (lạnh ký sinh)':' (nhiệt tỏa)'}</span>`:''}
-            <button data-pdel="${i}" class="text-slate-500 hover:text-red-400 ml-auto p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+            <button data-psave-template="${i}" title="Lưu tải ký sinh này thành mẫu để tái sử dụng cho phòng khác" class="text-slate-500 hover:text-violet-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+            <button data-pdel="${i}" class="text-slate-500 hover:text-red-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
           </div>
-          ${p.type==='IQF'?`<div class="grid grid-cols-3 md:grid-cols-6 gap-2">
-            <div><label class="text-[10px] text-slate-400">L buồng(m)</label><input data-pf="L" type="number" step="0.1" value="${p.L||5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">W(m)</label><input data-pf="W" type="number" step="0.1" value="${p.W||3}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">H(m)</label><input data-pf="H" type="number" step="0.1" value="${p.H||2.5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">U vách(W/m²K)</label><input data-pf="uPanel" type="number" step="0.01" value="${p.uPanel||0.22}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T buồng(°C)</label><input data-pf="tChamber" type="number" value="${p.tChamber??-35}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">Loại cửa</label><select data-pf="doorCode" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full">${doorOpts.map(o=>`<option value="${o.v}" ${p.doorCode===o.v?'selected':''}>${o.n}</option>`).join('')}</select></div>
-          </div>
-          <p class="text-[9px] text-slate-500 mt-1">Q âm = thiết bị hút nhiệt khỏi phòng ĐHKK → giảm tải (Peak Design: không trừ vào Q_coil để an toàn)</p>`:''}
-          ${p.type==='GLAZE'?`<div class="grid grid-cols-3 gap-2">
-            <div><label class="text-[10px] text-slate-400">S bể mạ băng(m²)</label><input data-pf="aBasin" type="number" step="0.1" value="${p.aBasin||10}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T nước mạ(°C)</label><input data-pf="tWater" type="number" value="${p.tWater??0}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">K trao đổi nhiệt</label><input data-pf="kWater" type="number" value="${p.kWater||20}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-          </div>`:''}
-          ${p.type==='ICE'?`<div class="grid grid-cols-2 gap-2">
-            <div><label class="text-[10px] text-slate-400">Sản lượng đá(kg/h)</label><input data-pf="mIceKgH" type="number" value="${p.mIceKgH||500}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T nước đầu ra(°C)</label><input data-pf="tWaterOut" type="number" value="${p.tWaterOut??5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-          </div>`:''}
-          ${p.type==='ROTOR'?`<div class="grid grid-cols-3 gap-2">
-            <div><label class="text-[10px] text-slate-400">G_gió(m³/h)</label><input data-pf="gAirM3h" type="number" value="${p.gAirM3h||2000}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T vào Rotor(°C)</label><input data-pf="tInRotor" type="number" value="${p.tInRotor||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T ra Rotor(°C)</label><input data-pf="tOutRotor" type="number" value="${p.tOutRotor||40}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-          </div>
-          <p class="text-[9px] text-slate-500 mt-1">Rotor tỏa nhiệt vào phòng → tải dương, cộng vào Q_sensible phòng được gán.</p>`:''}
+          ${this._paraTypeFieldsHtml(p,'data-pf')}
         </div>`;
       }).join('');
       const unassigned=rows.filter(p=>!p.roomId).length;
-      return `${unassigned?`<p class="text-[11px] text-amber-400 mb-2">⚠ ${unassigned} tải ký sinh chưa gán phòng (viền cam)</p>`:''}
+      return `${this._paraTemplatesHtml()}
+        ${unassigned?`<p class="text-[11px] text-amber-400 mb-2">⚠ ${unassigned} tải ký sinh chưa gán phòng (viền cam)</p>`:''}
         ${html}<button id="hl-add-para" class="mt-1 text-xs text-emerald-400 flex items-center gap-1">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm tải ký sinh</button>
       <p class="text-[11px] text-slate-500 mt-1">
@@ -2555,6 +2647,42 @@
           this.save(); if(f==='type') this.render();
         }));
       });
+      // ── Mẫu tải ký sinh (catalog) ──
+      root.querySelector('#hl-add-para-template')?.addEventListener('click',()=>{
+        this.PT().push({id:this.uid(),type:'IQF',name:'Mẫu tải ký sinh '+(this.PT().length+1),
+          tChamber:-35,L:5,W:3,H:2.5,uPanel:0.22,doorCode:'D1200x2200-STD'});
+        this.save(); this.render();
+      });
+      root.querySelectorAll('[data-ptdel]').forEach(b=>b.addEventListener('click',()=>{
+        this.PT().splice(parseInt(b.getAttribute('data-ptdel')),1); this.save(); this.render();
+      }));
+      root.querySelectorAll('[data-pti]').forEach(row=>{
+        const i=parseInt(row.getAttribute('data-pti'));
+        row.querySelectorAll('[data-ptf]').forEach(el=>el.addEventListener('change',()=>{
+          const f=el.getAttribute('data-ptf'); const t=this.PT()[i]; if(!t) return;
+          t[f]=el.type==='number'?parseFloat(el.value):el.value;
+          this.save(); if(f==='type') this.render();
+        }));
+      });
+      root.querySelectorAll('[data-pt-add]').forEach(b=>b.addEventListener('click',()=>{
+        const i=parseInt(b.getAttribute('data-pt-add'));
+        const t=this.PT()[i]; if(!t) return;
+        const roomSel=root.querySelector(`[data-pt-room="${i}"]`);
+        const roomId=roomSel?.value||null;
+        if(!roomId){ App.ui.toast('warn','Chọn phòng trước khi thêm từ mẫu.'); return; }
+        const {id,...spec}=t;
+        this.P().push({...spec, id:this.uid(), roomId});
+        this.save(); this.render();
+        App.ui.toast('ok',`Đã thêm tải ký sinh "${t.name||''}" vào phòng đã chọn.`);
+      }));
+      root.querySelectorAll('[data-psave-template]').forEach(b=>b.addEventListener('click',()=>{
+        const i=parseInt(b.getAttribute('data-psave-template'));
+        const p=this.P()[i]; if(!p) return;
+        const {id,roomId,_qW,...spec}=p;
+        this.PT().push({...spec, id:this.uid(), name:p.name||'Mẫu tải ký sinh '+(this.PT().length+1)});
+        this.save(); this.render();
+        App.ui.toast('ok','Đã lưu thành mẫu — xem ở khối "Mẫu tải ký sinh" phía trên.');
+      }));
     },
 
     // ── Room Drawer: slide-in panel để chỉnh sửa phòng ─────────────────────
@@ -3803,6 +3931,45 @@
       root.querySelectorAll('[data-mdel]').forEach(b=>b.addEventListener('click',()=>{
         this.M().splice(parseInt(b.getAttribute('data-mdel')),1); this.save(); this.render();
       }));
+      // ── Mẫu Motor (catalog) ──
+      root.querySelector('#hl-add-motor-template')?.addEventListener('click',()=>{
+        this.MT().push({id:this.uid(),name:'Mẫu motor '+(this.MT().length+1),pKw:5.5,qty:1,
+          method:'A',position:'TH1',hasVFD:false});
+        this.save(); this.render();
+      });
+      root.querySelectorAll('[data-mtdel]').forEach(b=>b.addEventListener('click',()=>{
+        this.MT().splice(parseInt(b.getAttribute('data-mtdel')),1); this.save(); this.render();
+      }));
+      root.querySelectorAll('[data-mti]').forEach(row=>{
+        const i=parseInt(row.getAttribute('data-mti'));
+        row.querySelectorAll('[data-mtf]').forEach(el=>el.addEventListener('change',()=>{
+          const f=el.getAttribute('data-mtf'); const t=this.MT()[i]; if(!t) return;
+          let val;
+          if(el.type==='checkbox') val=el.checked;
+          else if(el.type==='number') { val=parseFloat(el.value); if(isNaN(val)) val=0; }
+          else val=el.value;
+          t[f]=val; this.save();
+        }));
+      });
+      root.querySelectorAll('[data-mt-add]').forEach(b=>b.addEventListener('click',()=>{
+        const i=parseInt(b.getAttribute('data-mt-add'));
+        const t=this.MT()[i]; if(!t) return;
+        const roomSel=root.querySelector(`[data-mt-room="${i}"]`);
+        const roomId=roomSel?.value||null;
+        if(!roomId){ App.ui.toast('warn','Chọn phòng trước khi thêm từ mẫu.'); return; }
+        this.M().push({id:this.uid(),name:t.name||'',pKw:t.pKw||5.5,qty:t.qty||1,
+          method:t.method||'A',position:t.position||'TH1',FL:1,FU:1,hasVFD:!!t.hasVFD,roomId});
+        this.save(); this.render();
+        App.ui.toast('ok',`Đã thêm motor "${t.name||''}" vào phòng đã chọn.`);
+      }));
+      root.querySelectorAll('[data-msave-template]').forEach(b=>b.addEventListener('click',()=>{
+        const i=parseInt(b.getAttribute('data-msave-template'));
+        const m=this.M()[i]; if(!m) return;
+        this.MT().push({id:this.uid(),name:m.name||'Mẫu motor '+(this.MT().length+1),
+          pKw:m.pKw||5.5,qty:m.qty||1,method:m.method||'A',position:m.position||'TH1',hasVFD:!!m.hasVFD});
+        this.save(); this.render();
+        App.ui.toast('ok','Đã lưu thành mẫu — xem ở khối "Mẫu Motor" phía trên.');
+      }));
       root.querySelectorAll('tr[data-mi]').forEach(tr=>{
         const i=parseInt(tr.getAttribute('data-mi'));
         tr.querySelectorAll('[data-mf]').forEach(el=>el.addEventListener('change',()=>{
@@ -4760,6 +4927,8 @@
           hlClimate:  App.state.hlClimate,
           hlCalcMode: App.state.hlCalcMode,
           hlEquipGroups: App.state.hlEquipGroups || [],
+          hlMotorTemplates: App.state.hlMotorTemplates || [],
+          hlParaTemplates:  App.state.hlParaTemplates  || [],
           roomCount:  (App.state.hlRooms||[]).length
         };
         const saved = await App.db.saveProject(project);
@@ -4816,6 +4985,7 @@
         App.state.hlRooms=[]; App.state.hlMotors=[]; App.state.hlParasitic=[];
         App.state.hlClimate=null; App.state.hlCalcMode='Peak';
         App.state.hlEquipGroups=[];
+        App.state.hlMotorTemplates=[]; App.state.hlParaTemplates=[];
         this.closeModal();
         App.ui.renderAllTabs();
         this.autoSave(true);
@@ -4842,6 +5012,8 @@
       App.state.hlClimate  = p.hlClimate  || null;
       App.state.hlCalcMode = p.hlCalcMode || 'Peak';
       App.state.hlEquipGroups = p.hlEquipGroups || [];
+      App.state.hlMotorTemplates = p.hlMotorTemplates || [];
+      App.state.hlParaTemplates  = p.hlParaTemplates  || [];
       App.ui.renderAllTabs();
       App.ui.toast('ok','Đã nạp dự án: '+(p.inputs?.projectName||p.id)+' · '+(p.roomCount||0)+' phòng nhiệt tải');
     },
