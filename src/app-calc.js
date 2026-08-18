@@ -12,7 +12,7 @@
     /* ---- 6. Tiết diện & kích thước ống gió ----
        A(m2) = Q(m3/h) / (v(m/s) × 3600) */
     ductArea(qM3h, vMs){
-      if(!vMs || vMs<=0) throw new Error('Vận tốc thiết kế phải > 0');
+      if(!vMs || vMs<=0) throw new Error(App.ui.t('Vận tốc thiết kế phải > 0'));
       return qM3h / (vMs * 3600);
     },
     // Quy đổi tiết diện -> kích thước ống chữ nhật, ràng buộc Aspect Ratio W/H <= 4
@@ -84,7 +84,7 @@
     /* ---- 14. Tra NC sơ bộ theo vận tốc (quy tắc kinh nghiệm) ---- */
     ncGuide(vMs, ncTable){
       const row = ncTable.find(r=> vMs <= r.vMax);
-      return row ? row.ncRange : 'Không xác định';
+      return row ? row.ncRange : App.ui.t('Không xác định');
     },
 
     /* 16e. Bù áp suất dương — Phương pháp rò rỉ qua cửa (phương trình lỗ rò chuẩn — orifice equation):
@@ -169,14 +169,14 @@
     calcMotorEta(pKw){
       const tbl = App.data.motorIE3;
       const exact = tbl.find(r => Math.abs(r.pKw - pKw) < 0.001);
-      if(exact) return { eta: exact.eta, flag:'Khớp đúng mức chuẩn' };
+      if(exact) return { eta: exact.eta, flag:App.ui.t('Khớp đúng mức chuẩn') };
       const lo = [...tbl].reverse().find(r => r.pKw <= pKw);
       const hi = tbl.find(r => r.pKw >= pKw);
-      if(!lo && !hi) return { eta: tbl[0].eta, flag:'Ngoài dải bảng (dùng mức nhỏ nhất)' };
-      if(!lo) return { eta: hi.eta, flag:'Ngoài dải bảng (dùng mức nhỏ nhất)' };
-      if(!hi) return { eta: tbl[tbl.length-1].eta, flag:'Ngoài dải bảng (dùng mức lớn nhất)' };
+      if(!lo && !hi) return { eta: tbl[0].eta, flag:App.ui.t('Ngoài dải bảng (dùng mức nhỏ nhất)') };
+      if(!lo) return { eta: hi.eta, flag:App.ui.t('Ngoài dải bảng (dùng mức nhỏ nhất)') };
+      if(!hi) return { eta: tbl[tbl.length-1].eta, flag:App.ui.t('Ngoài dải bảng (dùng mức lớn nhất)') };
       const eta = lo.eta + (hi.eta-lo.eta)*(pKw-lo.pKw)/(hi.pKw-lo.pKw);
-      return { eta, flag:`⚙ Nội suy ${lo.pKw}-${hi.pKw} kW` };
+      return { eta, flag:App.ui.t('⚙ Nội suy {lo}-{hi} kW',{lo:lo.pKw,hi:hi.pKw}) };
     },
 
     // — Nhiệt tỏa motor (3 phương pháp A/B/C)
@@ -214,7 +214,7 @@
               lSupplyM3h, lFreshM3h, lReturnM3h, tOut, hOut, dOut, hIn,
               tSupplyDesign, rhSupplyDesign, espPa, elevationM, calcMode}){
       const P = App.data.PHYSICS;
-      if(equipType==='VENT') return {qCoilKW:0, type:'Quạt thông gió (không cần coil)'};
+      if(equipType==='VENT') return {qCoilKW:0, type:App.ui.t('Quạt thông gió (không cần coil)')};
       const Q_para_neg = (Q_parasitic_list??[]).filter(q=>q<0).reduce((a,b)=>a+b,0);
       const Q_para_pos = (Q_parasitic_list??[]).filter(q=>q>0).reduce((a,b)=>a+b,0);
       const Q_s_adj = Q_sens_room + (Q_motor_total??0) + Q_para_pos
@@ -379,7 +379,7 @@
     /* calcDataCenterAirflow — ASHRAE TC9.9 2021
        Airflow = 3600 × Q_load / (ρ × Cp × ΔT)  */
     calcDataCenterAirflow({qTotalKW, deltaT=12, supplyAirTempC=18, roomTempC=27}){
-      if(!deltaT || deltaT<=0) throw new Error('ΔT Data Center phải > 0');
+      if(!deltaT || deltaT<=0) throw new Error(App.ui.t('ΔT Data Center phải > 0'));
       const P = App.data.PHYSICS;
       const Q_supply = 3600 * qTotalKW / (P.RHO_AIR * P.CP_AIR * deltaT);
       // DC: 100% recirculation qua CRAC/CRAH, gió tươi chỉ đủ thông gió cho người
@@ -391,7 +391,7 @@
     // calcRoofCLTD — tải nhiệt qua mái theo CLTD
     calcRoofCLTD({uRoof, roofType='R2', areaM2, tRoom=22, tOutdoorMean=32, applyCorrection=true}){
       const rg = App.data.CLTD_ROOFS[roofType];
-      if(!rg) throw new Error(`Roof type không tồn tại: ${roofType}. Dùng R1-R6`);
+      if(!rg) throw new Error(App.ui.t('Roof type không tồn tại: {rt}. Dùng R1-R6',{rt:roofType}));
       let cltd = rg.cltdPeak;
       if(applyCorrection) cltd += (25.5 - tRoom) + (tOutdoorMean - 29.4);
       cltd = Math.max(cltd, 0);
@@ -424,7 +424,7 @@
 
       layers.forEach((lyr, idx) => {
         const mat = (D.CONSTRUCTION_MATERIALS||[]).find(m=>m.id===lyr.materialId);
-        if(!mat){ warnings.push(`Lớp ${idx+1}: không tìm thấy vật liệu "${lyr.materialId}"`); return; }
+        if(!mat){ warnings.push(App.ui.t('Lớp {n}: không tìm thấy vật liệu "{id}"',{n:idx+1,id:lyr.materialId})); return; }
         const thickM = (parseFloat(lyr.thicknessMm)||0) / 1000;
 
         let R_layer;
@@ -434,9 +434,9 @@
         } else if(mat.lambda && thickM > 0){
           R_layer = thickM / mat.lambda;
         } else if(mat.lambda && thickM === 0){
-          warnings.push(`${mat.name}: độ dày = 0 → bỏ qua`); return;
+          warnings.push(App.ui.t('{name}: độ dày = 0 → bỏ qua',{name:mat.name})); return;
         } else {
-          warnings.push(`${mat.name}: không có λ`); return;
+          warnings.push(App.ui.t('{name}: không có λ',{name:mat.name})); return;
         }
 
         R_total += R_layer;
@@ -454,8 +454,8 @@
       const U = R_total > 0 ? 1/R_total : null;
 
       // Cảnh báo giá trị quá thấp hoặc cao
-      if(U && U > 3.5)  warnings.push(`U = ${U.toFixed(2)} W/m²K — rất cao, kiểm tra lại cấu tạo`);
-      if(U && U < 0.10) warnings.push(`U = ${U.toFixed(3)} W/m²K — rất thấp, kiểm tra độ dày cách nhiệt`);
+      if(U && U > 3.5)  warnings.push(App.ui.t('U = {u} W/m²K — rất cao, kiểm tra lại cấu tạo',{u:U.toFixed(2)}));
+      if(U && U < 0.10) warnings.push(App.ui.t('U = {u} W/m²K — rất thấp, kiểm tra độ dày cách nhiệt',{u:U.toFixed(3)}));
 
       return { U, Rtotal:R_total, layers:layerDetails, warnings,
         h_o, h_i, Rfilm_o:includeFilms?1/h_o:0, Rfilm_i:includeFilms?1/h_i:0,
@@ -483,10 +483,10 @@
       const warnings = [];
 
       partitions.forEach((p, idx) => {
-        const label = p.name || `Vách ngăn #${idx+1}`;
+        const label = p.name || App.ui.t('Vách ngăn #{n}',{n:idx+1});
         const areaM2  = parseFloat(p.areaM2) || 0;
         if(areaM2 <= 0){
-          warnings.push(`${label}: chưa nhập diện tích (S=0) — bỏ qua, không tính vào tổng tải`);
+          warnings.push(App.ui.t('{label}: chưa nhập diện tích (S=0) — bỏ qua, không tính vào tổng tải',{label}));
           return;
         }
 
@@ -496,7 +496,7 @@
           const wt=(D.WALL_TYPES||[]).find(w=>w.id===p.wallTypeId);
           if(wt) U=wt.U;
         }
-        if(!U){ U = 0.45; warnings.push(`${label}: chưa chọn loại vách/nhập U — đang dùng mặc định U=0.45 (gạch 200mm), kiểm tra lại nếu vách thực tế khác`); }
+        if(!U){ U = 0.45; warnings.push(App.ui.t('{label}: chưa chọn loại vách/nhập U — đang dùng mặc định U=0.45 (gạch 200mm), kiểm tra lại nếu vách thực tế khác',{label})); }
 
         // T kề phòng
         let T_adj = null;
@@ -507,12 +507,12 @@
             T_adj   = parseFloat(adjRoom.tRoom) || parseFloat(adjRoom.tIn) || 22;
             adjName = adjRoom.name || p.adjRoomId;
           } else {
-            warnings.push(`${label}: phòng kề đã chọn không còn tồn tại — kiểm tra lại`);
+            warnings.push(App.ui.t('{label}: phòng kề đã chọn không còn tồn tại — kiểm tra lại',{label}));
           }
         }
         if(T_adj===null){
           T_adj = parseFloat(p.adjTempC) ?? 35; // mặc định T ngoài
-          if(p.adjTempC==null) warnings.push(`${label}: chưa nhập nhiệt độ phòng kề — đang dùng mặc định 35°C, kiểm tra lại nếu phòng kề có điều hòa`);
+          if(p.adjTempC==null) warnings.push(App.ui.t('{label}: chưa nhập nhiệt độ phòng kề — đang dùng mặc định 35°C, kiểm tra lại nếu phòng kề có điều hòa',{label}));
         }
 
         const dT = T_adj - tRoom;
@@ -572,7 +572,7 @@
             utilization: (qCoilKW/singleUnit.capKW*100).toFixed(0)+'%',
             isOversized: singleUnit.capKW > required*1.4,
             warning: singleUnit.capKW > required*1.4
-              ? `Oversized ${((singleUnit.capKW/required-1)*100).toFixed(0)}% — xem xét model nhỏ hơn` : null
+              ? App.ui.t('Oversized {pct}% — xem xét model nhỏ hơn',{pct:((singleUnit.capKW/required-1)*100).toFixed(0)}) : null
           };
         }
         // Không có single unit đủ → dùng model lớn nhất trong pool × nhiều units
@@ -584,7 +584,7 @@
           totalCapKW: largest.capKW * qty,
           utilization: (qCoilKW/(largest.capKW*qty)*100).toFixed(0)+'%',
           isOversized: false,
-          warning: qty > 4 ? `Cần ${qty} units — kiểm tra lại layout` : null
+          warning: qty > 4 ? App.ui.t('Cần {qty} units — kiểm tra lại layout',{qty}) : null
         };
       };
 
@@ -625,7 +625,7 @@
           utilization: (airflowM3h/singleUnit.airflowM3h*100).toFixed(0)+'%',
           isOversized: singleUnit.airflowM3h > requiredFlow*1.5,
           warning: singleUnit.airflowM3h > requiredFlow*1.5
-            ? `Oversized ${((singleUnit.airflowM3h/requiredFlow-1)*100).toFixed(0)}% — xem xét model nhỏ hơn` : null
+            ? App.ui.t('Oversized {pct}% — xem xét model nhỏ hơn',{pct:((singleUnit.airflowM3h/requiredFlow-1)*100).toFixed(0)}) : null
         };
       }
 
@@ -637,7 +637,7 @@
         totalAirflowM3h: largest.airflowM3h * qty,
         utilization: (airflowM3h/(largest.airflowM3h*qty)*100).toFixed(0)+'%',
         isOversized: false,
-        warning: qty > 4 ? `Cần ${qty} units — kiểm tra lại layout` : null
+        warning: qty > 4 ? App.ui.t('Cần {qty} units — kiểm tra lại layout',{qty}) : null
       };
     },
 
