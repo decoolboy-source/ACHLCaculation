@@ -4830,21 +4830,21 @@
           <!-- Scope selector + buttons -->
           <div class="flex flex-wrap gap-2 items-center">
             <div>
-              <label style="font-size:11px;color:#4a6680;display:block;margin-bottom:3px">Phạm vi xuất báo cáo</label>
+              <label style="font-size:11px;color:#4a6680;display:block;margin-bottom:3px">${App.ui.t('Phạm vi xuất báo cáo')}</label>
               <select id="export-scope" style="background:#07111e;border:1.5px solid #234168;border-radius:8px;color:#c2d4e2;padding:7px 12px;font-size:12px;min-height:38px;min-width:200px">
-                <option value="all">📋 Toàn bộ dự án (${rooms.length} phòng)</option>
-                ${floors.map(f=>{const n=rooms.filter(r=>r.floorId===f.id||(f.id==='fl1'&&!r.floorId)).length;return `<option value="floor:${f.id}">🏢 ${f.name} (${n} phòng)</option>`;}).join('')}
-                ${rooms.map(r=>`<option value="room:${r.id}">📌 ${r.name||'Phòng'}</option>`).join('')}
+                <option value="all">📋 ${App.ui.t('Toàn bộ dự án')} (${App.ui.t('{n} phòng',{n:rooms.length})})</option>
+                ${floors.map(f=>{const n=rooms.filter(r=>r.floorId===f.id||(f.id==='fl1'&&!r.floorId)).length;return `<option value="floor:${f.id}">🏢 ${f.name} (${App.ui.t('{n} phòng',{n})})</option>`;}).join('')}
+                ${rooms.map(r=>`<option value="room:${r.id}">📌 ${r.name||App.ui.t('Phòng')}</option>`).join('')}
               </select>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
-              <label style="font-size:11px;color:#4a6680">Định dạng</label>
+              <label style="font-size:11px;color:#4a6680">${App.ui.t('Định dạng')}</label>
               <div style="display:flex;gap:6px">
                 <button id="btn-export-pdf" style="display:flex;align-items:center;gap:6px;background:#b91c1c;border:none;color:white;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>Xuất PDF
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>${App.ui.t('Xuất PDF')}
                 </button>
                 <button id="btn-export-xlsx" style="display:flex;align-items:center;gap:6px;background:#047857;border:none;color:white;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>Xuất Excel
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>${App.ui.t('Xuất Excel')}
                 </button>
               </div>
             </div>
@@ -4852,10 +4852,10 @@
           <!-- Flags summary -->
           ${rooms.some(r=>r._flags&&r._flags.length>0)?`
           <div style="background:#0d1e10;border:1px solid #1a4020;border-radius:8px;padding:12px;font-size:11px">
-            <div style="color:#4ade80;font-weight:600;margin-bottom:6px">⚠ Thông số cần kiểm tra (* Flags)</div>
+            <div style="color:#4ade80;font-weight:600;margin-bottom:6px">⚠ ${App.ui.t('Thông số cần kiểm tra (* Flags)')}</div>
             ${rooms.filter(r=>r._flags&&r._flags.length>0).map(r=>
               r._flags.map(f=>`<div style="display:flex;gap:8px;margin-bottom:3px">
-                <span style="color:${f.severity==='error'||f.level==='red'?'#f87171':'#fbbf24'};min-width:60px;font-weight:600">${f.severity==='error'||f.level==='red'?'⛔ LỖI':'⚠ CẢNH'}</span>
+                <span style="color:${f.severity==='error'||f.level==='red'?'#f87171':'#fbbf24'};min-width:60px;font-weight:600">${f.severity==='error'||f.level==='red'?'⛔ '+App.ui.t('LỖI'):'⚠ '+App.ui.t('CẢNH')}</span>
                 <span style="color:#8095ab">[${r.name||'?'}]</span>
                 <span style="color:#8eaac2">${f.msg||f.code||''}</span>
               </div>`).join('')
@@ -4891,13 +4891,13 @@
   App.cmd = {
     actions(){
       return [
-        ...App.ui.TABS.map(tb=>({label:'Tab: '+App.ui.t(tb.key), run:()=>App.ui.showTab(tb.id)})),
-        {label:'Tính toán lại (Recalculate)', run:()=> App.ui.calc.recalc()},
-        {label:'Dự án mới', run:()=> App.admin.openProjectModal()},
-        {label:'Export toàn bộ dữ liệu .json', run:()=> App.admin.exportJSON()},
-        {label:'Xuất báo cáo PDF', run:()=> App.report.exportPDF()},
-        {label:'Xuất báo cáo Excel', run:()=> App.report.exportXLSX()},
-        {label:'Đổi ngôn ngữ VI/EN', run:()=>{ App.state.lang = App.state.lang==='vi'?'en':'vi'; App.ui.applyI18n(); App.ui.renderNav(); App.ui.renderAllTabs(); App.admin.autoSave(); }}
+        ...App.ui.TABS.map(tb=>({label:App.ui.t('Tab:')+' '+App.ui.t(tb.key), run:()=>App.ui.showTab(tb.id)})),
+        {label:App.ui.t('Tính toán lại (Recalculate)'), run:()=> App.ui.calc.recalc()},
+        {label:App.ui.t('Dự án mới'), run:()=> App.admin.openProjectModal()},
+        {label:App.ui.t('Export toàn bộ dữ liệu .json'), run:()=> App.admin.exportJSON()},
+        {label:App.ui.t('Xuất báo cáo PDF'), run:()=> App.report.exportPDF()},
+        {label:App.ui.t('Xuất báo cáo Excel'), run:()=> App.report.exportXLSX()},
+        {label:App.ui.t('Đổi ngôn ngữ VI/EN'), run:()=>{ App.state.lang = App.state.lang==='vi'?'en':'vi'; App.ui.applyI18n(); App.ui.renderNav(); App.ui.renderAllTabs(); App.admin.autoSave(); }}
       ];
     },
     open(){
@@ -4923,7 +4923,7 @@
       const q = query.toLowerCase();
       const matched = this.actions().filter(a=> a.label.toLowerCase().includes(q));
       const root = document.getElementById('cmdk-results');
-      root.innerHTML = matched.map((a,i)=>`<button data-action="${i}" class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800 flex items-center gap-2"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${a.label}</button>`).join('') || `<div class="px-3 py-4 text-sm text-slate-500 text-center">Không tìm thấy</div>`;
+      root.innerHTML = matched.map((a,i)=>`<button data-action="${i}" class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800 flex items-center gap-2"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${a.label}</button>`).join('') || `<div class="px-3 py-4 text-sm text-slate-500 text-center">${App.ui.t('Không tìm thấy')}</div>`;
       root.querySelectorAll('[data-action]').forEach((b,i)=> b.addEventListener('click', ()=>{ matched[i].run(); this.close(); }));
       if(window.lucide) lucide.createIcons();
     },
@@ -4979,7 +4979,7 @@
           localExhaust: App.state.localExhaust, workshopDoors: App.state.workshopDoors,
           results: App.state.results,
           // ── Heat load data ──
-          floors:     App.state.floors || [{id:'fl1',name:'Tầng 1',order:1}],
+          floors:     App.state.floors || [{id:'fl1',name:App.ui.t('Tầng {n}',{n:1}),order:1}],
           hlRooms:    cleanRooms,
           hlMotors:   cleanMotors,
           hlParasitic:cleanPara,
@@ -5024,14 +5024,14 @@
 
     openProjectModal(){
       this.openModal(`
-        <h3 class="font-medium mb-3">Dự án mới</h3>
+        <h3 class="font-medium mb-3">${App.ui.t('Dự án mới')}</h3>
         <div class="space-y-2">
-          <input id="modal-pname" placeholder="Tên dự án" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
-          <input id="modal-cust" placeholder="Khách hàng" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
+          <input id="modal-pname" placeholder="${App.ui.t('Tên dự án')}" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
+          <input id="modal-cust" placeholder="${App.ui.t('Khách hàng')}" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
         </div>
         <div class="flex justify-end gap-2 mt-4">
-          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">Hủy</button>
-          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-emerald-600 rounded-lg">Tạo</button>
+          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">${App.ui.t('Hủy')}</button>
+          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-emerald-600 rounded-lg">${App.ui.t('Tạo')}</button>
         </div>
       `);
       document.getElementById('modal-cancel').addEventListener('click', ()=> this.closeModal());

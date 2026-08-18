@@ -1701,6 +1701,16 @@ MATERIAL_RATES:{
         '✅ 0 lỗi ({n} phòng)':'✅ 0 errors ({n} room(s))',
         'Phòng chưa đặt tên':'Unnamed room', 'Lỗi render form:':'Form render error:',
         'ĐẠT':'PASS', 'U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)':'U = — (insufficient data, see warnings below)',
+
+        // Tab Xuất Báo Cáo — export scope UI + Command palette (Ctrl+K) + New project modal
+        'Phạm vi xuất báo cáo':'Report scope', 'Định dạng':'Format', 'Xuất PDF':'Export PDF',
+        'Xuất Excel':'Export Excel', 'Thông số cần kiểm tra (* Flags)':'Parameters to review (* Flags)',
+        'CẢNH':'WARN',
+        'Tab:':'Tab:', 'Tính toán lại (Recalculate)':'Recalculate',
+        'Dự án mới':'New project', 'Export toàn bộ dữ liệu .json':'Export all data as .json',
+        'Xuất báo cáo PDF':'Export PDF report', 'Xuất báo cáo Excel':'Export Excel report',
+        'Đổi ngôn ngữ VI/EN':'Switch language VI/EN', 'Không tìm thấy':'No results found',
+        'Tạo':'Create',
       }
     }
   };
