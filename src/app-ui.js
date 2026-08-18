@@ -291,17 +291,16 @@
       return hlRooms.length === 0 ? `
         <div class="text-xs text-slate-500 flex items-center gap-2 py-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-          Tính toán Tab "Phụ Tải Nhiệt" trước để import lưu lượng tự động.
-          Hoặc nhập tay Q (m³/h) cho từng nhánh ống trong bảng bên dưới.
+          ${App.ui.t('Tính toán Tab "Phụ Tải Nhiệt" trước để import lưu lượng tự động. Hoặc nhập tay Q (m³/h) cho từng nhánh ống trong bảng bên dưới.')}
         </div>` : `
         <div class="space-y-3">
-          <p class="text-xs text-slate-400">Tìm thấy <span class="text-emerald-400 font-medium">${hlRooms.length} phòng</span> đã tính trong Tab Phụ Tải Nhiệt. Import lưu lượng L_cấp làm đầu vào nhánh ống chính.</p>
+          <p class="text-xs text-slate-400">${App.ui.t('duct_import_found_rooms',{n:hlRooms.length})}</p>
           <div class="overflow-x-auto">
             <table class="zebra w-full text-xs">
               <thead class="text-slate-400"><tr>
-                <th class="text-left px-2 py-1.5">Phòng</th><th class="px-2">Loại TB</th>
-                <th class="px-2">L_cấp (m³/h)</th><th class="px-2">L_tươi</th>
-                <th class="px-2">L_hồi</th><th class="px-2">Q_coil (kW)</th>
+                <th class="text-left px-2 py-1.5">${App.ui.t('Phòng')}</th><th class="px-2">${App.ui.t('Loại TB')}</th>
+                <th class="px-2">L_cấp (m³/h)</th><th class="px-2">${App.ui.t('L_tươi')}</th>
+                <th class="px-2">${App.ui.t('L_hồi')}</th><th class="px-2">Q_coil (kW)</th>
               </tr></thead>
               <tbody>${previewRows}</tbody>
             </table>
@@ -310,22 +309,22 @@
             <!-- Nút thêm nhánh theo từng thiết bị -->
           ${(App.state.hlEquipGroups||[]).length>0?`
           <div style="margin-bottom:10px">
-            <p style="font-size:10px;color:#4a6680;margin-bottom:6px">Thêm nhánh ống nhanh theo thiết bị:</p>
+            <p style="font-size:10px;color:#4a6680;margin-bottom:6px">${App.ui.t('Thêm nhánh ống nhanh theo thiết bị:')}</p>
             <div style="display:flex;flex-wrap:wrap;gap:6px">
               ${(App.state.hlEquipGroups||[]).map(g=>`
                 <button data-quick-branch="${g.id}" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">
-                  + ${g.equipType||'AHU'} ${g.name}: Nhánh ống
+                  + ${g.equipType||'AHU'} ${g.name}: ${App.ui.t('Nhánh ống')}
                 </button>`).join('')}
             </div>
           </div>`:''}
           <button id="btn-import-hl-append" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i>Import thêm vào bảng ống hiện tại
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i>${App.ui.t('Import thêm vào bảng ống hiện tại')}
             </button>
             <button id="btn-import-hl-replace" class="border border-amber-600 text-amber-400 hover:bg-amber-600 hover:text-white rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 transition">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>Thay thế toàn bộ bảng ống
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${App.ui.t('Thay thế toàn bộ bảng ống')}
             </button>
           </div>
-          ${hasCurrent?'<p class="text-[11px] text-slate-500">Bảng ống hiện tại có '+App.state.branches.length+' nhánh.</p>':''}
+          ${hasCurrent?`<p class="text-[11px] text-slate-500">${App.ui.t('duct_current_table_count',{n:App.state.branches.length})}</p>`:''}
         </div>`;
     },
 
@@ -371,7 +370,7 @@
       const idxById={}; rows.forEach((b,i)=>idxById[b.id||('_'+i)]=i);
       // Tùy chọn parent (dùng trong khối "Thông tin chung" thu gọn — gán cha thủ công,
       // trường hợp hiếm gặp khi cần sửa lại cấu trúc cây thay vì dựng mới bằng nút "+").
-      const parentOpts=`<option value="">(Ống gốc / Root)</option>`+
+      const parentOpts=`<option value="">${App.ui.t('(Ống gốc / Root)')}</option>`+
         rows.map(b=>`<option value="${b.id}">${'　'.repeat(depthMap[b.id]||0)}${b.name||b.id}</option>`).join('');
 
       const renderNode = (node, depth) => {
@@ -386,12 +385,12 @@
         return `<div style="${depth>0?'margin-left:16px;border-left:2px solid #1a3050;padding-left:10px;':''}">
           <div class="border rounded-lg p-2.5 space-y-2 ${isCP?'border-amber-500 bg-amber-950/20':'border-slate-700/50'}" data-bidx="${i}">
             <div class="flex items-center gap-2">
-              <input data-brow="name" value="${b.name||'Nhánh '+(i+1)}" placeholder="Tên nhánh"
+              <input data-brow="name" value="${b.name||App.ui.t('Nhánh {n}',{n:i+1})}" placeholder="${App.ui.t('Tên nhánh')}"
                 class="flex-1 bg-base-900 border ${isCP?'border-amber-600':'border-slate-700'} rounded px-2 py-1.5 text-xs font-medium">
-              <button data-badd-child="${i}" title="Thêm nhánh con dưới nhánh này" class="flex-shrink-0 text-emerald-400 hover:text-emerald-300 p-1">
+              <button data-badd-child="${i}" title="${App.ui.t('Thêm nhánh con dưới nhánh này')}" class="flex-shrink-0 text-emerald-400 hover:text-emerald-300 p-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
-              <button data-badv-toggle="${b.id}" title="Thông tin chung (vật liệu/cách nhiệt/lọc...)" class="flex-shrink-0 text-slate-500 hover:text-slate-300 p-1">
+              <button data-badv-toggle="${b.id}" title="${App.ui.t('Thông tin chung (vật liệu/cách nhiệt/lọc...)')}" class="flex-shrink-0 text-slate-500 hover:text-slate-300 p-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               </button>
               <button data-brow-del="${i}" class="flex-shrink-0 text-slate-500 hover:text-red-400 p-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
@@ -399,10 +398,10 @@
             <div class="grid grid-cols-3 gap-2">
               <div><label class="text-[9px] text-slate-500">Q (m³/h)</label><input data-brow="qM3h" type="number" value="${b.qM3h||''}" placeholder="m³/h" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
               <div><label class="text-[9px] text-slate-500">v (m/s)</label><input data-brow="vMs" type="number" step="0.1" value="${b.vMs||''}" placeholder="m/s" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-              <div><label class="text-[9px] text-slate-500">Loại ống</label>
+              <div><label class="text-[9px] text-slate-500">${App.ui.t('Loại ống')}</label>
                 <select data-brow="vType" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                  <option value="mainDuct"   ${b.vType==='mainDuct'  ?'selected':''}>Chính</option>
-                  <option value="branchDuct" ${b.vType==='branchDuct'?'selected':''}>Nhánh</option>
+                  <option value="mainDuct"   ${b.vType==='mainDuct'  ?'selected':''}>${App.ui.t('Chính')}</option>
+                  <option value="branchDuct" ${b.vType==='branchDuct'?'selected':''}>${App.ui.t('Nhánh')}</option>
                 </select>
               </div>
             </div>
@@ -410,72 +409,72 @@
             ${b._resultError?`
             <div class="bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 text-[10px] text-amber-400 flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Chưa tính được — ${b._resultError}
+              ${App.ui.t('Chưa tính được')} — ${b._resultError}
             </div>`:`
             <div class="bg-slate-950/50 rounded-lg p-2 grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[10px]">
-              <div class="text-slate-500">Kích thước <span class="font-mono-data ${b._result?'text-emerald-400':'text-slate-600'}">${b._result?b._result.dimsLabel:'—'}</span></div>
-              <div class="text-slate-500">ΔP ma sát <span class="font-mono-data text-slate-300">${b._result?(b._result.frictionPa.toFixed(0)+' Pa'):'—'}</span></div>
-              <div class="text-slate-500">ΔP cục bộ <span class="font-mono-data text-slate-300">${localPa>0?localPa.toFixed(0)+' Pa':'0 Pa'}</span></div>
-              <div class="text-slate-500">ΔP tích lũy <span class="font-mono-data ${isCP?'text-amber-400 font-bold':'text-slate-300'}">${cumPa>0?cumPa.toFixed(0)+' Pa':'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('Kích thước')} <span class="font-mono-data ${b._result?'text-emerald-400':'text-slate-600'}">${b._result?b._result.dimsLabel:'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('ΔP ma sát')} <span class="font-mono-data text-slate-300">${b._result?(b._result.frictionPa.toFixed(0)+' Pa'):'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('ΔP cục bộ')} <span class="font-mono-data text-slate-300">${localPa>0?localPa.toFixed(0)+' Pa':'0 Pa'}</span></div>
+              <div class="text-slate-500">${App.ui.t('ΔP tích lũy')} <span class="font-mono-data ${isCP?'text-amber-400 font-bold':'text-slate-300'}">${cumPa>0?cumPa.toFixed(0)+' Pa':'—'}</span></div>
               <div class="text-slate-500">NC <span class="font-mono-data ${b._result?.ncFlag?'text-amber-400':'text-slate-300'}">${b._result?b._result.nc:'—'}</span></div>
-              <div class="text-slate-500">Đọng sương <span class="font-mono-data ${b._result?.condensationRisk?'text-red-400':'text-emerald-400'}">${b._result?(b._result.condensationRisk?'⚠ Có':'OK'):'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('Đọng sương')} <span class="font-mono-data ${b._result?.condensationRisk?'text-red-400':'text-emerald-400'}">${b._result?(b._result.condensationRisk?'⚠ '+App.ui.t('Có'):'OK'):'—'}</span></div>
             </div>`}
             <!-- Thông tin chung — thu gọn mặc định -->
             <button data-badv-toggle="${b.id}" class="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform:rotate(${advOpen?90:0}deg);transition:transform .15s"><polyline points="9 18 15 12 9 6"/></svg>
-              Thông tin chung (thiết bị, vật liệu, cách nhiệt, lọc...)
+              ${App.ui.t('Thông tin chung (thiết bị, vật liệu, cách nhiệt, lọc...)')}
             </button>
             <div class="space-y-2" style="${advOpen?'':'display:none'}">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div><label class="text-[9px] text-slate-500">Thiết bị (nhóm)</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Thiết bị (nhóm)')}</label>
                   <select data-brow="equipGroupId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                    <option value="">-- Chung --</option>
+                    <option value="">${App.ui.t('-- Chung --')}</option>
                     ${(App.state.hlEquipGroups||[]).map(g=>`<option value="${g.id}" ${b.equipGroupId===g.id?'selected':''}>${g.equipType||''} ${g.name||g.id}</option>`).join('')}
                   </select>
                 </div>
-                <div><label class="text-[9px] text-slate-500">Nhánh cha (Parent) — chỉ cần khi sửa cấu trúc cây thủ công</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Nhánh cha (Parent) — chỉ cần khi sửa cấu trúc cây thủ công')}</label>
                   <select data-brow="parentId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
                     ${parentOpts.replace(`value="${b.parentId||''}"`,`value="${b.parentId||''}" selected`)}
                   </select>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-2">
-                <div><label class="text-[9px] text-slate-500">Hình dạng</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Hình dạng')}</label>
                   <select data-brow="shape" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                    <option value="rect"  ${b.shape==='rect' ?'selected':''}>□ Chữ nhật</option>
-                    <option value="round" ${b.shape==='round'?'selected':''}>○ Tròn</option>
+                    <option value="rect"  ${b.shape==='rect' ?'selected':''}>□ ${App.ui.t('Chữ nhật')}</option>
+                    <option value="round" ${b.shape==='round'?'selected':''}>○ ${App.ui.t('Tròn')}</option>
                   </select>
                 </div>
-                <div><label class="text-[9px] text-slate-500">Vật liệu ống</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Vật liệu ống')}</label>
                   <select data-brow="materialId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${matOpts.replace(`value="${b.materialId}"`,`value="${b.materialId}" selected`)}</select>
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-2">
                 <div><label class="text-[9px] text-slate-500">L (m)</label><input data-brow="lengthM" type="number" step="1" value="${b.lengthM||10}" placeholder="m" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-                <div><label class="text-[9px] text-slate-500" title="Chọn nhanh preset Σζ phụ kiện điển hình">Preset Σζ</label>
+                <div><label class="text-[9px] text-slate-500" title="${App.ui.t('Chọn nhanh preset Σζ phụ kiện điển hình')}">${App.ui.t('Preset Σζ')}</label>
                   <select data-brow="fittingPreset" class="bg-base-900 border border-violet-800 rounded px-1 py-1.5 text-[10px] w-full">
-                    <option value="">-- Preset --</option>
-                    <option value="0.3" ${b.fittingPreset==='0.3'?'selected':''}>Đơn giản (0.3)</option>
-                    <option value="0.8" ${b.fittingPreset==='0.8'?'selected':''}>Tiêu chuẩn (0.8)</option>
-                    <option value="1.5" ${b.fittingPreset==='1.5'?'selected':''}>Nhiều cút (1.5)</option>
-                    <option value="2.5" ${b.fittingPreset==='2.5'?'selected':''}>Rất phức tạp (2.5)</option>
+                    <option value="">${App.ui.t('-- Preset --')}</option>
+                    <option value="0.3" ${b.fittingPreset==='0.3'?'selected':''}>${App.ui.t('Đơn giản (0.3)')}</option>
+                    <option value="0.8" ${b.fittingPreset==='0.8'?'selected':''}>${App.ui.t('Tiêu chuẩn (0.8)')}</option>
+                    <option value="1.5" ${b.fittingPreset==='1.5'?'selected':''}>${App.ui.t('Nhiều cút (1.5)')}</option>
+                    <option value="2.5" ${b.fittingPreset==='2.5'?'selected':''}>${App.ui.t('Rất phức tạp (2.5)')}</option>
                   </select>
                 </div>
-                <div><label class="text-[9px] text-slate-500" title="1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5">Σζ phụ kiện</label>
+                <div><label class="text-[9px] text-slate-500" title="${App.ui.t('1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5')}">${App.ui.t('Σζ phụ kiện')}</label>
                   <input data-brow="fittingsZeta" type="number" step="0.05" min="0" value="${b.fittingsZeta??0.8}"
                     class="bg-base-900 border border-violet-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right">
                 </div>
               </div>
-              <div><label class="text-[9px] text-slate-500">Cách nhiệt</label>
+              <div><label class="text-[9px] text-slate-500">${App.ui.t('Cách nhiệt')}</label>
                 <select data-brow="insulationId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${insOpts.replace(`value="${b.insulationId}"`,`value="${b.insulationId}" selected`)}</select>
               </div>
               <div class="grid grid-cols-2 gap-2">
-                <div><label class="text-[9px] text-slate-500">Dày cách nhiệt (mm)</label><input data-brow="thicknessMm" type="number" step="5" value="${b.thicknessMm||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
-                <div><label class="text-[9px] text-slate-500">T môi trường (°C)</label><input data-brow="ambientTC" type="number" step="0.5" value="${b.ambientTC||32}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Dày cách nhiệt (mm)')}</label><input data-brow="thicknessMm" type="number" step="5" value="${b.thicknessMm||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('T môi trường (°C)')}</label><input data-brow="ambientTC" type="number" step="0.5" value="${b.ambientTC||32}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
               </div>
-              <div><label class="text-[9px] text-slate-500">Lọc (nếu ống này qua bộ lọc)</label>
+              <div><label class="text-[9px] text-slate-500">${App.ui.t('Lọc (nếu ống này qua bộ lọc)')}</label>
                 <select data-brow="filterStageId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                  <option value="">(Không)</option>
+                  <option value="">${App.ui.t('(Không)')}</option>
                   ${filterOpts.replace(`value="${b.filterStageId}"`,`value="${b.filterStageId}" selected`)}
                 </select>
               </div>
@@ -495,40 +494,40 @@
         clusterByGid[gid].roots.push(rootNode);
       });
       const clusterLabel=gid=>{
-        if(!gid) return 'Chung / chưa gán thiết bị';
+        if(!gid) return App.ui.t('Chung / chưa gán thiết bị');
         const g=(App.state.hlEquipGroups||[]).find(x=>x.id===gid);
-        return g ? `${g.equipType||'AHU'} ${g.name||g.id}` : 'Thiết bị đã bị xoá';
+        return g ? `${g.equipType||'AHU'} ${g.name||g.id}` : App.ui.t('Thiết bị đã bị xoá');
       };
       const clustersHtml=clusters.map(cl=>`
         <div class="mb-3">
           <div class="flex items-center gap-2 mb-1.5 px-0.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400 flex-shrink-0"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
             <span class="text-xs font-medium text-cyan-300">${clusterLabel(cl.gid)}</span>
-            <span class="text-[10px] text-slate-500">${cl.roots.length} nhánh gốc</span>
+            <span class="text-[10px] text-slate-500">${App.ui.t('{n} nhánh gốc',{n:cl.roots.length})}</span>
             <button data-baddroot="${cl.gid}" class="ml-auto text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ nhánh gốc
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('+ nhánh gốc')}
             </button>
           </div>
           <div class="space-y-2">${cl.roots.map(r=>renderNode(r,0)).join('')}</div>
         </div>`).join('');
 
       return `
-        ${clustersHtml||'<p class="text-center text-slate-500 py-4 text-xs">Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.</p>'}
+        ${clustersHtml||`<p class="text-center text-slate-500 py-4 text-xs">${App.ui.t('Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.')}</p>`}
         ${maxCumPa>0?`<div class="mt-2 px-3 py-2 bg-amber-950/30 border border-amber-700/40 rounded-lg text-xs flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-          <span class="text-amber-400 font-medium">Critical path (nhánh màu cam):</span>
-          <span class="font-mono-data text-amber-300">${maxCumPa.toFixed(0)} Pa tích lũy</span>
-          <span class="text-slate-500">— Đây là tổn thất áp thiết kế cho fan (ESP)</span>
+          <span class="text-amber-400 font-medium">${App.ui.t('Critical path (nhánh màu cam):')}</span>
+          <span class="font-mono-data text-amber-300">${App.ui.t('{n} Pa tích lũy',{n:maxCumPa.toFixed(0)})}</span>
+          <span class="text-slate-500">— ${App.ui.t('Đây là tổn thất áp thiết kế cho fan (ESP)')}</span>
         </div>`:''}
         <button id="btn-add-branch" class="mt-2 text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></i>Thêm nhánh ống
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></i>${App.ui.t('Thêm nhánh ống')}
         </button>
         <div class="grid grid-cols-3 md:grid-cols-5 gap-2 mt-3 pt-3 border-t border-slate-800/60 text-[11px] text-slate-500">
-          <div>Ống chính: <span class="text-slate-300">5–9 m/s</span></div>
-          <div>Ống nhánh: <span class="text-slate-300">2.5–5 m/s</span></div>
-          <div>Trước lọc: <span class="text-slate-300">2–3.5 m/s</span></div>
-          <div>Σζ điển hình: <span class="text-slate-300">2 cút=0.6, tê=0.9, van=0.2</span></div>
-          <div>Critical path = ESP thiết kế quạt</div>
+          <div>${App.ui.t('Ống chính:')} <span class="text-slate-300">5–9 m/s</span></div>
+          <div>${App.ui.t('Ống nhánh:')} <span class="text-slate-300">2.5–5 m/s</span></div>
+          <div>${App.ui.t('Trước lọc:')} <span class="text-slate-300">2–3.5 m/s</span></div>
+          <div>${App.ui.t('Σζ điển hình:')} <span class="text-slate-300">2 cút=0.6, tê=0.9, van=0.2</span></div>
+          <div>${App.ui.t('Critical path = ESP thiết kế quạt')}</div>
         </div>`;
     },
 

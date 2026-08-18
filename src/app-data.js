@@ -1148,6 +1148,8 @@ MATERIAL_RATES:{
         confirm_del_group_rooms:'{n} phòng đang gán nhóm này sẽ mất liên kết (không bị xoá, chỉ gỡ nhóm).',
         confirm_del_group_branches:'{n} nhánh ống đang thuộc nhóm này sẽ không còn nằm trong cụm thiết bị nào ở Tab Tính Toán.',
         confirm_del_motor_title:'Xoá motor "{name}"?',
+        duct_import_found_rooms:'Tìm thấy <span class="text-emerald-400 font-medium">{n} phòng</span> đã tính trong Tab Phụ Tải Nhiệt. Import lưu lượng L_cấp làm đầu vào nhánh ống chính.',
+        duct_current_table_count:'Bảng ống hiện tại có {n} nhánh.',
       },
       en: {
         app_title:'MultiHVAC Calculator', app_subtitle:'Cleanroom · Data Center · Electrical Room',
@@ -1277,6 +1279,44 @@ MATERIAL_RATES:{
         'Nhóm thiết bị (AHU / PAU)':'Equipment groups (AHU / PAU)',
         'Tải Ký Sinh (IQF / Mạ băng / Đá vảy / Rotor)':'Parasitic Loads (IQF / Glazing / Ice Flake / Rotor)',
         'Hủy':'Cancel', 'Xác nhận':'Confirm',
+
+        // Tab Tính Toán — Import từ Phụ Tải Nhiệt
+        duct_import_found_rooms:'Found <span class="text-emerald-400 font-medium">{n} room(s)</span> calculated in the Heat Load tab. Import their supply airflow as the main duct branch input.',
+        duct_current_table_count:'The current duct table has {n} branch(es).',
+        'Tính toán Tab "Phụ Tải Nhiệt" trước để import lưu lượng tự động. Hoặc nhập tay Q (m³/h) cho từng nhánh ống trong bảng bên dưới.':'Calculate the Heat Load tab first to import airflow automatically. Or manually enter Q (m³/h) for each duct branch in the table below.',
+        'Phòng':'Room', 'Loại TB':'Equip. type', 'L_tươi':'L_fresh', 'L_hồi':'L_return',
+        'Thêm nhánh ống nhanh theo thiết bị:':'Quick-add a duct branch per equipment:', 'Nhánh ống':'Duct branch',
+        'Import thêm vào bảng ống hiện tại':'Import and append to the current duct table',
+        'Thay thế toàn bộ bảng ống':'Replace the entire duct table',
+
+        // Tab Tính Toán — Bảng nhánh ống (cây nhánh)
+        '(Ống gốc / Root)':'(Root duct)', 'Nhánh {n}':'Branch {n}', 'Tên nhánh':'Branch name',
+        'Thêm nhánh con dưới nhánh này':'Add a child branch under this one',
+        'Thông tin chung (vật liệu/cách nhiệt/lọc...)':'General info (material/insulation/filter...)',
+        'Loại ống':'Duct type', 'Chính':'Main', 'Nhánh':'Branch',
+        'Chưa tính được':'Could not calculate',
+        'Kích thước':'Dimensions', 'ΔP ma sát':'ΔP friction', 'ΔP cục bộ':'ΔP local', 'ΔP tích lũy':'ΔP cumulative',
+        'Đọng sương':'Condensation risk', 'Có':'Yes',
+        'Thông tin chung (thiết bị, vật liệu, cách nhiệt, lọc...)':'General info (equipment, material, insulation, filter...)',
+        'Thiết bị (nhóm)':'Equipment (group)', '-- Chung --':'-- General --',
+        'Nhánh cha (Parent) — chỉ cần khi sửa cấu trúc cây thủ công':'Parent branch — only needed for manual tree structure edits',
+        'Hình dạng':'Shape', 'Chữ nhật':'Rectangular', 'Tròn':'Round', 'Vật liệu ống':'Duct material',
+        'Chọn nhanh preset Σζ phụ kiện điển hình':'Quick-select a typical fitting Σζ preset', 'Preset Σζ':'Σζ preset',
+        'Đơn giản (0.3)':'Simple (0.3)', 'Tiêu chuẩn (0.8)':'Standard (0.8)',
+        'Nhiều cút (1.5)':'Many elbows (1.5)', 'Rất phức tạp (2.5)':'Very complex (2.5)',
+        '1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5':'1x 90° elbow R/D=1.5 ≈ 0.17, branch tee ≈ 0.75, open damper ≈ 0.20, diffuser ≈ 2.5',
+        'Σζ phụ kiện':'Fitting Σζ', 'Cách nhiệt':'Insulation', 'Dày cách nhiệt (mm)':'Insulation thickness (mm)',
+        'T môi trường (°C)':'Ambient T (°C)', 'Lọc (nếu ống này qua bộ lọc)':'Filter (if this duct passes through a filter)',
+        '(Không)':'(None)',
+        'Chung / chưa gán thiết bị':'General / no equipment assigned', 'Thiết bị đã bị xoá':'Equipment deleted',
+        '{n} nhánh gốc':'{n} root branch(es)', '+ nhánh gốc':'+ root branch',
+        'Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.':'No duct branches yet. Add manually or import from the Heat Load tab.',
+        'Critical path (nhánh màu cam):':'Critical path (orange branch):',
+        '{n} Pa tích lũy':'{n} Pa cumulative',
+        'Đây là tổn thất áp thiết kế cho fan (ESP)':'This is the design pressure loss for fan selection (ESP)',
+        'Thêm nhánh ống':'Add duct branch',
+        'Ống chính:':'Main duct:', 'Ống nhánh:':'Branch duct:', 'Trước lọc:':'Before filter:',
+        'Σζ điển hình:':'Typical Σζ:', 'Critical path = ESP thiết kế quạt':'Critical path = fan design ESP',
       }
     }
   };
