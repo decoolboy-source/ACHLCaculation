@@ -911,7 +911,7 @@
       const root = document.getElementById('panel-admin');
       root.innerHTML = `
         ${App.ui.panelShell('exportimport','Export / Import dữ liệu dự án','file-down', `
-          <p style="font-size:11px;color:#4a6680;margin-bottom:8px">Tạo/quản lý dự án trong <b style="color:#34d399">Tab Dự Án</b>. Dùng Export/Import để sao lưu hoặc chuyển dự án hiện tại giữa các máy.</p>
+          <p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('Tạo/quản lý dự án trong')} <b style="color:#34d399">${App.ui.t('tab_project')}</b>. ${App.ui.t('Dùng Export/Import để sao lưu hoặc chuyển dự án hiện tại giữa các máy.')}</p>
           <div class="flex gap-2">
             <button id="btn-export-json" class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i> Export .json</button>
             <label class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
@@ -952,32 +952,32 @@
         </tr>`).join('');
       const addForm=`
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end">
-          <div><label>Loại</label>
+          <div><label>${App.ui.t('Loại')}</label>
             <select id="eq-type" style="width:90px">
               <option>FCU</option><option>AHU</option><option>PAU</option><option>FCU+OA</option>
             </select></div>
-          <div><label>Model</label><input id="eq-model" type="text" placeholder="VD: FWD-T18" style="width:120px"></div>
+          <div><label>Model</label><input id="eq-model" type="text" placeholder="${App.ui.t('VD: FWD-T18')}" style="width:120px"></div>
           <div><label>Q (kW)</label><input id="eq-qkw" type="number" placeholder="5.6" step="0.1" style="width:70px"></div>
-          <div><label>Lưu lượng (m³/h)</label><input id="eq-flow" type="number" placeholder="1000" style="width:90px"></div>
-          <div><label>Nhà sản xuất</label><input id="eq-mfr" type="text" placeholder="Daikin" style="width:90px"></div>
-          <div><label>Ghi chú</label><input id="eq-note" type="text" placeholder="" style="width:100px"></div>
-          <button id="btn-add-equip" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm</button>
+          <div><label>${App.ui.t('Lưu lượng (m³/h)')}</label><input id="eq-flow" type="number" placeholder="1000" style="width:90px"></div>
+          <div><label>${App.ui.t('Nhà sản xuất')}</label><input id="eq-mfr" type="text" placeholder="Daikin" style="width:90px"></div>
+          <div><label>${App.ui.t('Ghi chú')}</label><input id="eq-note" type="text" placeholder="" style="width:100px"></div>
+          <button id="btn-add-equip" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ ${App.ui.t('add')}</button>
         </div>`;
       return addForm+(catalog.length?`
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;min-width:600px">
             <thead><tr style="background:#071325">
-              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">Loại</th>
+              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">${App.ui.t('Loại')}</th>
               <th style="padding:8px;color:#8eaac2;font-size:10px">Model</th>
               <th style="padding:8px;color:#8eaac2;font-size:10px">Q (kW)</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Lưu lượng</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Nhà SX</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Ghi chú</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Lưu lượng')}</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Nhà SX')}</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Ghi chú')}</th>
               <th style="width:30px"></th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
-        </div>`:'<p style="color:#3a5470;font-size:12px;text-align:center;padding:20px">Chưa có thiết bị. Điền form phía trên để thêm.</p>');
+        </div>`:`<p style="color:#3a5470;font-size:12px;text-align:center;padding:20px">${App.ui.t('Chưa có thiết bị. Điền form phía trên để thêm.')}</p>`);
     },
     // ── Danh mục loại phòng & Nhóm áp suất ──────────────────────────────────
     // Bảng tổng hợp toàn bộ BUILDING_TYPES (built-in + EXTRA + tự thêm), nhóm theo
@@ -988,26 +988,26 @@
       const customIds = new Set((App.state.customBuildingTypes||[]).map(b=>b.id));
       const all = App.data.BUILDING_TYPES||[];
       const pgMeta = {
-        positive:{label:'▲ Nhóm áp dương',color:'#34d399'},
-        neutral: {label:'■ Nhóm áp trung hòa',color:'#94a3b8'},
-        negative:{label:'▼ Nhóm áp âm',color:'#fb923c'},
+        positive:{label:'▲ '+App.ui.t('Nhóm áp dương'),color:'#34d399'},
+        neutral: {label:'■ '+App.ui.t('Nhóm áp trung hòa'),color:'#94a3b8'},
+        negative:{label:'▼ '+App.ui.t('Nhóm áp âm'),color:'#fb923c'},
       };
       const rowHtml=(b)=>{
         const isHidden = hidden.includes(b.id);
         const isCustom = customIds.has(b.id);
         return `
         <tr style="border-bottom:1px solid rgba(26,48,80,.4);${isHidden?'opacity:.45':''}">
-          <td style="padding:6px 8px;color:#edf2f8;font-size:11px;font-weight:500">${b.name}${isCustom?' <span style="color:#38bdf8;font-size:9px">· tự thêm</span>':''}${isHidden?' <span style="color:#fb923c;font-size:9px">· đã ẩn</span>':''}</td>
-          <td style="padding:6px 8px;color:#8eaac2;font-size:11px;text-align:right;font-family:monospace">${b.freshAirLsP!=null?b.freshAirLsP:(b.freshAirPerFixture?'—(theo TB)':'—')}</td>
+          <td style="padding:6px 8px;color:#edf2f8;font-size:11px;font-weight:500">${b.name}${isCustom?` <span style="color:#38bdf8;font-size:9px">· ${App.ui.t('tự thêm')}</span>`:''}${isHidden?` <span style="color:#fb923c;font-size:9px">· ${App.ui.t('đã ẩn')}</span>`:''}</td>
+          <td style="padding:6px 8px;color:#8eaac2;font-size:11px;text-align:right;font-family:monospace">${b.freshAirLsP!=null?b.freshAirLsP:(b.freshAirPerFixture?App.ui.t('—(theo TB)'):'—')}</td>
           <td style="padding:6px 8px;color:#8eaac2;font-size:11px;text-align:right;font-family:monospace">${b.deltaPPa!=null?(b.deltaPPa>0?'+':'')+b.deltaPPa:'—'}</td>
-          <td style="padding:6px 8px;font-size:10px;text-align:center">${b.hasLocalExhaust?'<span style="color:#fbbf24">có</span>':'<span style="color:#3a5070">—</span>'}</td>
+          <td style="padding:6px 8px;font-size:10px;text-align:center">${b.hasLocalExhaust?`<span style="color:#fbbf24">${App.ui.t('có')}</span>`:'<span style="color:#3a5070">—</span>'}</td>
           <td style="padding:6px 8px;color:#4a6680;font-size:9px;max-width:180px">${(b.stdRef||'').slice(0,50)}</td>
           <td style="padding:4px;text-align:right;white-space:nowrap">
             ${isCustom
-              ? `<button data-del-roomtype="${b.id}" title="Xóa hẳn (phòng tự thêm)" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
+              ? `<button data-del-roomtype="${b.id}" title="${App.ui.t('Xóa hẳn (phòng tự thêm)')}" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
               : (isHidden
-                ? `<button data-restore-roomtype="${b.id}" title="Khôi phục" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺ Khôi phục</button>`
-                : `<button data-hide-roomtype="${b.id}" title="Ẩn khỏi dropdown chọn" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
+                ? `<button data-restore-roomtype="${b.id}" title="${App.ui.t('Khôi phục')}" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺ ${App.ui.t('Khôi phục')}</button>`
+                : `<button data-hide-roomtype="${b.id}" title="${App.ui.t('Ẩn khỏi dropdown chọn')}" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
             }
           </td>
         </tr>`;
@@ -1017,18 +1017,18 @@
         if(!rooms.length) return '';
         const meta=pgMeta[pg];
         return `
-        <tr><td colspan="6" style="padding:10px 8px 4px;color:${meta.color};font-size:11px;font-weight:700;letter-spacing:.02em">${meta.label} (${rooms.length} phòng)</td></tr>
+        <tr><td colspan="6" style="padding:10px 8px 4px;color:${meta.color};font-size:11px;font-weight:700;letter-spacing:.02em">${meta.label} (${App.ui.t('{n} phòng',{n:rooms.length})})</td></tr>
         ${rooms.map(rowHtml).join('')}`;
       };
       const table = `
         <div class="overflow-x-auto">
           <table style="width:100%;border-collapse:collapse;min-width:600px">
             <thead><tr style="background:#071325">
-              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">Tên phòng</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Gió tươi<br>(L/s/người)</th>
+              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">${App.ui.t('Tên phòng')}</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Gió tươi')}<br>(L/s/${App.ui.t('người')})</th>
               <th style="padding:8px;color:#8eaac2;font-size:10px">ΔP<br>(Pa)</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Gió thải<br>cục bộ</th>
-              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">Nguồn chuẩn</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Gió thải<br>cục bộ')}</th>
+              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">${App.ui.t('Nguồn chuẩn')}</th>
               <th style="width:40px"></th>
             </tr></thead>
             <tbody>${section('positive')}${section('neutral')}${section('negative')}</tbody>
@@ -1036,19 +1036,19 @@
         </div>`;
       const addForm=`
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;padding-bottom:10px;border-bottom:1px solid rgba(26,48,80,.4)">
-          <div><label style="font-size:10px;color:#8eaac2">Tên phòng *</label><br><input id="rt-name" type="text" placeholder="VD: Phòng lưu trữ hồ sơ" style="width:170px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <div><label style="font-size:10px;color:#8eaac2">Nhóm áp suất</label><br>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Tên phòng')} *</label><br><input id="rt-name" type="text" placeholder="${App.ui.t('VD: Phòng lưu trữ hồ sơ')}" style="width:170px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Nhóm áp suất')}</label><br>
             <select id="rt-pgroup" style="width:100px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8">
-              <option value="positive">Dương</option><option value="neutral" selected>Trung hòa</option><option value="negative">Âm</option>
+              <option value="positive">${App.ui.t('Dương')}</option><option value="neutral" selected>${App.ui.t('Trung hòa')}</option><option value="negative">${App.ui.t('Âm')}</option>
             </select></div>
-          <div><label style="font-size:10px;color:#8eaac2">Gió tươi (L/s/người)</label><br><input id="rt-fresh" type="number" step="0.1" placeholder="8.5" style="width:80px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Gió tươi (L/s/người)')}</label><br><input id="rt-fresh" type="number" step="0.1" placeholder="8.5" style="width:80px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
           <div><label style="font-size:10px;color:#8eaac2">ΔP (Pa)</label><br><input id="rt-dp" type="number" step="1" placeholder="0" style="width:70px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <div><label style="font-size:10px;color:#8eaac2">ACH mặc định</label><br><input id="rt-ach" type="number" step="1" placeholder="8" style="width:70px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <div style="display:flex;align-items:center;gap:5px;padding-bottom:7px"><input id="rt-exhaust" type="checkbox" style="width:14px;height:14px"><label for="rt-exhaust" style="font-size:10px;color:#8eaac2">Có gió thải cục bộ</label></div>
-          <div><label style="font-size:10px;color:#8eaac2">Nguồn chuẩn</label><br><input id="rt-stdref" type="text" placeholder="VD: TCVN 5687:2010" style="width:150px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <button id="btn-add-roomtype" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm loại phòng</button>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('ACH mặc định')}</label><br><input id="rt-ach" type="number" step="1" placeholder="8" style="width:70px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <div style="display:flex;align-items:center;gap:5px;padding-bottom:7px"><input id="rt-exhaust" type="checkbox" style="width:14px;height:14px"><label for="rt-exhaust" style="font-size:10px;color:#8eaac2">${App.ui.t('Có gió thải cục bộ')}</label></div>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Nguồn chuẩn')}</label><br><input id="rt-stdref" type="text" placeholder="VD: TCVN 5687:2010" style="width:150px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <button id="btn-add-roomtype" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ ${App.ui.t('Thêm loại phòng')}</button>
         </div>`;
-      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">Nhóm theo dấu ΔP thiết kế. "Ẩn" với phòng có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng đã tạo trước đó vẫn tính đúng.</p>`
+      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('Nhóm theo dấu ΔP thiết kế. "Ẩn" với phòng có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng đã tạo trước đó vẫn tính đúng.')}</p>`
         + addForm + table;
     },
 
@@ -1065,13 +1065,13 @@
         const isHidden=hidden.includes(key), isCustom=customIds.has(key);
         return `
         <tr style="border-bottom:1px solid rgba(26,48,80,.4);${isHidden?'opacity:.45':''}">
-          ${meta.fields.map(f=>`<td style="padding:6px 8px;color:${f.key==='name'?'#edf2f8':'#8eaac2'};font-size:11px;${f.key==='name'?'font-weight:500':'text-align:right;font-family:monospace'}">${item[f.key]??'—'}${f.key==='name'&&isCustom?' <span style="color:#38bdf8;font-size:9px">· tự thêm</span>':''}${f.key==='name'&&isHidden?' <span style="color:#fb923c;font-size:9px">· đã ẩn</span>':''}</td>`).join('')}
+          ${meta.fields.map(f=>`<td style="padding:6px 8px;color:${f.key==='name'?'#edf2f8':'#8eaac2'};font-size:11px;${f.key==='name'?'font-weight:500':'text-align:right;font-family:monospace'}">${item[f.key]??'—'}${f.key==='name'&&isCustom?` <span style="color:#38bdf8;font-size:9px">· ${App.ui.t('tự thêm')}</span>`:''}${f.key==='name'&&isHidden?` <span style="color:#fb923c;font-size:9px">· ${App.ui.t('đã ẩn')}</span>`:''}</td>`).join('')}
           <td style="padding:4px;text-align:right;white-space:nowrap">
             ${isCustom
-              ? `<button data-del-mat="${catKey}:${key}" title="Xóa hẳn (tự thêm)" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
+              ? `<button data-del-mat="${catKey}:${key}" title="${App.ui.t('Xóa hẳn (tự thêm)')}" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
               : (isHidden
-                ? `<button data-restore-mat="${catKey}:${key}" title="Khôi phục" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺</button>`
-                : `<button data-hide-mat="${catKey}:${key}" title="Ẩn khỏi dropdown chọn" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
+                ? `<button data-restore-mat="${catKey}:${key}" title="${App.ui.t('Khôi phục')}" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺</button>`
+                : `<button data-hide-mat="${catKey}:${key}" title="${App.ui.t('Ẩn khỏi dropdown chọn')}" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
             }
           </td>
         </tr>`;
@@ -1080,7 +1080,7 @@
         <div class="overflow-x-auto">
           <table style="width:100%;border-collapse:collapse;min-width:500px">
             <thead><tr style="background:#071325">
-              ${meta.fields.map(f=>`<th style="padding:8px;${f.key==='name'?'text-align:left':''};color:#8eaac2;font-size:10px;${f.width?'width:'+f.width+'px':''}">${f.label}</th>`).join('')}
+              ${meta.fields.map(f=>`<th style="padding:8px;${f.key==='name'?'text-align:left':''};color:#8eaac2;font-size:10px;${f.width?'width:'+f.width+'px':''}">${App.ui.t(f.label)}</th>`).join('')}
               <th style="width:40px"></th>
             </tr></thead>
             <tbody>${arr.map(rowHtml).join('')}</tbody>
@@ -1089,12 +1089,12 @@
       const addForm=`
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;padding-bottom:10px;border-bottom:1px solid rgba(26,48,80,.4)">
           ${meta.fields.map(f=>`
-          <div><label style="font-size:10px;color:#8eaac2">${f.label}${f.key==='name'?' *':''}</label><br>
-            <input id="mat-${catKey}-${f.key}" type="${f.type}" ${f.step?'step="'+f.step+'"':''} placeholder="${f.placeholder||''}" style="width:${f.width||130}px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8">
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t(f.label)}${f.key==='name'?' *':''}</label><br>
+            <input id="mat-${catKey}-${f.key}" type="${f.type}" ${f.step?'step="'+f.step+'"':''} placeholder="${f.placeholder?App.ui.t(f.placeholder):''}" style="width:${f.width||130}px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8">
           </div>`).join('')}
-          <button data-add-mat="${catKey}" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm</button>
+          <button data-add-mat="${catKey}" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ ${App.ui.t('add')}</button>
         </div>`;
-      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">"Ẩn" với vật liệu có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng/hạng mục đã dùng vật liệu này vẫn tính đúng.</p>`
+      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('"Ẩn" với vật liệu có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng/hạng mục đã dùng vật liệu này vẫn tính đúng.')}</p>`
         + addForm + table;
     },
 
@@ -1107,35 +1107,35 @@
           <td class="px-2 py-1"><input data-eref="eta" type="number" step="0.001" value="${r.eta??''}" class="w-20 bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs font-mono-data text-right eref-input" readonly style="opacity:.6;cursor:not-allowed"></td>
         </tr>`).join('');
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-          <span style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);color:#fb923c;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">📝 CÓ THỂ CHỈNH SỬA</span>
+          <span style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);color:#fb923c;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">📝 ${App.ui.t('CÓ THỂ CHỈNH SỬA')}</span>
           <button id="btn-toggle-eref-edit" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;border-radius:5px;padding:3px 10px;font-size:10px;font-weight:600;cursor:pointer">
-            ✏ Mở khóa để sửa
+            ✏ ${App.ui.t('Mở khóa để sửa')}
           </button>
-          <span style="font-size:11px;color:#4a6680">Giá trị tham khảo chung — chỉnh sửa theo datasheet thực tế.</span>
+          <span style="font-size:11px;color:#4a6680">${App.ui.t('Giá trị tham khảo chung — chỉnh sửa theo datasheet thực tế.')}</span>
         </div>
-        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> Giá trị tham khảo chung — chỉnh sửa theo datasheet thiết bị thực tế của dự án.</p>
+        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> ${App.ui.t('Giá trị tham khảo chung — chỉnh sửa theo datasheet thiết bị thực tế của dự án.')}</p>
         <div class="overflow-x-auto"><table class="zebra w-full text-xs">
-          <thead class="text-slate-400"><tr><th class="text-left px-2 py-1.5">Thiết bị</th><th class="text-left px-2 py-1.5">Loại</th><th class="px-2 py-1.5">R (Ω)</th><th class="px-2 py-1.5">η</th></tr></thead>
+          <thead class="text-slate-400"><tr><th class="text-left px-2 py-1.5">${App.ui.t('Thiết bị')}</th><th class="text-left px-2 py-1.5">${App.ui.t('Loại')}</th><th class="px-2 py-1.5">R (Ω)</th><th class="px-2 py-1.5">η</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>`;
     },
     climateTableHtml(){
       const rows = App.data.climateSample.map(c=>`
-        <tr><td class="px-2 py-1">${c.province}${c.borrowedFrom?` <span class="text-amber-400 text-[10px]">(mượn: ${c.borrowedFrom})</span>`:''}</td>
+        <tr><td class="px-2 py-1">${c.province}${c.borrowedFrom?` <span class="text-amber-400 text-[10px]">(${App.ui.t('mượn:')} ${c.borrowedFrom})</span>`:''}</td>
         <td class="px-2 py-1 text-slate-500">${c.station||''}</td>
         <td class="px-2 py-1 text-right font-mono-data">${c.tv}</td><td class="px-2 py-1 text-right font-mono-data">${c.tt}</td>
         <td class="px-2 py-1 text-right font-mono-data">${c.tn}</td><td class="px-2 py-1 text-right font-mono-data">${c.rh}%</td></tr>`).join('');
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-          <span style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#34d399;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">🔒 CHỈ ĐỌC — Tiêu chuẩn QCVN</span>
-          <span style="font-size:11px;color:#4a6680">Dữ liệu chuẩn không chỉnh sửa. Import CSV để cập nhật.</span>
+          <span style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#34d399;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">🔒 ${App.ui.t('CHỈ ĐỌC — Tiêu chuẩn QCVN')}</span>
+          <span style="font-size:11px;color:#4a6680">${App.ui.t('Dữ liệu chuẩn không chỉnh sửa. Import CSV để cập nhật.')}</span>
         </div>
-        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> Nguồn: QCVN 02:2022/BXD, Phụ lục A (63 tỉnh thành). Các tỉnh không có trạm khí tượng riêng trong QCVN (đánh dấu "mượn") dùng số liệu trạm lân cận có khí hậu tương đồng — kiểm tra lại nếu dự án ở các tỉnh này.</p>
+        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> ${App.ui.t('Nguồn: QCVN 02:2022/BXD, Phụ lục A (63 tỉnh thành). Các tỉnh không có trạm khí tượng riêng trong QCVN (đánh dấu "mượn") dùng số liệu trạm lân cận có khí hậu tương đồng — kiểm tra lại nếu dự án ở các tỉnh này.')}</p>
         <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="zebra w-full text-xs">
-          <thead class="text-slate-400 sticky top-0 bg-base-900"><tr><th class="text-left px-2 py-1.5">Tỉnh/TP</th><th class="text-left px-2 py-1.5">Trạm</th><th class="px-2 py-1.5">Tv max (°C)</th><th class="px-2 py-1.5">Tt TB (°C)</th><th class="px-2 py-1.5">Tn min (°C)</th><th class="px-2 py-1.5">RH TB (%)</th></tr></thead>
+          <thead class="text-slate-400 sticky top-0 bg-base-900"><tr><th class="text-left px-2 py-1.5">${App.ui.t('Tỉnh/TP')}</th><th class="text-left px-2 py-1.5">${App.ui.t('Trạm')}</th><th class="px-2 py-1.5">${App.ui.t('Tv max (°C)')}</th><th class="px-2 py-1.5">${App.ui.t('Tt TB (°C)')}</th><th class="px-2 py-1.5">${App.ui.t('Tn min (°C)')}</th><th class="px-2 py-1.5">${App.ui.t('RH TB (%)')}</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
         <label class="mt-2 inline-flex border border-slate-700 rounded-lg px-3 py-1.5 text-xs items-center gap-1.5 cursor-pointer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg> Import / cập nhật khí hậu .csv/.xlsx
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg> ${App.ui.t('Import / cập nhật khí hậu .csv/.xlsx')}
           <input id="input-import-climate" type="file" accept=".csv,.xlsx" class="hidden">
         </label>`;
     },
@@ -1151,10 +1151,10 @@
           manufacturer:root.querySelector('#eq-mfr')?.value||'',
           note:root.querySelector('#eq-note')?.value||''
         };
-        if(!eq.model){ App.ui.toast('warn','Nhập Model thiết bị'); return; }
+        if(!eq.model){ App.ui.toast('warn',App.ui.t('Nhập Model thiết bị')); return; }
         App.state.equipCatalog.push(eq);
         App.admin.autoSave(); this.render();
-        App.ui.toast('ok','Đã thêm '+eq.type+' '+eq.model);
+        App.ui.toast('ok',App.ui.t('Đã thêm {type} {model}',{type:eq.type,model:eq.model}));
       });
       // Xóa thiết bị
       root.querySelectorAll('[data-del-equip]').forEach(btn=>{
@@ -1167,7 +1167,7 @@
       // ── Danh mục loại phòng: thêm / ẩn / khôi phục / xóa ──────────────────
       root.querySelector('#btn-add-roomtype')?.addEventListener('click',()=>{
         const name=(root.querySelector('#rt-name')?.value||'').trim();
-        if(!name){ App.ui.toast('warn','Nhập tên phòng'); return; }
+        if(!name){ App.ui.toast('warn',App.ui.t('Nhập tên phòng')); return; }
         const pressureGroup=root.querySelector('#rt-pgroup')?.value||'neutral';
         const freshAirLsP=parseFloat(root.querySelector('#rt-fresh')?.value)||0;
         const deltaPPa=parseFloat(root.querySelector('#rt-dp')?.value)||0;
@@ -1178,17 +1178,17 @@
         const bt={
           id, name, category:'custom',
           pressureGroup, standardModule:null,
-          hasLocalExhaust, localExhaustNote: hasLocalExhaust?'Do người dùng khai báo — kiểm tra lưu lượng thực tế theo thiết bị':undefined,
+          hasLocalExhaust, localExhaustNote: hasLocalExhaust?App.ui.t('Do người dùng khai báo — kiểm tra lưu lượng thực tế theo thiết bị'):undefined,
           achMin:Math.max(1,Math.round(achDefault*0.6)), achMax:Math.round(achDefault*1.4), achDefault,
-          freshAirLsP, deltaPPa, stdRef: stdRef||'Do người dùng tự khai báo — kiểm tra lại theo tiêu chuẩn áp dụng',
-          systemRec:'', note:'Loại phòng tự thêm trong tab Database.',
+          freshAirLsP, deltaPPa, stdRef: stdRef||App.ui.t('Do người dùng tự khai báo — kiểm tra lại theo tiêu chuẩn áp dụng'),
+          systemRec:'', note:App.ui.t('Loại phòng tự thêm trong tab Database.'),
         };
         App.state.customBuildingTypes = App.state.customBuildingTypes||[];
         App.state.customBuildingTypes.push(bt);
         App.data.BUILDING_TYPES.push(bt);
         App.admin.saveRoomTypesSettings();
         this.render();
-        App.ui.toast('ok','Đã thêm loại phòng "'+name+'"');
+        App.ui.toast('ok',App.ui.t('Đã thêm loại phòng "{name}"',{name}));
       });
       root.querySelectorAll('[data-hide-roomtype]').forEach(btn=>{
         btn.addEventListener('click',()=>{
@@ -1215,7 +1215,7 @@
           if(idx>=0) App.data.BUILDING_TYPES.splice(idx,1);
           App.admin.saveRoomTypesSettings();
           this.render();
-          App.ui.toast('ok','Đã xóa loại phòng tự thêm');
+          App.ui.toast('ok',App.ui.t('Đã xóa loại phòng tự thêm'));
         });
       });
       // ── Danh mục vật liệu (tường/kính/ống gió/cách nhiệt/cửa): thêm/ẩn/khôi phục/xóa ──
@@ -1233,7 +1233,7 @@
             item[f.key]=v;
             if(f.key==='name') nameVal=v;
           });
-          if(!nameVal.trim()){ App.ui.toast('warn','Nhập tên vật liệu'); return; }
+          if(!nameVal.trim()){ App.ui.toast('warn',App.ui.t('Nhập tên vật liệu')); return; }
           item[meta.idField]='custom_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
           App.state.customMaterials=App.state.customMaterials||{};
           App.state.customMaterials[catKey]=App.state.customMaterials[catKey]||[];
@@ -1242,7 +1242,7 @@
           App.data[meta.arrayName].push(item);
           App.admin.saveRoomTypesSettings();
           this.render();
-          App.ui.toast('ok','Đã thêm "'+nameVal+'"');
+          App.ui.toast('ok',App.ui.t('Đã thêm "{name}"',{name:nameVal}));
         });
       });
       root.querySelectorAll('[data-hide-mat]').forEach(btn=>{
@@ -1275,7 +1275,7 @@
           if(idx>=0) arr.splice(idx,1);
           App.admin.saveRoomTypesSettings();
           this.render();
-          App.ui.toast('ok','Đã xóa vật liệu tự thêm');
+          App.ui.toast('ok',App.ui.t('Đã xóa vật liệu tự thêm'));
         });
       });
       const newBtn = root.querySelector('#btn-new-project');
@@ -1295,7 +1295,7 @@
           else{ inp.setAttribute('readonly',''); inp.style.opacity='.6'; inp.style.cursor='not-allowed'; }
         });
         const b=root.querySelector('#btn-toggle-eref-edit');
-        if(b) b.textContent=isLocked?'🔒 Khóa lại':'✏ Mở khóa để sửa';
+        if(b) b.textContent=isLocked?'🔒 '+App.ui.t('Khóa lại'):'✏ '+App.ui.t('Mở khóa để sửa');
       });
       root.querySelectorAll('[data-eref]').forEach(el=>{
         const tr = el.closest('tr'); const idx = parseInt(tr.getAttribute('data-erefidx'));
@@ -1320,13 +1320,13 @@
             </div>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-sm">Hệ đơn vị</span>
+            <span class="text-sm">${App.ui.t('Hệ đơn vị')}</span>
             <div class="flex gap-1.5">
               <button data-unit="SI" class="unit-btn px-3 py-1.5 rounded-lg text-xs border ${App.state.unit==='SI'?'border-emerald-500 text-emerald-400':'border-slate-700'}">SI</button>
-              <button data-unit="IP" class="unit-btn px-3 py-1.5 rounded-lg text-xs border ${App.state.unit==='IP'?'border-emerald-500 text-emerald-400':'border-slate-700'}" disabled title="Phiên bản hiện tại tính theo SI">IP</button>
+              <button data-unit="IP" class="unit-btn px-3 py-1.5 rounded-lg text-xs border ${App.state.unit==='IP'?'border-emerald-500 text-emerald-400':'border-slate-700'}" disabled title="${App.ui.t('Phiên bản hiện tại tính theo SI')}">IP</button>
             </div>
           </div>
-          <p class="text-[11px] text-slate-500">Chuyển đơn vị IP (CFM, in.w.g, °F) sẽ bổ sung ở phiên bản kế tiếp — toàn bộ công thức hiện hành tính theo SI.</p>
+          <p class="text-[11px] text-slate-500">${App.ui.t('Chuyển đơn vị IP (CFM, in.w.g, °F) sẽ bổ sung ở phiên bản kế tiếp — toàn bộ công thức hiện hành tính theo SI.')}</p>
         </div>
       `);
       root.querySelectorAll('.lang-btn').forEach(b=> b.addEventListener('click', ()=>{
@@ -4648,17 +4648,17 @@
       const root = document.getElementById('panel-about');
       root.innerHTML = App.ui.panelShell('about','tab_about','info', `
         <div class="text-sm space-y-3 text-slate-300">
-          <p>MultiHVAC Calculator hỗ trợ tính chọn lưu lượng gió, ống gió và thiết bị AHU/FCU/CRAC cho 3 môi trường: Phòng sạch, Data Center, Phòng điện/Tủ điện.</p>
+          <p>${App.ui.t('MultiHVAC Calculator hỗ trợ tính chọn lưu lượng gió, ống gió và thiết bị AHU/FCU/CRAC cho 3 môi trường: Phòng sạch, Data Center, Phòng điện/Tủ điện.')}</p>
           <div>
-            <div class="text-xs text-slate-400 mb-1">Tiêu chuẩn áp dụng</div>
+            <div class="text-xs text-slate-400 mb-1">${App.ui.t('Tiêu chuẩn áp dụng')}</div>
             <ul class="list-disc list-inside text-xs space-y-0.5 text-slate-400">
-              <li>ISO 14644-1/4 — Phòng sạch</li>
+              <li>ISO 14644-1/4 — ${App.ui.t('Phòng sạch')}</li>
               <li>GMP EU Annex 1 / WHO TRS 961</li>
               <li>ASHRAE Fundamentals Ch.18, Ch.21</li>
               <li>ASHRAE TC9.9 (2021) — Data Center Thermal Guidelines</li>
               <li>SMACNA HVAC Duct Construction Standards</li>
-              <li>TCVN 5687:2010 — Thông gió, điều hoà không khí</li>
-              <li>QCVN 02:2022/BXD — Số liệu khí hậu xây dựng</li>
+              <li>TCVN 5687:2010 — ${App.ui.t('Thông gió, điều hoà không khí')}</li>
+              <li>QCVN 02:2022/BXD — ${App.ui.t('Số liệu khí hậu xây dựng')}</li>
             </ul>
           </div>
           <div class="text-[11px] text-slate-500 pt-2 border-t border-slate-800/70">Created by Quocde · Ver 2606.22.01</div>
