@@ -4447,42 +4447,42 @@
         </div>`;
       root.innerHTML = `
         <div class="space-y-3">
-          ${section('Luồng làm việc — 2 tab chính', `
+          ${section(App.ui.t('Luồng làm việc — 2 tab chính'), `
             <div class="bg-base-900/60 rounded-lg p-3 font-mono-data text-[11px] space-y-2">
-              <div class="text-emerald-400 font-medium">Bước 1 → Tab "Phụ Tải Nhiệt"</div>
-              <div class="text-slate-300 pl-3">Nhập N phòng (AHU/PAU/FCU/VENT) → khai báo tải nhiệt, motor, ký sinh → bấm "Tính tải" → nhận Q_coil (kW, TR) và L_supply (m³/h) từng phòng.</div>
-              <div class="text-cyan-400 font-medium mt-2">Bước 2 → Tab "Thiết Kế Ống Gió"</div>
-              <div class="text-slate-300 pl-3">Bấm "Import từ Tab Phụ Tải Nhiệt" để đưa L_supply vào bảng nhánh ống → chọn vật liệu, cách nhiệt, vận tốc → bấm "Tính ống" → nhận kích thước, ΔP ma sát, ESP quạt.</div>
-              <div class="text-slate-500 text-[10px] mt-2 pl-3">Hai tab dùng chung dữ liệu dự án (IndexedDB), auto-save liên tục.</div>
+              <div class="text-emerald-400 font-medium">${App.ui.t('Bước 1 → Tab "Phụ Tải Nhiệt"')}</div>
+              <div class="text-slate-300 pl-3">${App.ui.t('Nhập N phòng (AHU/PAU/FCU/VENT) → khai báo tải nhiệt, motor, ký sinh → bấm "Tính tải" → nhận Q_coil (kW, TR) và L_supply (m³/h) từng phòng.')}</div>
+              <div class="text-cyan-400 font-medium mt-2">${App.ui.t('Bước 2 → Tab "Thiết Kế Ống Gió"')}</div>
+              <div class="text-slate-300 pl-3">${App.ui.t('Bấm "Import từ Tab Phụ Tải Nhiệt" để đưa L_supply vào bảng nhánh ống → chọn vật liệu, cách nhiệt, vận tốc → bấm "Tính ống" → nhận kích thước, ΔP ma sát, ESP quạt.')}</div>
+              <div class="text-slate-500 text-[10px] mt-2 pl-3">${App.ui.t('Hai tab dùng chung dữ liệu dự án (IndexedDB), auto-save liên tục.')}</div>
             </div>`)}
 
-          ${section('Tab 1 — Thiết Kế Ống Gió (chỉ duct)', `
-            <p><b>Phạm vi:</b> Sizing ống gió (chữ nhật W×H hoặc tròn Ø), vật liệu, cách nhiệt, tổn thất ma sát Darcy-Weisbach, kiểm tra đọng sương, NC tiếng ồn, ESP quạt tổng.</p>
-            <p><b>Lưu lượng đầu vào:</b> Nhập tay Q (m³/h) cho từng nhánh — hoặc bấm "Import từ Tab Phụ Tải Nhiệt" để kéo tự động L_supply từng phòng đã tính.</p>
-            <p><b>Chọn tỉnh/TP:</b> Áp Tv_max và RH_trung_bình vào tất cả nhánh để kiểm tra điểm đọng sương bề mặt ống lạnh.</p>
-            <p><b>KHÔNG có trong tab này:</b> tính tải nhiệt phòng, chọn AHU/FCU, motor, tải ký sinh (những thứ đó ở Tab Phụ Tải Nhiệt).</p>`)}
+          ${section(App.ui.t('Tab 1 — Thiết Kế Ống Gió (chỉ duct)'), `
+            <p><b>${App.ui.t('Phạm vi:')}</b> ${App.ui.t('Sizing ống gió (chữ nhật W×H hoặc tròn Ø), vật liệu, cách nhiệt, tổn thất ma sát Darcy-Weisbach, kiểm tra đọng sương, NC tiếng ồn, ESP quạt tổng.')}</p>
+            <p><b>${App.ui.t('Lưu lượng đầu vào:')}</b> ${App.ui.t('Nhập tay Q (m³/h) cho từng nhánh — hoặc bấm "Import từ Tab Phụ Tải Nhiệt" để kéo tự động L_supply từng phòng đã tính.')}</p>
+            <p><b>${App.ui.t('Chọn tỉnh/TP:')}</b> ${App.ui.t('Áp Tv_max và RH_trung_bình vào tất cả nhánh để kiểm tra điểm đọng sương bề mặt ống lạnh.')}</p>
+            <p><b>${App.ui.t('KHÔNG có trong tab này:')}</b> ${App.ui.t('tính tải nhiệt phòng, chọn AHU/FCU, motor, tải ký sinh (những thứ đó ở Tab Phụ Tải Nhiệt).')}</p>`)}
 
-          ${section('Tab 2 — Phụ Tải Nhiệt (multi-room)', `
-            <p><b>Điều kiện khí hậu:</b> T_ngoài, RH, cao độ → tự tính enthalpy h, dung ẩm d, điểm sương Td, P_atm hiệu chỉnh (hiển thị live).</p>
-            <p><b>Danh sách phòng:</b> Thêm N phòng, mỗi phòng chọn loại: AHU (mixing point), PAU (100% tươi), FCU (tải tươi cộng thẳng vào Q_phòng), VENT (Q_coil=0). Click vào phòng để mở form chi tiết. Nút "copy" để nhân đôi phòng.</p>
-            <p><b>Motor IE3:</b> 3 phương pháp A (FL×FU) / B (đơn giản) / C (TCVN K1×K2×K3), 3 vị trí TH1/TH2/TH3. η nội suy tuyến tính giữa các mức IEC 60034-30-1.</p>
-            <p><b>Tải ký sinh:</b> IQF/Kho lạnh (vách+khe cửa), Mạ băng, Đá vảy, Rotor tách ẩm. Tải lạnh mang dấu âm, Peak Design không trừ vào Q_coil.</p>
-            <p><b>Kết quả:</b> 9 KPI (kW, TR, W/m², %tươi, SHR...) + bảng per-room đầy đủ + validation 6 hạng mục + badge nổi góc màn hình.</p>`)}
+          ${section(App.ui.t('Tab 2 — Phụ Tải Nhiệt (multi-room)'), `
+            <p><b>${App.ui.t('Điều kiện khí hậu:')}</b> ${App.ui.t('T_ngoài, RH, cao độ → tự tính enthalpy h, dung ẩm d, điểm sương Td, P_atm hiệu chỉnh (hiển thị live).')}</p>
+            <p><b>${App.ui.t('Danh sách phòng:')}</b> ${App.ui.t('Thêm N phòng, mỗi phòng chọn loại: AHU (mixing point), PAU (100% tươi), FCU (tải tươi cộng thẳng vào Q_phòng), VENT (Q_coil=0). Click vào phòng để mở form chi tiết. Nút "copy" để nhân đôi phòng.')}</p>
+            <p><b>${App.ui.t('Motor IE3:')}</b> ${App.ui.t('3 phương pháp A (FL×FU) / B (đơn giản) / C (TCVN K1×K2×K3), 3 vị trí TH1/TH2/TH3. η nội suy tuyến tính giữa các mức IEC 60034-30-1.')}</p>
+            <p><b>${App.ui.t('Tải ký sinh:')}</b> ${App.ui.t('IQF/Kho lạnh (vách+khe cửa), Mạ băng, Đá vảy, Rotor tách ẩm. Tải lạnh mang dấu âm, Peak Design không trừ vào Q_coil.')}</p>
+            <p><b>${App.ui.t('Kết quả:')}</b> ${App.ui.t('9 KPI (kW, TR, W/m², %tươi, SHR...) + bảng per-room đầy đủ + validation 6 hạng mục + badge nổi góc màn hình.')}</p>`)}
 
-          ${section('Xuất báo cáo', `
-            <p>Tab <b>Xuất Báo Cáo</b>: PDF đa trang (kèm mộc PASS, bảng per-room) + Excel 5 sheet (Tổng quan · Chi tiết phòng · Motor · Ký sinh · Ống gió). Tên file kèm ngày tháng tự động.</p>`)}
+          ${section(App.ui.t('Xuất báo cáo'), `
+            <p>${App.ui.t('Tab')} <b>${App.ui.t('tab_report')}</b>: ${App.ui.t('PDF đa trang (kèm mộc PASS, bảng per-room) + Excel 5 sheet (Tổng quan · Chi tiết phòng · Motor · Ký sinh · Ống gió). Tên file kèm ngày tháng tự động.')}</p>`)}
 
-          ${section('Quản lý dữ liệu & sao lưu', `
-            <p>Tab <b>Quản Lý Dự Án</b>: tạo/nạp/xoá dự án (IndexedDB, không đồng bộ qua internet). Cột "Phòng" cho biết số phòng nhiệt tải đã khai báo. Export .json để sao lưu toàn bộ (bao gồm cả ống gió + phụ tải), Import .json để khôi phục.</p>`)}
+          ${section(App.ui.t('Quản lý dữ liệu & sao lưu'), `
+            <p>${App.ui.t('Tab')} <b>${App.ui.t('Quản Lý Dự Án')}</b>: ${App.ui.t('tạo/nạp/xoá dự án (IndexedDB, không đồng bộ qua internet). Cột "Phòng" cho biết số phòng nhiệt tải đã khai báo. Export .json để sao lưu toàn bộ (bao gồm cả ống gió + phụ tải), Import .json để khôi phục.')}</p>`)}
 
-          ${section('Phím tắt', `
-            <p><kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+K</kbd> tìm nhanh ·
-            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+Enter</kbd> tính toán ·
-            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+S</kbd> lưu ngay ·
-            phím số <kbd class="font-mono-data bg-slate-800 px-1 rounded">1–8</kbd> chuyển tab.</p>`)}
+          ${section(App.ui.t('Phím tắt'), `
+            <p><kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+K</kbd> ${App.ui.t('tìm nhanh')} ·
+            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+Enter</kbd> ${App.ui.t('tính toán')} ·
+            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+S</kbd> ${App.ui.t('lưu ngay')} ·
+            ${App.ui.t('phím số')} <kbd class="font-mono-data bg-slate-800 px-1 rounded">1–8</kbd> ${App.ui.t('chuyển tab.')}</p>`)}
 
-          ${section('Giới hạn & lưu ý', `
-            <p>Dữ liệu khí hậu từ QCVN 02:2022/BXD; 7 tỉnh không có trạm riêng dùng số liệu lân cận (đánh dấu trong tab Quản Lý). Hệ số tổn thất cục bộ phụ kiện là giá trị sơ bộ (SMACNA), cần hiệu chỉnh theo bản vẽ thực tế. Giá trị R/η motor là tham khảo — cập nhật theo datasheet thực tế trong tab Quản Lý &amp; Admin.</p>`)}
+          ${section(App.ui.t('Giới hạn & lưu ý'), `
+            <p>${App.ui.t('Dữ liệu khí hậu từ QCVN 02:2022/BXD; 7 tỉnh không có trạm riêng dùng số liệu lân cận (đánh dấu trong tab Quản Lý). Hệ số tổn thất cục bộ phụ kiện là giá trị sơ bộ (SMACNA), cần hiệu chỉnh theo bản vẽ thực tế. Giá trị R/η motor là tham khảo — cập nhật theo datasheet thực tế trong tab Quản Lý &amp; Admin.')}</p>`)}
         </div>`;
       if(window.lucide) lucide.createIcons();
     }
