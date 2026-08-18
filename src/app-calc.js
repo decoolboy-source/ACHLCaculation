@@ -321,12 +321,12 @@
         const vMid = uniVelocityMs ?? ((std.velMin+std.velMax)/2);
         Q_supply = (faceAreaM2||0) * vMid * 3600;
         ACH_actual = volumeM3>0 ? Q_supply/volumeM3 : null;
-        modeNote = `Đơn hướng v=${vMid.toFixed(2)} m/s`;
+        modeNote = App.ui.t('Đơn hướng v={v} m/s',{v:vMid.toFixed(2)});
       } else {
         const ach = achApplied ?? std?.achDefault ?? ((std?.achMin+std?.achMax)/2 ?? 20);
         ACH_actual = ach;
         Q_supply = volumeM3 * ach;
-        modeNote = `Rối (${ach} ACH)`;
+        modeNote = App.ui.t('Rối ({ach} ACH)',{ach});
       }
 
       // ── 2. Lưu lượng gió tươi tối thiểu từ người ─────────────────────────
@@ -885,7 +885,7 @@
         return { Q_supply:r.Q_total_m3h, Q_fresh:r.Q_total_m3h,
           Q_recirculation:0, Q_return:0, Q_pressurization:0,
           Q_people_min:0, ACH_actual:(r.Q_total_m3h/Math.max(vol,1)),
-          freshPct:100, modeNote:'Exhaust-only (ASHRAE 62.1 §6.2.7)',
+          freshPct:100, modeNote:App.ui.t('Exhaust-only (ASHRAE 62.1 §6.2.7)'),
           stdRef:r.source, warnings:[], _specialResult:r };
       }
 
@@ -1027,7 +1027,7 @@
         ACH_fresh_actual: vol>0 ? Q_fresh/vol : 0, ACH_fresh_required: bt?.achFreshMin||null,
         Q_localExhaust, Q_makeupRaw, localExhaustTreated: room.hasLocalExhaustEquip?(room.localExhaustTreated||'ahu'):null,
         freshPct:Q_supFinal>0?(Q_fresh/Q_supFinal)*100:0,
-        modeNote:`${bt?.name||'General'} — ${ach} ACH (ASHRAE 62.1-2022)`,
+        modeNote:`${bt?.name||App.ui.t('Chung')} — ${ach} ACH (ASHRAE 62.1-2022)`,
         stdRef:bt?.stdRef||'ASHRAE 62.1-2022', warnings };
     },
 

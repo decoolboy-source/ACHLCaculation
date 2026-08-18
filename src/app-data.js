@@ -1744,6 +1744,10 @@ MATERIAL_RATES:{
         'Có nguy cơ':'At risk',
         'Tính ống gió':'Calculate ductwork', 'Ctrl+Enter để tính nhanh':'Ctrl+Enter for a quick calculate',
         'Chung':'General', 'Nhánh gốc {n}':'Root branch {n}', 'Thiết bị mới':'New device',
+
+        // app-calc.js — modeNote (shown in room airflow badge, report design-basis, Excel equipment schedule)
+        'Đơn hướng v={v} m/s':'Unidirectional v={v} m/s', 'Rối ({ach} ACH)':'Turbulent ({ach} ACH)',
+        'Exhaust-only (ASHRAE 62.1 §6.2.7)':'Exhaust-only (ASHRAE 62.1 §6.2.7)',
       }
     }
   };
