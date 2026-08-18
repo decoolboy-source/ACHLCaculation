@@ -1742,6 +1742,8 @@ MATERIAL_RATES:{
         'Q tỏa(kW)':'Heat gain(kW)', 'Tên':'Name', 'Phòng gán':'Assigned room', 'Q tỏa/hút(kW)':'Q gain/removal(kW)',
         'Hút lạnh (âm)':'Cooling removal (negative)', 'Tỏa nhiệt (dương)':'Heat gain (positive)',
         'Có nguy cơ':'At risk',
+        'Tính ống gió':'Calculate ductwork', 'Ctrl+Enter để tính nhanh':'Ctrl+Enter for a quick calculate',
+        'Chung':'General', 'Nhánh gốc {n}':'Root branch {n}', 'Thiết bị mới':'New device',
       }
     }
   };

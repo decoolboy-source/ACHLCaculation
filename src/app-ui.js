@@ -261,9 +261,9 @@
           <div class="bg-panel-800/60 border border-slate-800 rounded-xl p-4">
             <button id="btn-duct-calc" style="width:100%;background:#059669;color:#ffffff;border:none;border-radius:10px;padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;-webkit-appearance:none">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span style="color:#ffffff;font-size:14px;font-weight:700">Tính ống gió</span>
+              <span style="color:#ffffff;font-size:14px;font-weight:700">${App.ui.t('Tính ống gió')}</span>
             </button>
-            <p style="font-size:11px;color:#4a6680;margin-top:6px;text-align:center">Ctrl+Enter để tính nhanh</p>
+            <p style="font-size:11px;color:#4a6680;margin-top:6px;text-align:center">${App.ui.t('Ctrl+Enter để tính nhanh')}</p>
           </div>
           <div id="duct-results" style="scroll-margin-top:80px"></div>
           <div id="duct-diag"></div>
@@ -603,7 +603,7 @@
         branches.push({
           id: newId,
           parentId: isFirst ? null : (mainBranch?.id||null),
-          name:'Nhánh '+(branches.length+1),
+          name:App.ui.t('Nhánh {n}',{n:branches.length+1}),
           vType: isFirst?'mainDuct':'branchDuct',
           equipGroupId: lastBranch?.equipGroupId || '',
           // FIX: trước đây không set vMs mặc định — recalc() bỏ qua hoàn toàn nhánh nào thiếu
@@ -650,7 +650,7 @@
         branches.push({
           id:'b'+(Date.now()%1e6).toString(36)+Math.trunc(Math.random()*99),
           parentId: parent.id, equipGroupId: parent.equipGroupId||'',
-          name:'Nhánh '+(branches.length+1),
+          name:App.ui.t('Nhánh {n}',{n:branches.length+1}),
           vType:'branchDuct', vMs:3.75,
           shape:'rect', materialId: parent.materialId||'galv',
           insulationId: parent.insulationId||'glasswool', lengthM:10,
@@ -672,7 +672,7 @@
         branches.push({
           id:'b'+(Date.now()%1e6).toString(36)+Math.trunc(Math.random()*99),
           parentId:'', equipGroupId:gid,
-          name:(g?((g.equipType||'AHU')+' '+g.name):'Chung')+' - Nhánh gốc '+(rootsInCluster+1),
+          name:(g?((g.equipType||'AHU')+' '+g.name):App.ui.t('Chung'))+' - '+App.ui.t('Nhánh gốc {n}',{n:rootsInCluster+1}),
           vType:'mainDuct', vMs:7,
           shape:'rect', materialId:'galv', insulationId:'glasswool', lengthM:10,
           ambientTC:32, ambientRH:80, thicknessMm:25, fittingsZeta:0.8
@@ -3144,7 +3144,7 @@
         btn.addEventListener('click', e=>{ e.stopPropagation();
           if(!r.elecDeviceRows) r.elecDeviceRows=[];
           r.elecDeviceRows.push({
-            name:'Thiết bị mới', typeId:'vfd_low',
+            name:App.ui.t('Thiết bị mới'), typeId:'vfd_low',
             ratedKW:15, qty:1, loadFactor:0.8, heatFactor:0.04
           });
           r._calcStale=true; hl.save(); hl._reRenderDrawer();
@@ -3171,13 +3171,13 @@
             if(preset){
               dev.typeId=el.value;
               dev.heatFactor=preset.heatFactor;
-              dev.name=dev.name==='Thiết bị mới'?preset.name:dev.name;
+              dev.name=dev.name===App.ui.t('Thiết bị mới')?preset.name:dev.name;
               if(!dev.ratedKW||dev.ratedKW===15) dev.ratedKW=preset.ratedKWDefault||dev.ratedKW;
               // Cập nhật DOM
               const row=body.querySelector('[data-edi="'+di+'"]')||el.closest('tr');
               const nameEl=row?.querySelector('[data-elec="name"]');
               const kWEl=row?.querySelector('[data-elec="ratedKW"]');
-              if(nameEl&&dev.name==='Thiết bị mới') nameEl.value=preset.name;
+              if(nameEl&&dev.name===App.ui.t('Thiết bị mới')) nameEl.value=preset.name;
               if(kWEl&&preset.ratedKWDefault) kWEl.value=preset.ratedKWDefault;
             }
           } else {
