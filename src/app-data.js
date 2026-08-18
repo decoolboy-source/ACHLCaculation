@@ -1699,6 +1699,8 @@ MATERIAL_RATES:{
         'Đây là gợi ý tham chiếu. Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn thiết bị.':'This is a reference suggestion. The engineer must confirm with the actual manufacturer catalog before finalizing equipment selection.',
         'Hiệu suất sử dụng xanh &lt;70% (oversized), vàng 70-90% (tối ưu), đỏ &gt;90% (cần kiểm tra). Design margin: +10%. Catalog tham chiếu thị trường VN 2024.':'Green utilization &lt;70% (oversized), yellow 70-90% (optimal), red &gt;90% (needs review). Design margin: +10%. Catalog references the VN 2024 market.',
         '✅ 0 lỗi ({n} phòng)':'✅ 0 errors ({n} room(s))',
+        'Phòng chưa đặt tên':'Unnamed room', 'Lỗi render form:':'Form render error:',
+        'ĐẠT':'PASS', 'U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)':'U = — (insufficient data, see warnings below)',
       }
     }
   };

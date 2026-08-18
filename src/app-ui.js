@@ -2455,7 +2455,7 @@
     // không tham gia tính toán trực tiếp, chỉ là tiện ích nhập liệu.
     _motorTemplatesHtml(){
       const templates = this.MT();
-      const roomOpts = `<option value="">-- Chọn phòng --</option>`+
+      const roomOpts = `<option value="">-- ${App.ui.t('Chọn phòng')} --</option>`+
         this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const rows = templates.map((t,i)=>`
         <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-mti="${i}">
@@ -2496,7 +2496,7 @@
 
     _motorsHtml(){
       const rows = this.M();
-      const roomOpts = `<option value="">⚠ Chưa gán phòng</option>`+
+      const roomOpts = `<option value="">⚠ ${App.ui.t('Chưa gán phòng')}</option>`+
         this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const tbody = rows.map((m,i)=>{
         const {eta,flag}=App.calc.calcMotorEta(m.pKw||5.5);
@@ -2600,7 +2600,7 @@
     // (loại + toàn bộ thông số kỹ thuật), gán nhanh vào nhiều phòng khác nhau.
     _paraTemplatesHtml(){
       const templates = this.PT();
-      const roomOpts = `<option value="">-- Chọn phòng --</option>`+
+      const roomOpts = `<option value="">-- ${App.ui.t('Chọn phòng')} --</option>`+
         this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const rows = templates.map((t,i)=>`
         <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-pti="${i}">
@@ -2683,7 +2683,7 @@
       });
       // ── Mẫu tải ký sinh (catalog) ──
       root.querySelector('#hl-add-para-template')?.addEventListener('click',()=>{
-        this.PT().push({id:this.uid(),type:'IQF',name:'Mẫu tải ký sinh '+(this.PT().length+1),
+        this.PT().push({id:this.uid(),type:'IQF',name:App.ui.t('Mẫu tải ký sinh {n}',{n:this.PT().length+1}),
           tChamber:-35,L:5,W:3,H:2.5,uPanel:0.22,doorCode:'D1200x2200-STD'});
         this.save(); this.render();
       });
@@ -2738,7 +2738,7 @@
 
       // Header: tên phòng + subtitle (tầng · loại phòng)
       const fl=this.FL().find(f=>f.id===r.floorId)||(this.FL()[0]);
-      if(title) title.textContent=r.name||'Phòng chưa đặt tên';
+      if(title) title.textContent=r.name||App.ui.t('Phòng chưa đặt tên');
       if(sub)   sub.textContent=(fl?.name||'')+(r.buildingType
         ?' · '+((App.data.BUILDING_TYPES||[]).find(b=>b.id===r.buildingType)?.name||''):'');
 
@@ -2766,7 +2766,7 @@
           } else { body.innerHTML=rawHtml; }
         }
       }catch(e){
-        body.innerHTML='<p style="padding:16px;color:#f87171">Lỗi render form: '+e.message+'</p>';
+        body.innerHTML='<p style="padding:16px;color:#f87171">'+App.ui.t('Lỗi render form:')+' '+e.message+'</p>';
         console.warn('[Drawer render]',e);
       }
       App.state.hlRooms=saved;
@@ -2958,7 +2958,7 @@
       document.getElementById('rd-kpi-ach').textContent=(r._airflow?.ACH_actual?.toFixed(0)||'—')+' ACH';
       const statusEl=document.getElementById('rd-kpi-status');
       statusEl.style.cssText=sc[status]||sc.ok;
-      statusEl.textContent=status==='red'?'❌ LỖI':status==='yellow'?'⚠ CẢNH BÁO':'✓ ĐẠT';
+      statusEl.textContent=status==='red'?'❌ '+App.ui.t('LỖI'):status==='yellow'?'⚠ '+App.ui.t('CẢNH BÁO'):'✓ '+App.ui.t('ĐẠT');
       this._updateStaleBanner(r);
     },
     // Hiện/ẩn cảnh báo "số liệu cũ, chưa tính lại" — gọi mỗi khi mở drawer, mỗi khi
@@ -3032,7 +3032,7 @@
           const res=App.calc.calcULayered({layers:r.wallLayers, includeFilms:true});
           const el=body.querySelector('#ucalc-result-0');
           if(el&&res.U) el.textContent='U = '+res.U.toFixed(4)+' W/m²K  |  R = '+res.Rtotal.toFixed(4)+' m²K/W';
-          if(el&&!res.U) el.textContent='U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)';
+          if(el&&!res.U) el.textContent=App.ui.t('U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)');
           // FIX (Bước 3): hiện warnings tính sẵn trong calcULayered() — trước đây bị bỏ phí
           const warnEl=body.querySelector('#ucalc-warnings-0');
           if(warnEl){
@@ -3407,7 +3407,7 @@
           // name: cập nhật drawer header title ngay
           if(f==='name'){
             const titleEl=document.getElementById('room-drawer-title');
-            if(titleEl) titleEl.textContent=val||'Phòng chưa đặt tên';
+            if(titleEl) titleEl.textContent=val||App.ui.t('Phòng chưa đặt tên');
           }
         });
       });
@@ -3624,7 +3624,7 @@
           e.stopPropagation();
           const i=parseInt(b.getAttribute('data-ri-dup'));
           const copy=JSON.parse(JSON.stringify(this.R()[i]));
-          copy.id=this.uid(); copy.name=(copy.name||'Phòng')+' (copy)';
+          copy.id=this.uid(); copy.name=(copy.name||App.ui.t('Phòng'))+' (copy)';
           delete copy._af; delete copy._ev; delete copy._coil; delete copy._airflow;
           this.R().splice(i+1,0,copy); this.save(); this.render();
         });
@@ -3803,7 +3803,7 @@
           gEl.textContent=`S=${r.aGlass}m² · SHGC=${r.shgc||0.6}`;
           gEl.style.color='#fbbf24'; gEl.style.fontFamily='monospace';
         } else {
-          gEl.textContent='(nhấp để mở)';
+          gEl.textContent='('+App.ui.t('nhấp để mở')+')';
           gEl.style.color='#3a5470'; gEl.style.fontFamily='';
         }
       }
@@ -3879,7 +3879,7 @@
             el.textContent=`U = ${result.U.toFixed(4)} W/m²K  |  R_total = ${result.Rtotal.toFixed(4)} m²K/W`;
           }
           if(el && !result.U){
-            el.textContent='U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)';
+            el.textContent=App.ui.t('U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)');
           }
           // FIX (Bước 3): hiện warnings tính sẵn trong calcULayered() — trước đây bị bỏ phí
           const warnEl=root.querySelector(`#ucalc-warnings-${ri}`);
@@ -3982,7 +3982,7 @@
       }));
       // ── Mẫu Motor (catalog) ──
       root.querySelector('#hl-add-motor-template')?.addEventListener('click',()=>{
-        this.MT().push({id:this.uid(),name:'Mẫu motor '+(this.MT().length+1),pKw:5.5,qty:1,
+        this.MT().push({id:this.uid(),name:App.ui.t('Mẫu motor {n}',{n:this.MT().length+1}),pKw:5.5,qty:1,
           method:'A',position:'TH1',hasVFD:false});
         this.save(); this.render();
       });
