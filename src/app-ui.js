@@ -603,10 +603,25 @@
         App.admin.autoSave(); this.render();
       });
 
-      // Delete branch
+      // Delete branch — xác nhận trước khi xoá: xoá 1 nhánh có nhánh con bên dưới sẽ khiến
+      // các nhánh con đó tự động "thăng cấp" thành nhánh gốc mới (xử lý êm, không lỗi — xem
+      // _buildBranchTree), nhưng người dùng cần biết trước việc đó sắp xảy ra thay vì bất ngờ
+      // thấy cấu trúc cây đổi khác sau khi bấm nhầm.
       root.querySelectorAll('[data-brow-del]').forEach(b=>b.addEventListener('click',()=>{
-        App.state.branches.splice(parseInt(b.getAttribute('data-brow-del')),1);
-        App.admin.autoSave(); this.render();
+        const idx=parseInt(b.getAttribute('data-brow-del'));
+        const branch=App.state.branches[idx]; if(!branch) return;
+        const childCount=App.state.branches.filter(x=>x.parentId===branch.id).length;
+        App.ui.showConfirm(
+          'Xoá nhánh "'+(branch.name||'này')+'"?',
+          childCount>0
+            ? `Không thể hoàn tác. Nhánh này đang có ${childCount} nhánh con — các nhánh con sẽ trở thành nhánh gốc mới, không bị xoá theo.`
+            : 'Không thể hoàn tác.',
+          'Xoá nhánh',
+          ()=>{
+            App.state.branches.splice(idx,1);
+            App.admin.autoSave(); this.render();
+          }
+        );
       }));
 
       // Thêm nhánh CON ngay dưới 1 nhánh cụ thể (nút "+" trên từng thẻ trong cây) — tự động
@@ -2637,7 +2652,11 @@
         this.save(); this.render();
       });
       root.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>{
-        this.P().splice(parseInt(b.getAttribute('data-pdel')),1); this.save(); this.render();
+        const i=parseInt(b.getAttribute('data-pdel'));
+        const p=this.P()[i]; if(!p) return;
+        App.ui.showConfirm('Xoá tải ký sinh "'+(p.name||'này')+'"?','Không thể hoàn tác.','Xoá tải ký sinh',()=>{
+          this.P().splice(i,1); this.save(); this.render();
+        });
       }));
       root.querySelectorAll('[data-pi]').forEach(row=>{
         const i=parseInt(row.getAttribute('data-pi'));
@@ -3519,10 +3538,19 @@
       });
       root.querySelectorAll('[data-gdel]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-gdel'));
-        const gid = this.G()[i]?.id;
-        this.G().splice(i,1);
-        this.R().forEach(r=>{ if(r.groupId===gid) r.groupId=null; });
-        this.save(); this.render();
+        const g=this.G()[i]; if(!g) return;
+        const roomsInGroup=this.R().filter(r=>r.groupId===g.id).length;
+        const branchesInGroup=(App.state.branches||[]).filter(x=>x.equipGroupId===g.id).length;
+        App.ui.showConfirm(
+          'Xoá nhóm thiết bị "'+(g.name||g.id)+'"?',
+          `Không thể hoàn tác.${roomsInGroup>0?` ${roomsInGroup} phòng đang gán nhóm này sẽ mất liên kết (không bị xoá, chỉ gỡ nhóm).`:''}${branchesInGroup>0?` ${branchesInGroup} nhánh ống đang thuộc nhóm này sẽ không còn nằm trong cụm thiết bị nào ở Tab Tính Toán.`:''}`,
+          'Xoá nhóm',
+          ()=>{
+            this.G().splice(i,1);
+            this.R().forEach(r=>{ if(r.groupId===g.id) r.groupId=null; });
+            this.save(); this.render();
+          }
+        );
       }));
       root.querySelectorAll('[data-gi]').forEach(row=>{
         const i=parseInt(row.getAttribute('data-gi'));
@@ -3929,7 +3957,11 @@
         this.save(); this.render();
       });
       root.querySelectorAll('[data-mdel]').forEach(b=>b.addEventListener('click',()=>{
-        this.M().splice(parseInt(b.getAttribute('data-mdel')),1); this.save(); this.render();
+        const i=parseInt(b.getAttribute('data-mdel'));
+        const m=this.M()[i]; if(!m) return;
+        App.ui.showConfirm('Xoá motor "'+(m.name||'này')+'"?','Không thể hoàn tác. Nhiệt tỏa của motor này sẽ không còn được tính vào phòng nào.','Xoá motor',()=>{
+          this.M().splice(i,1); this.save(); this.render();
+        });
       }));
       // ── Mẫu Motor (catalog) ──
       root.querySelector('#hl-add-motor-template')?.addEventListener('click',()=>{
@@ -4812,7 +4844,16 @@
             ).join('')}
           </div>`:''}
         </div>
-        <div id="report-preview" class="mt-4 bg-white text-slate-900 rounded-lg p-5 text-xs"></div>
+        <!-- Lề báo cáo theo quy cách văn bản (trái rộng hơn để đóng file, phải/trên/dưới vừa
+             phải — tương tự Thông tư 01/2011/TT-BNV: trái ~30mm, phải ~20mm, trên/dưới
+             ~20mm). Lề trái/phải dùng % (không phải px) vì html2canvas chụp NGUYÊN component
+             này rồi jsPDF kéo giãn đều để vừa khít bề rộng trang A4 (210mm) — margin tính theo
+             % của bề rộng khung nên luôn ra đúng mm thật trên PDF xuất ra, bất kể khung này
+             đang hiển thị rộng bao nhiêu px trên màn hình. Lề trên/dưới dùng px vì báo cáo dài
+             được cắt thành nhiều trang từ 1 canvas liên tục theo chiều cao (xem
+             _exportPDF_impl) — chỉ áp dụng đúng ở mép trên trang đầu/mép dưới trang cuối,
+             không lặp lại ở đầu/cuối mỗi trang giữa (giới hạn của cơ chế xuất PDF hiện tại). -->
+        <div id="report-preview" class="mt-4 bg-white text-slate-900 rounded-lg text-xs" style="padding:32px 9.52% 32px 14.29%"></div>
       `);
       App.ui.bindPanelToggles(root);
       root.querySelector('#btn-export-pdf').addEventListener('click', ()=>{
