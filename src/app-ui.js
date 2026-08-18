@@ -311,12 +311,23 @@
         </div>`;
     },
 
-    // ── Bảng nhánh ống gió (với tree structure) ─────────────────────────────
+    // ── Bảng nhánh ống gió — dạng CÂY thư mục thật (không còn ASCII giả lập) ─
+    // Thiết kế lại theo phản hồi: giao diện cũ là 1 danh sách PHẲNG, mỗi nhánh 1 khối form
+    // to đầy đủ ~20 field, chỉ phân biệt cấp cha/con bằng vài ký tự ASCII (┌─├─└─│) — với
+    // >5-6 nhánh nhìn rất rối, khó thấy lưu lượng phân bổ xuống từng nhánh con thế nào.
+    // Giờ: (1) nhánh GỐC của mỗi thiết bị (equipGroupId) được nhóm thành 1 cụm riêng, có
+    // tiêu đề rõ ràng + nút "+ nhánh gốc" ngay tại cụm (hỗ trợ đúng trường hợp 1 thiết bị ra
+    // 2 nhánh chính); (2) nhánh CON lồng thụt vào thật (margin-left + viền dọc nối), không
+    // còn ASCII; (3) mỗi nhánh có nút "+" riêng để thêm ngay 1 nhánh con dưới nó — tự động
+    // kế thừa equipGroupId, không cần tự chọn lại; (4) field cốt lõi (tên, Q, v, kết quả)
+    // luôn hiện; field ít đổi (vật liệu/cách nhiệt/độ dày/lọc/Σζ/parent thủ công) gộp vào 1
+    // khối "Thông tin chung" thu gọn mặc định, bấm mới xổ ra — đúng yêu cầu "xếp gọn".
     _branchTableHtml(){
       const rows = App.state.branches || [];
       const matOpts   = App.data.ductMaterials.filter(m=>!(App.state.hiddenMaterialIds?.ductMaterials||[]).includes(m.id)).map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
       const insOpts   = App.data.insulationMaterials.filter(m=>!(App.state.hiddenMaterialIds?.insulation||[]).includes(m.id)).map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
       const filterOpts= App.data.filterStages.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+      const advSet = this._getAdvExpanded();
 
       // Xây cây để tính depth và cumPa
       const tree = this._buildBranchTree(rows);
@@ -334,115 +345,157 @@
       const maxCumPa=Math.max(0,...Object.values(cumPaMap));
       const criticalIds=new Set();
       if(maxCumPa>0){
-        // Trace ngược từ node có cumPa cao nhất
         const maxNodeId=Object.keys(cumPaMap).find(id=>cumPaMap[id]===maxCumPa);
         let cur=rows.find(b=>b.id===maxNodeId);
         while(cur){ criticalIds.add(cur.id); cur=rows.find(b=>b.id===cur.parentId); }
       }
 
-      // Tùy chọn parent
+      const idxById={}; rows.forEach((b,i)=>idxById[b.id||('_'+i)]=i);
+      // Tùy chọn parent (dùng trong khối "Thông tin chung" thu gọn — gán cha thủ công,
+      // trường hợp hiếm gặp khi cần sửa lại cấu trúc cây thay vì dựng mới bằng nút "+").
       const parentOpts=`<option value="">(Ống gốc / Root)</option>`+
-        rows.map(b=>`<option value="${b.id}">${'─'.repeat((depthMap[b.id]||0)+1)} ${b.name||b.id}</option>`).join('');
+        rows.map(b=>`<option value="${b.id}">${'　'.repeat(depthMap[b.id]||0)}${b.name||b.id}</option>`).join('');
 
-      const tbody=rows.map((b,i)=>{
-        const depth=depthMap[b.id]||0;
+      const renderNode = (node, depth) => {
+        const i = idxById[node.id];
+        const b = rows[i];
+        if(b==null) return '';
         const isCP=criticalIds.has(b.id);
         const cumPa=cumPaMap[b.id]||0;
         const localPa=b._result?.localPa||0;
-        const indent='│ '.repeat(depth);
-        const connector=depth>0?(i<rows.length-1&&rows[i+1]&&(depthMap[rows[i+1].id]||0)>=depth?'├─':'└─'):'┌─';
-        // FIX: layout cũ nhồi 20 cột vào 1 bảng cuộn ngang — trên mobile mỗi ô quá hẹp, select
-        // dài chữ bị co lại gần như biến mất trong khi ô số bên cạnh giãn to bất thường (cùng
-        // lỗi đã gặp ở door-rows/partition-rows/layer-calculator). Đổi sang thẻ xếp dọc: mỗi
-        // nhánh 1 khối, field nào cần đọc tên dài (vật liệu, cách nhiệt, lọc, parent) được full
-        // chiều rộng riêng 1 dòng; field số ngắn (Q, v, L, dày, T°) mới ghép chung hàng.
-        return `<div class="border rounded-lg p-2.5 space-y-2 ${isCP?'border-amber-500 bg-amber-950/20':'border-slate-700/50'}" data-bidx="${i}">
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-[9px] text-slate-600 flex-shrink-0">${indent}${depth>0?connector:'┌─'}</span>
-            <input data-brow="name" value="${b.name||'Nhánh '+(i+1)}" placeholder="Tên nhánh"
-              class="flex-1 bg-base-900 border ${isCP?'border-amber-600':'border-slate-700'} rounded px-2 py-1.5 text-xs font-medium">
-            <button data-brow-del="${i}" class="flex-shrink-0 text-slate-500 hover:text-red-400 p-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div><label class="text-[9px] text-slate-500">Thiết bị (nhóm)</label>
-              <select data-brow="equipGroupId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                <option value="">-- Chung --</option>
-                ${(App.state.hlEquipGroups||[]).map(g=>`<option value="${g.id}" ${b.equipGroupId===g.id?'selected':''}>${g.equipType||''} ${g.name||g.id}</option>`).join('')}
-              </select>
+        const advOpen=advSet.has(b.id);
+        const childrenHtml=(node.children||[]).map(c=>renderNode(c, depth+1)).join('');
+        return `<div style="${depth>0?'margin-left:16px;border-left:2px solid #1a3050;padding-left:10px;':''}">
+          <div class="border rounded-lg p-2.5 space-y-2 ${isCP?'border-amber-500 bg-amber-950/20':'border-slate-700/50'}" data-bidx="${i}">
+            <div class="flex items-center gap-2">
+              <input data-brow="name" value="${b.name||'Nhánh '+(i+1)}" placeholder="Tên nhánh"
+                class="flex-1 bg-base-900 border ${isCP?'border-amber-600':'border-slate-700'} rounded px-2 py-1.5 text-xs font-medium">
+              <button data-badd-child="${i}" title="Thêm nhánh con dưới nhánh này" class="flex-shrink-0 text-emerald-400 hover:text-emerald-300 p-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button data-badv-toggle="${b.id}" title="Thông tin chung (vật liệu/cách nhiệt/lọc...)" class="flex-shrink-0 text-slate-500 hover:text-slate-300 p-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+              <button data-brow-del="${i}" class="flex-shrink-0 text-slate-500 hover:text-red-400 p-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
             </div>
-            <div><label class="text-[9px] text-slate-500">Nhánh cha (Parent)</label>
-              <select data-brow="parentId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                ${parentOpts.replace(`value="${b.parentId||''}"`,`value="${b.parentId||''}" selected`)}
-              </select>
+            <div class="grid grid-cols-3 gap-2">
+              <div><label class="text-[9px] text-slate-500">Q (m³/h)</label><input data-brow="qM3h" type="number" value="${b.qM3h||''}" placeholder="m³/h" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
+              <div><label class="text-[9px] text-slate-500">v (m/s)</label><input data-brow="vMs" type="number" step="0.1" value="${b.vMs||''}" placeholder="m/s" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
+              <div><label class="text-[9px] text-slate-500">Loại ống</label>
+                <select data-brow="vType" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
+                  <option value="mainDuct"   ${b.vType==='mainDuct'  ?'selected':''}>Chính</option>
+                  <option value="branchDuct" ${b.vType==='branchDuct'?'selected':''}>Nhánh</option>
+                </select>
+              </div>
+            </div>
+            <!-- Kết quả tính toán — luôn hiện, không thu gọn -->
+            ${b._resultError?`
+            <div class="bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 text-[10px] text-amber-400 flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Chưa tính được — ${b._resultError}
+            </div>`:`
+            <div class="bg-slate-950/50 rounded-lg p-2 grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[10px]">
+              <div class="text-slate-500">Kích thước <span class="font-mono-data ${b._result?'text-emerald-400':'text-slate-600'}">${b._result?b._result.dimsLabel:'—'}</span></div>
+              <div class="text-slate-500">ΔP ma sát <span class="font-mono-data text-slate-300">${b._result?(b._result.frictionPa.toFixed(0)+' Pa'):'—'}</span></div>
+              <div class="text-slate-500">ΔP cục bộ <span class="font-mono-data text-slate-300">${localPa>0?localPa.toFixed(0)+' Pa':'0 Pa'}</span></div>
+              <div class="text-slate-500">ΔP tích lũy <span class="font-mono-data ${isCP?'text-amber-400 font-bold':'text-slate-300'}">${cumPa>0?cumPa.toFixed(0)+' Pa':'—'}</span></div>
+              <div class="text-slate-500">NC <span class="font-mono-data ${b._result?.ncFlag?'text-amber-400':'text-slate-300'}">${b._result?b._result.nc:'—'}</span></div>
+              <div class="text-slate-500">Đọng sương <span class="font-mono-data ${b._result?.condensationRisk?'text-red-400':'text-emerald-400'}">${b._result?(b._result.condensationRisk?'⚠ Có':'OK'):'—'}</span></div>
+            </div>`}
+            <!-- Thông tin chung — thu gọn mặc định -->
+            <button data-badv-toggle="${b.id}" class="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform:rotate(${advOpen?90:0}deg);transition:transform .15s"><polyline points="9 18 15 12 9 6"/></svg>
+              Thông tin chung (thiết bị, vật liệu, cách nhiệt, lọc...)
+            </button>
+            <div class="space-y-2" style="${advOpen?'':'display:none'}">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div><label class="text-[9px] text-slate-500">Thiết bị (nhóm)</label>
+                  <select data-brow="equipGroupId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
+                    <option value="">-- Chung --</option>
+                    ${(App.state.hlEquipGroups||[]).map(g=>`<option value="${g.id}" ${b.equipGroupId===g.id?'selected':''}>${g.equipType||''} ${g.name||g.id}</option>`).join('')}
+                  </select>
+                </div>
+                <div><label class="text-[9px] text-slate-500">Nhánh cha (Parent) — chỉ cần khi sửa cấu trúc cây thủ công</label>
+                  <select data-brow="parentId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
+                    ${parentOpts.replace(`value="${b.parentId||''}"`,`value="${b.parentId||''}" selected`)}
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-[9px] text-slate-500">Hình dạng</label>
+                  <select data-brow="shape" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
+                    <option value="rect"  ${b.shape==='rect' ?'selected':''}>□ Chữ nhật</option>
+                    <option value="round" ${b.shape==='round'?'selected':''}>○ Tròn</option>
+                  </select>
+                </div>
+                <div><label class="text-[9px] text-slate-500">Vật liệu ống</label>
+                  <select data-brow="materialId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${matOpts.replace(`value="${b.materialId}"`,`value="${b.materialId}" selected`)}</select>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div><label class="text-[9px] text-slate-500">L (m)</label><input data-brow="lengthM" type="number" step="1" value="${b.lengthM||10}" placeholder="m" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
+                <div><label class="text-[9px] text-slate-500" title="Chọn nhanh preset Σζ phụ kiện điển hình">Preset Σζ</label>
+                  <select data-brow="fittingPreset" class="bg-base-900 border border-violet-800 rounded px-1 py-1.5 text-[10px] w-full">
+                    <option value="">-- Preset --</option>
+                    <option value="0.3" ${b.fittingPreset==='0.3'?'selected':''}>Đơn giản (0.3)</option>
+                    <option value="0.8" ${b.fittingPreset==='0.8'?'selected':''}>Tiêu chuẩn (0.8)</option>
+                    <option value="1.5" ${b.fittingPreset==='1.5'?'selected':''}>Nhiều cút (1.5)</option>
+                    <option value="2.5" ${b.fittingPreset==='2.5'?'selected':''}>Rất phức tạp (2.5)</option>
+                  </select>
+                </div>
+                <div><label class="text-[9px] text-slate-500" title="1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5">Σζ phụ kiện</label>
+                  <input data-brow="fittingsZeta" type="number" step="0.05" min="0" value="${b.fittingsZeta??0.8}"
+                    class="bg-base-900 border border-violet-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right">
+                </div>
+              </div>
+              <div><label class="text-[9px] text-slate-500">Cách nhiệt</label>
+                <select data-brow="insulationId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${insOpts.replace(`value="${b.insulationId}"`,`value="${b.insulationId}" selected`)}</select>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-[9px] text-slate-500">Dày cách nhiệt (mm)</label><input data-brow="thicknessMm" type="number" step="5" value="${b.thicknessMm||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
+                <div><label class="text-[9px] text-slate-500">T môi trường (°C)</label><input data-brow="ambientTC" type="number" step="0.5" value="${b.ambientTC||32}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
+              </div>
+              <div><label class="text-[9px] text-slate-500">Lọc (nếu ống này qua bộ lọc)</label>
+                <select data-brow="filterStageId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
+                  <option value="">(Không)</option>
+                  ${filterOpts.replace(`value="${b.filterStageId}"`,`value="${b.filterStageId}" selected`)}
+                </select>
+              </div>
             </div>
           </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <div><label class="text-[9px] text-slate-500">Q (m³/h)</label><input data-brow="qM3h" type="number" value="${b.qM3h||''}" placeholder="m³/h" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-            <div><label class="text-[9px] text-slate-500">Loại ống</label>
-              <select data-brow="vType" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                <option value="mainDuct"   ${b.vType==='mainDuct'  ?'selected':''}>Chính</option>
-                <option value="branchDuct" ${b.vType==='branchDuct'?'selected':''}>Nhánh</option>
-              </select>
-            </div>
-            <div><label class="text-[9px] text-slate-500">v (m/s)</label><input data-brow="vMs" type="number" step="0.1" value="${b.vMs||''}" placeholder="m/s" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-            <div><label class="text-[9px] text-slate-500">Hình dạng</label>
-              <select data-brow="shape" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                <option value="rect"  ${b.shape==='rect' ?'selected':''}>□ Chữ nhật</option>
-                <option value="round" ${b.shape==='round'?'selected':''}>○ Tròn</option>
-              </select>
-            </div>
-          </div>
-          <div><label class="text-[9px] text-slate-500">Vật liệu ống</label>
-            <select data-brow="materialId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${matOpts.replace(`value="${b.materialId}"`,`value="${b.materialId}" selected`)}</select>
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div><label class="text-[9px] text-slate-500">L (m)</label><input data-brow="lengthM" type="number" step="1" value="${b.lengthM||10}" placeholder="m" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-            <div><label class="text-[9px] text-slate-500" title="Chọn nhanh preset Σζ phụ kiện điển hình">Preset Σζ</label>
-              <select data-brow="fittingPreset" class="bg-base-900 border border-violet-800 rounded px-1 py-1.5 text-[10px] w-full">
-                <option value="">-- Preset --</option>
-                <option value="0.3" ${b.fittingPreset==='0.3'?'selected':''}>Đơn giản (0.3)</option>
-                <option value="0.8" ${b.fittingPreset==='0.8'?'selected':''}>Tiêu chuẩn (0.8)</option>
-                <option value="1.5" ${b.fittingPreset==='1.5'?'selected':''}>Nhiều cút (1.5)</option>
-                <option value="2.5" ${b.fittingPreset==='2.5'?'selected':''}>Rất phức tạp (2.5)</option>
-              </select>
-            </div>
-            <div><label class="text-[9px] text-slate-500" title="1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5">Σζ phụ kiện</label>
-              <input data-brow="fittingsZeta" type="number" step="0.05" min="0" value="${b.fittingsZeta??0.8}"
-                class="bg-base-900 border border-violet-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right">
-            </div>
-          </div>
-          <div><label class="text-[9px] text-slate-500">Cách nhiệt</label>
-            <select data-brow="insulationId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${insOpts.replace(`value="${b.insulationId}"`,`value="${b.insulationId}" selected`)}</select>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div><label class="text-[9px] text-slate-500">Dày cách nhiệt (mm)</label><input data-brow="thicknessMm" type="number" step="5" value="${b.thicknessMm||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
-            <div><label class="text-[9px] text-slate-500">T môi trường (°C)</label><input data-brow="ambientTC" type="number" step="0.5" value="${b.ambientTC||32}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
-          </div>
-          <div><label class="text-[9px] text-slate-500">Lọc (nếu ống này qua bộ lọc)</label>
-            <select data-brow="filterStageId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-              <option value="">(Không)</option>
-              ${filterOpts.replace(`value="${b.filterStageId}"`,`value="${b.filterStageId}" selected`)}
-            </select>
-          </div>
-          <!-- Kết quả tính toán -->
-          ${b._resultError?`
-          <div class="bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 text-[10px] text-amber-400 flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Chưa tính được — ${b._resultError}
-          </div>`:`
-          <div class="bg-slate-950/50 rounded-lg p-2 grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[10px]">
-            <div class="text-slate-500">Kích thước <span class="font-mono-data ${b._result?'text-emerald-400':'text-slate-600'}">${b._result?b._result.dimsLabel:'—'}</span></div>
-            <div class="text-slate-500">ΔP ma sát <span class="font-mono-data text-slate-300">${b._result?(b._result.frictionPa.toFixed(0)+' Pa'):'—'}</span></div>
-            <div class="text-slate-500">ΔP cục bộ <span class="font-mono-data text-slate-300">${localPa>0?localPa.toFixed(0)+' Pa':'0 Pa'}</span></div>
-            <div class="text-slate-500">ΔP tích lũy <span class="font-mono-data ${isCP?'text-amber-400 font-bold':'text-slate-300'}">${cumPa>0?cumPa.toFixed(0)+' Pa':'—'}</span></div>
-            <div class="text-slate-500">NC <span class="font-mono-data ${b._result?.ncFlag?'text-amber-400':'text-slate-300'}">${b._result?b._result.nc:'—'}</span></div>
-            <div class="text-slate-500">Đọng sương <span class="font-mono-data ${b._result?.condensationRisk?'text-red-400':'text-emerald-400'}">${b._result?(b._result.condensationRisk?'⚠ Có':'OK'):'—'}</span></div>
-          </div>`}
+          ${childrenHtml?`<div class="space-y-2 mt-2">${childrenHtml}</div>`:''}
         </div>`;
-      }).join('');
+      };
+
+      // Nhóm các nhánh GỐC (parentId rỗng) theo thiết bị (equipGroupId) — mỗi thiết bị 1 cụm
+      // cây riêng, có tiêu đề + nút "+ nhánh gốc" tại chỗ (hỗ trợ 1 thiết bị ra nhiều nhánh
+      // chính, ví dụ 2 miệng gió chính từ cùng 1 AHU).
+      const clusters=[]; const clusterByGid={};
+      tree.forEach(rootNode=>{
+        const gid=rootNode.equipGroupId||'';
+        if(!clusterByGid[gid]){ clusterByGid[gid]={gid, roots:[]}; clusters.push(clusterByGid[gid]); }
+        clusterByGid[gid].roots.push(rootNode);
+      });
+      const clusterLabel=gid=>{
+        if(!gid) return 'Chung / chưa gán thiết bị';
+        const g=(App.state.hlEquipGroups||[]).find(x=>x.id===gid);
+        return g ? `${g.equipType||'AHU'} ${g.name||g.id}` : 'Thiết bị đã bị xoá';
+      };
+      const clustersHtml=clusters.map(cl=>`
+        <div class="mb-3">
+          <div class="flex items-center gap-2 mb-1.5 px-0.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400 flex-shrink-0"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+            <span class="text-xs font-medium text-cyan-300">${clusterLabel(cl.gid)}</span>
+            <span class="text-[10px] text-slate-500">${cl.roots.length} nhánh gốc</span>
+            <button data-baddroot="${cl.gid}" class="ml-auto text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ nhánh gốc
+            </button>
+          </div>
+          <div class="space-y-2">${cl.roots.map(r=>renderNode(r,0)).join('')}</div>
+        </div>`).join('');
 
       return `
-        <div class="space-y-2">${tbody||'<p class="text-center text-slate-500 py-4 text-xs">Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.</p>'}</div>
+        ${clustersHtml||'<p class="text-center text-slate-500 py-4 text-xs">Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.</p>'}
         ${maxCumPa>0?`<div class="mt-2 px-3 py-2 bg-amber-950/30 border border-amber-700/40 rounded-lg text-xs flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
           <span class="text-amber-400 font-medium">Critical path (nhánh màu cam):</span>
@@ -461,13 +514,21 @@
         </div>`;
     },
 
+    // ── Trạng thái xổ/thu "Thông tin chung" mỗi nhánh — chỉ UI, không lưu vào project ──
+    _getAdvExpanded(){ if(!this.__advExpanded) this.__advExpanded=new Set(); return this.__advExpanded; },
+
     // ── Build tree từ danh sách nhánh phẳng ─────────────────────────────────
     _buildBranchTree(branches){
+      // FIX: nhánh nào thiếu b.id (vd import từ Tab Phụ Tải Nhiệt trước đây không gán id) chỉ
+      // dùng id giả '_<index>' làm KEY của map, nhưng node trả về ({...b, children:[]}) không
+      // hề mang theo field .id đó — mọi nơi đọc node.id (vẽ cây, tìm critical path theo id, tra
+      // ngược index gốc) đều ra undefined, và MỌI nhánh thiếu id cùng lúc bị collide vào chung
+      // 1 key '_NaN' hoặc trùng lặp. Giờ gán thẳng .id (kể cả id giả) vào node để nhất quán.
       const map={};
-      branches.forEach(b=>{ map[b.id||'_'+branches.indexOf(b)]={...b, children:[]}; });
+      branches.forEach((b,idx)=>{ const id=b.id||('_'+idx); map[id]={...b, id, children:[]}; });
       const roots=[];
-      branches.forEach(b=>{
-        const id=b.id||'_'+branches.indexOf(b);
+      branches.forEach((b,idx)=>{
+        const id=b.id||('_'+idx);
         if(!b.parentId||!map[b.parentId]) roots.push(map[id]);
         else map[b.parentId].children.push(map[id]);
       });
@@ -548,6 +609,54 @@
         App.admin.autoSave(); this.render();
       }));
 
+      // Thêm nhánh CON ngay dưới 1 nhánh cụ thể (nút "+" trên từng thẻ trong cây) — tự động
+      // kế thừa equipGroupId của nhánh cha, không cần chọn lại thủ công.
+      root.querySelectorAll('[data-badd-child]').forEach(b=>b.addEventListener('click',()=>{
+        const parentIdx=parseInt(b.getAttribute('data-badd-child'));
+        const parent=App.state.branches[parentIdx]; if(!parent) return;
+        const branches=App.state.branches;
+        branches.push({
+          id:'b'+(Date.now()%1e6).toString(36)+Math.trunc(Math.random()*99),
+          parentId: parent.id, equipGroupId: parent.equipGroupId||'',
+          name:'Nhánh '+(branches.length+1),
+          vType:'branchDuct', vMs:3.75,
+          shape:'rect', materialId: parent.materialId||'galv',
+          insulationId: parent.insulationId||'glasswool', lengthM:10,
+          ambientTC: parent.ambientTC||32, ambientRH: parent.ambientRH||80, thicknessMm: parent.thicknessMm||25,
+          fittingsZeta:0.8
+        });
+        this._getAdvExpanded().delete(parent.id); // không cần tự mở rộng cha khi chỉ thêm con
+        App.admin.autoSave(); this.render();
+      }));
+
+      // Thêm nhánh GỐC mới cho 1 cụm thiết bị đã có sẵn trong cây (nút "+ nhánh gốc" trên
+      // tiêu đề cụm) — hỗ trợ trường hợp 1 thiết bị (AHU/PAU...) đi ra từ 2 miệng gió chính
+      // trở lên, mỗi miệng là 1 nhánh gốc riêng cùng equipGroupId.
+      root.querySelectorAll('[data-baddroot]').forEach(b=>b.addEventListener('click',()=>{
+        const gid=b.getAttribute('data-baddroot')||'';
+        const branches=App.state.branches||(App.state.branches=[]);
+        const g=(App.state.hlEquipGroups||[]).find(x=>x.id===gid);
+        const rootsInCluster=branches.filter(x=>!x.parentId && (x.equipGroupId||'')===gid).length;
+        branches.push({
+          id:'b'+(Date.now()%1e6).toString(36)+Math.trunc(Math.random()*99),
+          parentId:'', equipGroupId:gid,
+          name:(g?((g.equipType||'AHU')+' '+g.name):'Chung')+' - Nhánh gốc '+(rootsInCluster+1),
+          vType:'mainDuct', vMs:7,
+          shape:'rect', materialId:'galv', insulationId:'glasswool', lengthM:10,
+          ambientTC:32, ambientRH:80, thicknessMm:25, fittingsZeta:0.8
+        });
+        App.admin.autoSave(); this.render();
+      }));
+
+      // Xổ/thu khối "Thông tin chung" — chỉ đổi state UI cục bộ, không autoSave (không phải
+      // dữ liệu dự án).
+      root.querySelectorAll('[data-badv-toggle]').forEach(b=>b.addEventListener('click',()=>{
+        const id=b.getAttribute('data-badv-toggle');
+        const set=this._getAdvExpanded();
+        if(set.has(id)) set.delete(id); else set.add(id);
+        this.render();
+      }));
+
       // Branch field changes (no re-render, just save)
       root.querySelectorAll('[data-bidx]').forEach(tr=>{
         const i = parseInt(tr.getAttribute('data-bidx'));
@@ -576,7 +685,13 @@
       if(!hlRooms.length){ App.ui.toast('warn','Chưa có dữ liệu từ Tab Phụ Tải Nhiệt. Tính toán Tab đó trước.'); return; }
       const cl = App.state.hlClimate || {};
       const prov = App.data.climateSample.find(c=>c.province===App.state.inputs.climateProvince);
-      const newBranches = hlRooms.map(r=>({
+      const newBranches = hlRooms.map((r,idx)=>({
+        // FIX: nhánh import trước đây không có .id — mọi thao tác dựa vào id thật (đặt
+        // nhánh con dưới nó qua nút "+", tra critical path theo id, tham chiếu parentId từ
+        // nhánh khác) đều âm thầm hỏng cho riêng các nhánh import. _buildBranchTree() có id
+        // giả dự phòng cho hiển thị, nhưng vẫn cần id THẬT ổn định để ghi lại được (vd
+        // parentId của 1 nhánh con thêm sau trỏ đúng vào nhánh import này).
+        id: 'b'+Date.now().toString(36)+'_'+idx+Math.trunc(Math.random()*999),
         name: r.name||'Nhánh',
         qM3h: Math.round(r._af.L_supply),
         vType: 'mainDuct',

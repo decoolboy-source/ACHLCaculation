@@ -34,6 +34,7 @@ const testFiles = [
   './cases/report-text-color',
   './cases/report-preview-css-scope',
   './cases/motor-para-templates',
+  './cases/duct-branch-tree-ui',
   './cases/deep-followup-fixes',
   './cases/fan-equipment-schedule',
 ];
