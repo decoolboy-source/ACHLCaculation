@@ -49,7 +49,7 @@
     },
     setStatusProject(){
       const p = App.state.activeProjectId;
-      document.getElementById('status-project').textContent = p ? ('Dự án: ' + (App.state.inputs.projectName||p)) : '';
+      document.getElementById('status-project').textContent = p ? (App.ui.t('Dự án:') + ' ' + (App.state.inputs.projectName||p)) : '';
     },
 
     TABS: [
@@ -5600,11 +5600,11 @@
         const flaggedRooms=rooms.filter(r=>r._flags&&r._flags.length>0);
         if(flaggedRooms.length>0){
           const flagSheet=[
-            ['* THÔNG SỐ CẦN KIỂM TRA (vượt ngưỡng tiêu chuẩn)'],
-            ['Phòng','Mức độ','Thông số','Chi tiết','Tiêu chuẩn tham chiếu'],
+            [App.ui.t('* THÔNG SỐ CẦN KIỂM TRA (vượt ngưỡng tiêu chuẩn)')],
+            [App.ui.t('Phòng'),App.ui.t('Mức độ'),App.ui.t('Thông số'),App.ui.t('Chi tiết'),App.ui.t('Tiêu chuẩn tham chiếu')],
             ...flaggedRooms.flatMap(r=>r._flags.map(f=>[
               r.name||'—',
-              f.severity==='error'||f.level==='red'?'⛔ LỖI':'⚠ CẢNH BÁO',
+              f.severity==='error'||f.level==='red'?'⛔ '+App.ui.t('LỖI'):'⚠ '+App.ui.t('CẢNH BÁO'),
               f.field||'—',
               f.msg||f.code||'—',
               'ASHRAE 62.1-2022 / ISO 14644-1:2015'
@@ -5629,22 +5629,22 @@
         if((App.state.branches||[]).length>0) methodSet.add('Duct sizing: Darcy-Weisbach (SMACNA HVAC Duct Design)');
         const cosBasis=[
           ['CƠ SỞ THIẾT KẾ — BASIS OF DESIGN'],[''],
-          ['I. TIÊU CHUẨN ÁP DỤNG'],
+          [App.ui.t('I. TIÊU CHUẨN ÁP DỤNG')],
           ...[...stdSet].sort().map(s=>['• '+s]),
           [''],
-          ['II. PHƯƠNG PHÁP TÍNH TOÁN'],
+          [App.ui.t('II. PHƯƠNG PHÁP TÍNH TOÁN')],
           ...[...methodSet].sort().map(m=>['• '+m]),
           [''],
-          ['III. THÔNG SỐ THAM KHẢO THỰC TẾ (không có giá trị pháp lý)'],
-          ['• FCU/AHU catalog — dải công suất tham khảo thị trường VN 2024, xác nhận với nhà sản xuất'],
-          ['• Đơn giá BOM (VND) — tham khảo thị trường 2024, sai số ±30-50%'],
-          ['• Hệ số ζ phụ kiện ống gió — giá trị trung bình SMACNA, tra đồ thị để chính xác'],
-          ['• Mật độ tải IT kW/m² DC Rack — ước tính, đo thực tế để thiết kế chính xác'],
+          [App.ui.t('III. THÔNG SỐ THAM KHẢO THỰC TẾ (không có giá trị pháp lý)')],
+          ['• '+App.ui.t('FCU/AHU catalog — dải công suất tham khảo thị trường VN 2024, xác nhận với nhà sản xuất')],
+          ['• '+App.ui.t('Đơn giá BOM (VND) — tham khảo thị trường 2024, sai số ±30-50%')],
+          ['• '+App.ui.t('Hệ số ζ phụ kiện ống gió — giá trị trung bình SMACNA, tra đồ thị để chính xác')],
+          ['• '+App.ui.t('Mật độ tải IT kW/m² DC Rack — ước tính, đo thực tế để thiết kế chính xác')],
           [''],
-          ['III. LƯU Ý PHÁP LÝ'],
-          ['• Thông số tham khảo thực tế (FCU catalog, đơn giá VND) không có giá trị pháp lý.'],
-          ['• Kỹ sư phải xác nhận với catalog nhà sản xuất trước khi chọn thiết bị.'],
-          ['• Số liệu khí hậu: QCVN 02:2022/BXD. Một số tỉnh dùng trạm gần nhất.'],
+          [App.ui.t('III. LƯU Ý PHÁP LÝ')],
+          ['• '+App.ui.t('Thông số tham khảo thực tế (FCU catalog, đơn giá VND) không có giá trị pháp lý.')],
+          ['• '+App.ui.t('Kỹ sư phải xác nhận với catalog nhà sản xuất trước khi chọn thiết bị.')],
+          ['• '+App.ui.t('Số liệu khí hậu: QCVN 02:2022/BXD. Một số tỉnh dùng trạm gần nhất.')],
         ];
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cosBasis), 'Co_So_Thiet_Ke');
 
@@ -5654,23 +5654,23 @@
         const totalFresh = rooms.reduce((s,r)=>s+(r._af?.L_fresh||0),0);
         const totalFloor = rooms.reduce((s,r)=>s+((r.L||0)*(r.W||0)),0);
         const summary = [
-          ['MultiHVAC Calculator — Báo cáo tính toán phụ tải nhiệt'],
-          ['Tên dự án', I.projectName||'—'],
-          ['Khách hàng', I.client||I.customer||'—'],
-          ['Địa chỉ', I.address||'—'],
-          ['Kỹ sư thiết kế', I.engineer||I.performer||'—'],
-          ['Ngày thực hiện', I.date||I.execDate||'—'],
-          ['Mã dự án', I.projectCode||'—'],
+          [App.ui.t('MultiHVAC Calculator — Báo cáo tính toán phụ tải nhiệt')],
+          [App.ui.t('Tên dự án'), I.projectName||'—'],
+          [App.ui.t('Khách hàng'), I.client||I.customer||'—'],
+          [App.ui.t('Địa chỉ'), I.address||'—'],
+          [App.ui.t('Kỹ sư thiết kế'), I.engineer||I.performer||'—'],
+          [App.ui.t('Ngày thực hiện'), I.date||I.execDate||'—'],
+          [App.ui.t('Mã dự án'), I.projectCode||'—'],
           [],
-          ['KPI Tổng hợp', 'Giá trị', 'Đơn vị'],
-          ['Số phòng', rooms.length, 'phòng'],
-          ['Diện tích sàn tổng', totalFloor.toFixed(0), 'm²'],
-          ['Tổng lạnh coil', totalCoil.toFixed(2), 'kW'],
-          ['Tổng lạnh coil', (totalCoil/3.517).toFixed(2), 'TR'],
-          ['Tổng gió cấp', totalSupply.toFixed(0), 'm³/h'],
-          ['Tổng gió tươi', totalFresh.toFixed(0), 'm³/h'],
-          ['% Gió tươi / Cấp', totalSupply>0?((totalFresh/totalSupply)*100).toFixed(1):0, '%'],
-          ['W/m² sàn', totalFloor>0?(totalCoil*1000/totalFloor).toFixed(0):'-', 'W/m²'],
+          [App.ui.t('KPI Tổng hợp'), App.ui.t('Giá trị'), App.ui.t('Đơn vị')],
+          [App.ui.t('Số phòng'), rooms.length, App.ui.t('phòng')],
+          [App.ui.t('Diện tích sàn tổng'), totalFloor.toFixed(0), 'm²'],
+          [App.ui.t('Tổng lạnh coil'), totalCoil.toFixed(2), 'kW'],
+          [App.ui.t('Tổng lạnh coil'), (totalCoil/3.517).toFixed(2), 'TR'],
+          [App.ui.t('Tổng gió cấp'), totalSupply.toFixed(0), 'm³/h'],
+          [App.ui.t('Tổng gió tươi'), totalFresh.toFixed(0), 'm³/h'],
+          [App.ui.t('% Gió tươi / Cấp'), totalSupply>0?((totalFresh/totalSupply)*100).toFixed(1):0, '%'],
+          [App.ui.t('W/m² sàn'), totalFloor>0?(totalCoil*1000/totalFloor).toFixed(0):'-', 'W/m²'],
         ];
         const wsSum = XLSX.utils.aoa_to_sheet(summary);
         XLSX.utils.book_append_sheet(wb, wsSum, 'Tong_Quan');
@@ -5678,13 +5678,13 @@
         // Sheet 2: Chi tiết từng phòng (per-room heat load)
         if(rooms.length > 0){
           const roomHeader = [
-            'Tên phòng','Loại TB','Dài(m)','Rộng(m)','Cao(m)','S.sàn(m²)','Thể tích(m³)',
-            'ACH(h⁻¹)','Số người','T cấp(°C)',
-            'L_cấp(m³/h)','L_hồi(m³/h)','L_tươi(m³/h)','Warn',
-            'Q_vách(kW)','Q_mái(kW)','Q_sàn(kW)','Q_vách_ngăn(kW)',
-            'Q_kính(kW)','Q_người_s(kW)','Q_đèn(kW)','Q_fr_s(kW)',
-            'Q_hiện_tổng(kW)','Q_ẩn(kW)','SHR',
-            'Q_coil(kW)','Q_coil(TR)','Reheat(kW)','Loại TB'
+            App.ui.t('Tên phòng'),App.ui.t('Loại TB'),App.ui.t('Dài(m)'),App.ui.t('Rộng(m)'),App.ui.t('Cao(m)'),App.ui.t('S.sàn(m²)'),App.ui.t('Thể tích(m³)'),
+            App.ui.t('ACH(h⁻¹)'),App.ui.t('Số người'),App.ui.t('T cấp(°C)'),
+            App.ui.t('L_cấp(m³/h)'),App.ui.t('L_hồi(m³/h)'),'L_tươi(m³/h)','Warn',
+            App.ui.t('Q_vách(kW)'),App.ui.t('Q_mái(kW)'),App.ui.t('Q_sàn(kW)'),App.ui.t('Q_vách_ngăn(kW)'),
+            App.ui.t('Q_kính(kW)'),App.ui.t('Q_người_s(kW)'),App.ui.t('Q_đèn(kW)'),'Q_fr_s(kW)',
+            App.ui.t('Q_hiện_tổng(kW)'),App.ui.t('Q_ẩn(kW)'),'SHR',
+            'Q_coil(kW)','Q_coil(TR)','Reheat(kW)',App.ui.t('Loại TB')
           ];
           const roomData = rooms.map(r=>{
             const hl=App.ui.heatload;
@@ -5722,45 +5722,45 @@
 
         // Sheet: Equipment Schedule
         if(rooms.filter(r=>r._coil?.qCoilKW>0).length>0){
-          const eqHeader=['Phòng','Loại phòng','Phương pháp gió','Q_coil(kW)','Model đề xuất','SL','Tổng CS(kW)','Hiệu suất sử dụng(%)','Lưu lượng(m³/h)','Ghi chú'];
+          const eqHeader=[App.ui.t('Phòng'),App.ui.t('Loại phòng'),App.ui.t('Phương pháp gió'),'Q_coil(kW)',App.ui.t('Model đề xuất'),App.ui.t('SL'),App.ui.t('Tổng CS(kW)'),App.ui.t('Hiệu suất sử dụng(%)'),App.ui.t('Lưu lượng(m³/h)'),App.ui.t('Ghi chú')];
           const eqData=rooms.filter(r=>r._coil?.qCoilKW>0).map(r=>{
             // FCU_OA: chọn model theo phần coil FCU riêng (qCoilFcuKW), không theo tổng qCoilKW
             // (đã gồm cả phần thiết bị xử lý gió tươi riêng — không nằm trong catalog FCU/AHU/PAU)
             const qSel = r.equipType==='FCU_OA' ? (r._coil.qCoilFcuKW??r._coil.qCoilKW) : r._coil.qCoilKW;
             const sel=App.calc.selectEquipAuto({qCoilKW:qSel,equipType:r.equipType,designMarginPct:10});
-            if(!sel) return [r.name,'VENT','—','Không cần coil','','','','',''];
+            if(!sel) return [r.name,'VENT','—',App.ui.t('Không cần coil'),'','','','',''];
             return [r.name,r.buildingType||'—',(r._airflow?.modeNote||'general').slice(0,40),(r._coil.qCoilKW).toFixed(2),sel.model.name,sel.qty,(sel.totalCapKW).toFixed(1),sel.utilization,(sel.model.airflowM3h*(sel.qty||1)).toString(),sel.warning||sel.model.note||''];
           });
-          eqData.push(['','','','','','','','','⚠ Catalog tham chiếu thị trường VN 2024. Xác nhận với nhà sản xuất trước khi chọn thiết bị.']);
+          eqData.push(['','','','','','','','','⚠ '+App.ui.t('Catalog tham chiếu thị trường VN 2024. Xác nhận với nhà sản xuất trước khi chọn thiết bị.')]);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([eqHeader,...eqData]), 'Equipment_Schedule');
         }
 
         // Sheet: BOM sơ bộ
         const bom=App.calc.generateBOM(rooms, App.state.ductBranches||App.state.branches||[], App.state.hlEquipGroups||[]);
         if(bom?.items?.length>0){
-          const bomHeader=['Hạng mục','Mô tả','Đơn vị','Khối lượng','Đơn giá (VND)','Thành tiền (VND)'];
+          const bomHeader=[App.ui.t('Hạng mục'),App.ui.t('Mô tả'),App.ui.t('Đơn vị'),App.ui.t('Khối lượng'),App.ui.t('Đơn giá (VND)'),App.ui.t('Thành tiền (VND)')];
           const bomData=bom.items.map(b=>[b.cat,b.item,b.unit,b.qty.toFixed(0),b.rate.toLocaleString(),b.cost.toLocaleString()]);
-          bomData.push(['','','','','TỔNG CỘNG (VND):',bom.totalVND.toLocaleString()]);
-          bomData.push(['','','','','TỔNG CỘNG (triệu VND):',bom.totalMVND]);
-          bomData.push(['GHI CHÚ',bom.note,'','','','']);
+          bomData.push(['','','','',App.ui.t('TỔNG CỘNG (VND):'),bom.totalVND.toLocaleString()]);
+          bomData.push(['','','','',App.ui.t('TỔNG CỘNG (triệu VND):'),bom.totalMVND]);
+          bomData.push([App.ui.t('GHI CHÚ'),bom.note,'','','','']);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([bomHeader,...bomData]), 'BOM_So_Bo');
         }
         }
 
         // Sheet 3: Motor heat gain
         if((App.state.hlMotors||[]).length > 0){
-          const motHeader = ['Tên motor','P(kW)','SL','Phương pháp','Vị trí TH','FL','FU','VFD','Q tỏa(kW)'];
-          const motData = App.state.hlMotors.map(m=>[m.name||'',m.pKw||0,m.qty||1,m.method||'A',m.position||'TH1',m.FL||1,m.FU||1,m.hasVFD?'Có':'Không',m._qKW?.toFixed(3)||'']);
+          const motHeader = [App.ui.t('Tên motor'),'P(kW)',App.ui.t('SL'),App.ui.t('Phương pháp'),App.ui.t('Vị trí TH'),'FL','FU','VFD',App.ui.t('Q tỏa(kW)')];
+          const motData = App.state.hlMotors.map(m=>[m.name||'',m.pKw||0,m.qty||1,m.method||'A',m.position||'TH1',m.FL||1,m.FU||1,m.hasVFD?App.ui.t('Có'):App.ui.t('Không'),m._qKW?.toFixed(3)||'']);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([motHeader,...motData]), 'Motor_Heat');
         }
 
         // Sheet 4b: Tải ký sinh
         if((App.state.hlParasitic||[]).length > 0){
-          const paraHeader=['Tên','Loại','Phòng gán','Q tỏa/hút(kW)','Ghi chú'];
+          const paraHeader=[App.ui.t('Tên'),App.ui.t('Loại'),App.ui.t('Phòng gán'),App.ui.t('Q tỏa/hút(kW)'),App.ui.t('Ghi chú')];
           const paraData=(App.state.hlParasitic||[]).map(p=>{
-            const rName=App.state.hlRooms?.find(r=>r.id===p.roomId)?.name||'Chưa gán';
+            const rName=App.state.hlRooms?.find(r=>r.id===p.roomId)?.name||App.ui.t('Chưa gán phòng');
             const qKW=p._qW!=null?(p._qW/1000).toFixed(3):'—';
-            const sign=(p._qW||0)<0?'Hút lạnh (âm)':'Tỏa nhiệt (dương)';
+            const sign=(p._qW||0)<0?App.ui.t('Hút lạnh (âm)'):App.ui.t('Tỏa nhiệt (dương)');
             return [p.name||'',p.type||'',rName,qKW,sign];
           });
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([paraHeader,...paraData]), 'Tai_Ky_Sinh');
@@ -5768,10 +5768,10 @@
 
         // Sheet 5: Ống gió
         if((App.state.branches||[]).length > 0){
-          const ductHeader = ['Tên nhánh','Q(m³/h)','v(m/s)','Hình dạng','Vật liệu','Cách nhiệt','L(m)','Kích thước','ΔP ma sát(Pa)','NC','Đọng sương'];
+          const ductHeader = [App.ui.t('Tên nhánh'),'Q(m³/h)','v(m/s)',App.ui.t('Hình dạng'),App.ui.t('Vật liệu ống'),App.ui.t('Cách nhiệt'),'L(m)',App.ui.t('Kích thước'),App.ui.t('ΔP ma sát(Pa)'),'NC',App.ui.t('Đọng sương')];
           const ductData = (App.state.branches||[]).map(b=>[
             b.name||'',b.qM3h||0,b.vMs||0,b.shape||'',b.materialId||'',b.insulationId||'',b.lengthM||0,
-            b._result?.dimsLabel||'',b._result?.frictionPa.toFixed(0)||'',b._result?.nc||'',b._result?.condensationRisk?'Có nguy cơ':'Không'
+            b._result?.dimsLabel||'',b._result?.frictionPa.toFixed(0)||'',b._result?.nc||'',b._result?.condensationRisk?App.ui.t('Có nguy cơ'):App.ui.t('Không')
           ]);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([ductHeader,...ductData]), 'Ong_Gio');
         }
