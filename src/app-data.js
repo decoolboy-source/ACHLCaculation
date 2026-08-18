@@ -1663,6 +1663,23 @@ MATERIAL_RATES:{
         '{label}: chưa nhập nhiệt độ phòng kề — đang dùng mặc định 35°C, kiểm tra lại nếu phòng kề có điều hòa':'{label}: adjacent room temperature not entered — using default 35°C, double-check if the adjacent room is air-conditioned',
         'Oversized {pct}% — xem xét model nhỏ hơn':'Oversized {pct}% — consider a smaller model',
         'Cần {qty} units — kiểm tra lại layout':'Requires {qty} units — review the layout',
+
+        // Tab Phụ Tải Nhiệt — Floor/Room overview widget + climate panel
+        'Copy phòng':'Copy room', 'Chưa có phòng nào':'No rooms yet', 'Thêm phòng':'Add room',
+        'Nhấp để đổi tên tầng':'Click to rename floor', 'Copy toàn bộ tầng':'Copy entire floor',
+        'Copy tầng':'Copy floor',
+        'Xóa tầng (các phòng sẽ chuyển về tầng còn lại)':'Delete floor (rooms will move to the remaining floor)',
+        'Thêm tầng mới':'Add new floor',
+        'Phụ Tải Nhiệt & Phân Phối Gió':'Heat Load & Air Distribution',
+        '{n} nhóm thiết bị':'{n} equipment group(s)',
+        'Tỉnh/TP (T môi trường ống — kiểm tra đọng sương)':'Province/City (ambient T for duct condensation check)',
+        'Chọn tỉnh/thành để tự điền T, RH':'Select a province/city to auto-fill T, RH',
+        'Số liệu khí hậu theo QCVN 02:2022/BXD.':'Climate data per QCVN 02:2022/BXD.',
+        'T ngoài (°C)':'Outdoor T (°C)', 'RH ngoài (%)':'Outdoor RH (%)',
+        'T trong (°C)':'Indoor T (°C)', 'RH trong (%)':'Indoor RH (%)', 'Cao độ (m)':'Elevation (m)',
+        'Dự án':'Project', '{n} tầng':'{n} floor(s)',
+        'Tính tải tất cả':'Calculate all loads',
+        'Bấm "Tính tải" để tính toán phụ tải và phân phối gió tất cả phòng.':'Click "Calculate load" to compute heat load and air distribution for all rooms.',
       }
     }
   };

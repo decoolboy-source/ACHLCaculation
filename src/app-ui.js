@@ -1399,7 +1399,7 @@
     rfSel(f,opts,v){ return `<select data-rf="${f}" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">${opts.map(o=>`<option value="${o.v??o}" ${(v===(o.v??o))?'selected':''}>${o.n||o}</option>`).join('')}</select>`; },
 
     // ── Floor management helpers ──────────────────────────────────────────
-    FL(){ return App.state.floors || (App.state.floors=[{id:'fl1',name:'Tầng 1',order:1}]); },
+    FL(){ return App.state.floors || (App.state.floors=[{id:'fl1',name:App.ui.t('Tầng {n}',{n:1}),order:1}]); },
     _getUwall(r){
       if(r.wallTypeId){ const wt=(App.data.WALL_TYPES||[]).find(w=>w.id===r.wallTypeId); if(wt) return wt.U; }
       return parseFloat(r.uWall)||0.45;
@@ -1424,7 +1424,7 @@
       const n=this.R().filter(r=>r.floorId===floorId).length+1;
       this.R().push({
         id:this.uid(), floorId:floorId,
-        name:(F?.name||'Tầng')+'-P'+n,
+        name:(F?.name||App.ui.t('Tầng'))+'-P'+n,
         buildingType:'office', equipType:'AHU', classSystem:'GENERAL', classCode:'',
         achApplied:8, deltaPPa:5, pressACH:1, freshAirPerPersonLs:8.5,
         L:10, W:8, H:3.2, roomShape:'rect',
@@ -1454,16 +1454,16 @@
       <div data-ri="${globalIdx}" style="border-bottom:1px solid #0f1e30">
         <div class="room-hd" data-open-room="${globalIdx}" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;min-height:44px;user-select:none">
           <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;${statusDot}"></span>
-          <span style="flex:1;font-size:13px;color:#c2d4e2;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name||'Phòng'}</span>
+          <span style="flex:1;font-size:13px;color:#c2d4e2;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name||App.ui.t('Phòng')}</span>
           ${btBadge}
           <span style="font-size:11px;color:#3a5470;white-space:nowrap">${area}m²</span>
           <span style="font-size:11px;color:#4a6680;white-space:nowrap">${r.equipType||'—'}</span>
           ${qStr}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a4060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
-          <button data-copy-room="${globalIdx}" title="Copy phòng" onclick="event.stopPropagation()" style="background:none;border:none;color:#34d399;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
+          <button data-copy-room="${globalIdx}" title="${App.ui.t('Copy phòng')}" onclick="event.stopPropagation()" style="background:none;border:none;color:#34d399;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
           </button>
-          <button data-del-room="${globalIdx}" title="Xóa phòng" onclick="event.stopPropagation()" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
+          <button data-del-room="${globalIdx}" title="${App.ui.t('Xóa phòng')}" onclick="event.stopPropagation()" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
           </button>
         </div>
@@ -1477,26 +1477,26 @@
         const totalKW=rooms.reduce((s,r)=>s+(r._coil?.qCoilKW||0),0);
         const hasErr=rooms.some(r=>r._valid?.status==='red');
         const hasWarn=rooms.some(r=>r._valid?.status==='yellow');
-        const badge=hasErr?'<span style="color:#f87171;font-size:10px">● LỖI</span>':hasWarn?'<span style="color:#fbbf24;font-size:10px">● CẢNH BÁO</span>':'<span style="color:#34d399;font-size:10px">✓ OK</span>';
+        const badge=hasErr?`<span style="color:#f87171;font-size:10px">● ${App.ui.t('LỖI')}</span>`:hasWarn?`<span style="color:#fbbf24;font-size:10px">● ${App.ui.t('CẢNH BÁO')}</span>`:'<span style="color:#34d399;font-size:10px">✓ OK</span>';
         const roomRows=rooms.length===0
-          ?`<div style="padding:20px;text-align:center;color:#3a5470;font-size:12px">Chưa có phòng nào · <button data-add-room-floor="${fl.id}" style="color:#34d399;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600">+ Thêm phòng</button></div>`
+          ?`<div style="padding:20px;text-align:center;color:#3a5470;font-size:12px">${App.ui.t('Chưa có phòng nào')} · <button data-add-room-floor="${fl.id}" style="color:#34d399;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600">+ ${App.ui.t('Thêm phòng')}</button></div>`
           :rooms.map((r,ri)=>this._roomRowHtml(r,ri,fl.id)).join('');
         return `
         <div class="floor-group" data-floor-id="${fl.id}" style="margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #1a3050">
           <div class="floor-header" style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(90deg,#0d2038 0%,#091825 100%);border-bottom:1px solid #1a3050;min-height:44px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <input data-floor-rename="${fl.id}" value="${fl.name}" style="background:none;border:none;color:#c2d4e2;font-weight:700;font-size:13px;outline:none;min-width:80px;max-width:160px;padding:2px 4px;border-radius:4px;cursor:text" onclick="event.stopPropagation()" title="Nhấp để đổi tên tầng">
-            <span style="color:#3a5470;font-size:11px">${rooms.length} phòng</span>
+            <input data-floor-rename="${fl.id}" value="${fl.name}" style="background:none;border:none;color:#c2d4e2;font-weight:700;font-size:13px;outline:none;min-width:80px;max-width:160px;padding:2px 4px;border-radius:4px;cursor:text" onclick="event.stopPropagation()" title="${App.ui.t('Nhấp để đổi tên tầng')}">
+            <span style="color:#3a5470;font-size:11px">${App.ui.t('{n} phòng',{n:rooms.length})}</span>
             ${totalKW>0?`<span style="color:#22d3ee;font-size:12px;font-family:monospace;font-weight:600">${totalKW.toFixed(1)} kW</span>`:''}
             ${badge}
             <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
               <button data-add-room-floor="${fl.id}" style="display:flex;align-items:center;gap:4px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#34d399;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm phòng
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm phòng')}
               </button>
-              <button data-copy-floor="${fl.id}" title="Copy toàn bộ tầng" style="display:flex;align-items:center;gap:4px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy tầng
+              <button data-copy-floor="${fl.id}" title="${App.ui.t('Copy toàn bộ tầng')}" style="display:flex;align-items:center;gap:4px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>${App.ui.t('Copy tầng')}
               </button>
-              ${floors.length>1?`<button data-del-floor="${fl.id}" title="Xóa tầng (các phòng sẽ chuyển về tầng còn lại)" style="background:none;border:1px solid #1e3050;border-radius:5px;color:#3a5470;cursor:pointer;padding:5px;display:flex;align-items:center">
+              ${floors.length>1?`<button data-del-floor="${fl.id}" title="${App.ui.t('Xóa tầng (các phòng sẽ chuyển về tầng còn lại)')}" style="background:none;border:1px solid #1e3050;border-radius:5px;color:#3a5470;cursor:pointer;padding:5px;display:flex;align-items:center">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
               </button>`:''}
             </div>
@@ -1506,7 +1506,7 @@
       }).join('')+`
       <button id="btn-add-floor" style="display:flex;align-items:center;gap:6px;background:rgba(56,189,248,.06);border:1px dashed #1a3a55;color:#38bdf8;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:600;width:100%;justify-content:center;cursor:pointer;margin-top:4px">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Thêm tầng mới
+        ${App.ui.t('Thêm tầng mới')}
       </button>`;
     },
 
@@ -1522,8 +1522,8 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
           <h2 class="font-semibold text-base flex items-center gap-2">
             <i data-lucide="thermometer" class="w-5 h-5 text-amber-400"></i>
-            Phụ Tải Nhiệt & Phân Phối Gió
-            <span class="text-[11px] text-slate-500 font-normal">${this.R().length} phòng · ${this.G().length} nhóm thiết bị</span>
+            ${App.ui.t('Phụ Tải Nhiệt & Phân Phối Gió')}
+            <span class="text-[11px] text-slate-500 font-normal">${App.ui.t('{n} phòng',{n:this.R().length})} · ${App.ui.t('{n} nhóm thiết bị',{n:this.G().length})}</span>
           </h2>
           <div class="flex gap-2 flex-wrap">
             <select id="hl-calcmode" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
@@ -1537,23 +1537,23 @@
         <!-- Climate -->
         ${App.ui.panelShell('hl-climate','Điều kiện khí hậu thiết kế','cloud',`
           <div style="margin-bottom:12px">
-            <label>Tỉnh/TP (T môi trường ống — kiểm tra đọng sương)</label>
+            <label>${App.ui.t('Tỉnh/TP (T môi trường ống — kiểm tra đọng sương)')}</label>
             <select data-cf="provinceId" style="width:100%">
-              <option value="">── Chọn tỉnh/thành để tự điền T, RH ──</option>
+              <option value="">── ${App.ui.t('Chọn tỉnh/thành để tự điền T, RH')} ──</option>
               ${(App.data.climateSample||[]).map(c=>`<option value="${c.province}" ${cl.provinceId===c.province?'selected':''}>${c.province} (tv=${c.tv}°C / RH=${c.rh}%)</option>`).join('')}
             </select>
-            ${cl.provinceId?`<p style="font-size:10px;color:#f59e0b;margin-top:3px">Số liệu khí hậu theo QCVN 02:2022/BXD.</p>`:''}
+            ${cl.provinceId?`<p style="font-size:10px;color:#f59e0b;margin-top:3px">${App.ui.t('Số liệu khí hậu theo QCVN 02:2022/BXD.')}</p>`:''}
           </div>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div><label>T ngoài (°C)</label>${this.cfInp('tOut',cl.tOut,'35')}</div>
-            <div><label>RH ngoài (%)</label>${this.cfInp('rhOut',cl.rhOut,'80')}</div>
-            <div><label>T trong (°C)</label>${this.cfInp('tIn',cl.tIn,'22')}</div>
-            <div><label>RH trong (%)</label>${this.cfInp('rhIn',cl.rhIn,'55')}</div>
-            <div><label>Cao độ (m)</label>${this.cfInp('elevationM',cl.elevationM,'0')}</div>
+            <div><label>${App.ui.t('T ngoài (°C)')}</label>${this.cfInp('tOut',cl.tOut,'35')}</div>
+            <div><label>${App.ui.t('RH ngoài (%)')}</label>${this.cfInp('rhOut',cl.rhOut,'80')}</div>
+            <div><label>${App.ui.t('T trong (°C)')}</label>${this.cfInp('tIn',cl.tIn,'22')}</div>
+            <div><label>${App.ui.t('RH trong (%)')}</label>${this.cfInp('rhIn',cl.rhIn,'55')}</div>
+            <div><label>${App.ui.t('Cao độ (m)')}</label>${this.cfInp('elevationM',cl.elevationM,'0')}</div>
           </div>
           <div class="mt-2 pt-2 border-t border-slate-800/60 text-[11px] font-mono-data text-slate-400 flex flex-wrap gap-4">
-            <span>Ngoài: h=<span class="text-cyan-300">${psyOut.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-cyan-300">${psyOut.dGperKg.toFixed(1)}</span> g/kg · Td=<span class="text-cyan-300">${psyOut.dewPointC.toFixed(1)}</span>°C</span>
-            <span>Trong: h=<span class="text-emerald-300">${psyIn.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-emerald-300">${psyIn.dGperKg.toFixed(1)}</span> g/kg · P_atm=<span class="text-emerald-300">${psyOut.pAtmKPa.toFixed(3)}</span> kPa</span>
+            <span>${App.ui.t('Ngoài:')} h=<span class="text-cyan-300">${psyOut.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-cyan-300">${psyOut.dGperKg.toFixed(1)}</span> g/kg · Td=<span class="text-cyan-300">${psyOut.dewPointC.toFixed(1)}</span>°C</span>
+            <span>${App.ui.t('Trong:')} h=<span class="text-emerald-300">${psyIn.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-emerald-300">${psyIn.dGperKg.toFixed(1)}</span> g/kg · P_atm=<span class="text-emerald-300">${psyOut.pAtmKPa.toFixed(3)}</span> kPa</span>
           </div>
         `)}
         <!-- Nhóm thiết bị -->
@@ -1563,10 +1563,10 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
             <h3 style="font-size:13px;font-weight:600;color:#c2d4e2;display:flex;align-items:center;gap:8px">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="14" rx="1.5"/><rect width="7" height="7" x="3" y="14" rx="1.5"/></svg>
-              Dự án · ${(App.state.floors||[]).length} tầng · ${this.R().length} phòng
+              ${App.ui.t('Dự án')} · ${App.ui.t('{n} tầng',{n:(App.state.floors||[]).length})} · ${App.ui.t('{n} phòng',{n:this.R().length})}
             </h3>
             <button id="hl-recalc-btn-main" style="display:flex;align-items:center;gap:5px;background:#059669;color:white;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>Tính tải tất cả
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>${App.ui.t('Tính tải tất cả')}
             </button>
           </div>
           ${this._floorsHtml()}
@@ -1578,7 +1578,7 @@
         <!-- Results -->
         <div id="hl-results" class="bg-panel-800/60 border border-slate-800 rounded-xl p-4">
           <div class="text-xs text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="info" class="w-3.5 h-3.5"></i>Bấm "Tính tải" để tính toán phụ tải và phân phối gió tất cả phòng.
+            <i data-lucide="info" class="w-3.5 h-3.5"></i>${App.ui.t('Bấm "Tính tải" để tính toán phụ tải và phân phối gió tất cả phòng.')}
           </div>
         </div>
       </div>`;
