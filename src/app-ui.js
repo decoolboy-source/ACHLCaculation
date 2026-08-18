@@ -572,7 +572,7 @@
           // "Tính ống gió" ra kết quả ngay, không cần biết phải tự nhập vận tốc trước.
           App.state.branches.push({
             id:'b'+Date.now().toString(36),
-            name:(g.equipType||'AHU')+' '+g.name+' - Nhánh '+(App.state.branches.filter(b=>b.equipGroupId===gid).length+1),
+            name:(g.equipType||'AHU')+' '+g.name+' - '+App.ui.t('Nhánh {n}',{n:App.state.branches.filter(b=>b.equipGroupId===gid).length+1}),
             parentId:'', equipGroupId:gid,
             qM3h:null, vType: isFirst?'mainDuct':'branchDuct', vMs: isFirst?7:3.75,
             shape:'rect', materialId:'galv', lengthM:10,
@@ -580,7 +580,7 @@
             filterStageId:'', fittingsZeta:0.8
           });
           App.admin.autoSave(); this.render();
-          App.ui.toast('ok','Đã thêm nhánh cho '+(g.equipType||'AHU')+' '+g.name+' — nhập Q (m³/h) rồi bấm Tính ống gió');
+          App.ui.toast('ok',App.ui.t('Đã thêm nhánh cho {equip} {name} — nhập Q (m³/h) rồi bấm Tính ống gió',{equip:g.equipType||'AHU',name:g.name}));
         });
       });
       root.querySelector('#btn-import-hl-append')?.addEventListener('click', ()=>this._doImportHL(false));
@@ -1407,17 +1407,17 @@
     addFloor(){
       const F=this.FL();
       const max=Math.max(0,...F.map(f=>f.order||0));
-      F.push({id:'fl'+Date.now().toString(36),name:'Tầng '+(F.length+1),order:max+1});
+      F.push({id:'fl'+Date.now().toString(36),name:App.ui.t('Tầng {n}',{n:F.length+1}),order:max+1});
       this.save(); this.render();
     },
     deleteFloor(fid){
-      if(this.FL().length<=1){ App.ui.toast('warn','Phải có ít nhất 1 tầng'); return; }
-      const flName=this.FL().find(f=>f.id===fid)?.name||'tầng';
+      if(this.FL().length<=1){ App.ui.toast('warn',App.ui.t('Phải có ít nhất 1 tầng')); return; }
+      const flName=this.FL().find(f=>f.id===fid)?.name||App.ui.t('tầng');
       const cnt=this.R().filter(r=>r.floorId===fid).length;
       App.state.hlRooms=this.R().filter(r=>r.floorId!==fid);
       App.state.floors=this.FL().filter(f=>f.id!==fid);
       this.save(); this.render();
-      App.ui.toast('ok','Đã xóa '+flName+' và '+cnt+' phòng');
+      App.ui.toast('ok',App.ui.t('Đã xóa {name} và {n} phòng',{name:flName,n:cnt}));
     },
     addRoomToFloor(floorId){
       const F=this.FL().find(f=>f.id===floorId);
@@ -2703,19 +2703,19 @@
         const t=this.PT()[i]; if(!t) return;
         const roomSel=root.querySelector(`[data-pt-room="${i}"]`);
         const roomId=roomSel?.value||null;
-        if(!roomId){ App.ui.toast('warn','Chọn phòng trước khi thêm từ mẫu.'); return; }
+        if(!roomId){ App.ui.toast('warn',App.ui.t('Chọn phòng trước khi thêm từ mẫu.')); return; }
         const {id,...spec}=t;
         this.P().push({...spec, id:this.uid(), roomId});
         this.save(); this.render();
-        App.ui.toast('ok',`Đã thêm tải ký sinh "${t.name||''}" vào phòng đã chọn.`);
+        App.ui.toast('ok',App.ui.t('Đã thêm tải ký sinh "{name}" vào phòng đã chọn.',{name:t.name||''}));
       }));
       root.querySelectorAll('[data-psave-template]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-psave-template'));
         const p=this.P()[i]; if(!p) return;
         const {id,roomId,_qW,...spec}=p;
-        this.PT().push({...spec, id:this.uid(), name:p.name||'Mẫu tải ký sinh '+(this.PT().length+1)});
+        this.PT().push({...spec, id:this.uid(), name:p.name||App.ui.t('Mẫu tải ký sinh {n}',{n:this.PT().length+1})});
         this.save(); this.render();
-        App.ui.toast('ok','Đã lưu thành mẫu — xem ở khối "Mẫu tải ký sinh" phía trên.');
+        App.ui.toast('ok',App.ui.t('Đã lưu thành mẫu — xem ở khối "Mẫu tải ký sinh" phía trên.'));
       }));
     },
 
@@ -2723,7 +2723,7 @@
     _drawerRoomIdx: -1,
     openDrawer(roomIdx){
       try{ return this._openDrawer_impl(roomIdx); }
-      catch(e){ console.warn('[MultiHVAC] openDrawer error:',e.message); App.ui.toast('err','Không mở được form phòng: '+e.message.slice(0,60)); }
+      catch(e){ console.warn('[MultiHVAC] openDrawer error:',e.message); App.ui.toast('err',App.ui.t('Không mở được form phòng:')+' '+e.message.slice(0,60)); }
     },
     _openDrawer_impl(roomIdx){
       const r=this.R()[roomIdx]; if(!r) return;
@@ -2813,7 +2813,7 @@
     },
     saveAndCloseDrawer(){
       this.save();
-      App.ui.toast('ok','Đã lưu phòng');
+      App.ui.toast('ok',App.ui.t('Đã lưu phòng'));
       this.closeDrawer();
       this.render(); // Refresh room row để hiển thị kết quả mới
     },
@@ -2931,10 +2931,10 @@
         this._updateDrawerKPI(r);
         const partWarnCount=(r._partitionWarnings||[]).length;
         App.ui.toast(worstSev!=='pass'?'warn':'ok',
-          'Tính xong · Q_coil='+(coil.qCoilKW?.toFixed(2)||'?')+' kW'
-          +(worstSev==='red'?` · ❌ ${allFlags.filter(f=>f.severity==='error'||f.level==='red').length} lỗi cần xử lý`:'')
-          +(worstSev==='yellow'?` · ⚠ ${allFlags.filter(f=>f.severity==='warn'||f.level==='yellow').length} cảnh báo`:'')
-          +(partWarnCount?` · ⚠ ${partWarnCount} cảnh báo vách ngăn (xem chi tiết trong panel Vách ngăn)`:''));
+          App.ui.t('Tính xong · Q_coil={q} kW',{q:coil.qCoilKW?.toFixed(2)||'?'})
+          +(worstSev==='red'?' · '+App.ui.t('❌ {n} lỗi cần xử lý',{n:allFlags.filter(f=>f.severity==='error'||f.level==='red').length}):'')
+          +(worstSev==='yellow'?' · '+App.ui.t('⚠ {n} cảnh báo',{n:allFlags.filter(f=>f.severity==='warn'||f.level==='yellow').length}):'')
+          +(partWarnCount?' · '+App.ui.t('⚠ {n} cảnh báo vách ngăn (xem chi tiết trong panel Vách ngăn)',{n:partWarnCount}):''));
         this.save(); this.render();
         // FIX: đồng bộ khối preview Q_cấp/Q_tươi/Q_tuần hoàn/ACH thực ở CUỐI form —
         // khối đó đọc r._airflow tại thời điểm HTML được vẽ, không tự cập nhật khi
@@ -2944,7 +2944,7 @@
         // — khiến 2 nơi hiện 2 con số khác nhau dù cùng 1 phòng. Vẽ lại toàn bộ drawer
         // ngay sau khi tính để cả 2 khối luôn khớp nhau tức thì.
         this._reRenderDrawer();
-      }catch(e){ App.ui.toast('err','Lỗi tính: '+e.message.slice(0,50)); }
+      }catch(e){ App.ui.toast('err',App.ui.t('Lỗi tính:')+' '+e.message.slice(0,50)); }
     },
     _updateDrawerKPI(r){
       const kpi=document.getElementById('room-drawer-kpi');
@@ -3084,7 +3084,7 @@
       // Áp dụng U vào phòng
       body.querySelectorAll('[data-ucalc-apply]').forEach(btn=>{
         btn.addEventListener('click', e=>{ e.stopPropagation();
-          if(!r.wallLayers?.length){ App.ui.toast('warn','Thêm ít nhất 1 lớp vật liệu'); return; }
+          if(!r.wallLayers?.length){ App.ui.toast('warn',App.ui.t('Thêm ít nhất 1 lớp vật liệu')); return; }
           try{
             const res=App.calc.calcULayered({layers:r.wallLayers, includeFilms:true});
             if(res.U){
@@ -3097,14 +3097,14 @@
               // thì báo rõ trong toast luôn — trước đây áp dụng U vẫn "thành công" dù 1 lớp
               // đã bị âm thầm loại khỏi phép tính, người dùng không biết để sửa lại.
               if(res.warnings?.length){
-                App.ui.toast('warn','Đã áp U = '+res.U.toFixed(4)+' W/m²K — NHƯNG có '+res.warnings.length+' cảnh báo, xem chi tiết trong bảng lớp vật liệu');
+                App.ui.toast('warn',App.ui.t('Đã áp U = {u} W/m²K — NHƯNG có {n} cảnh báo, xem chi tiết trong bảng lớp vật liệu',{u:res.U.toFixed(4),n:res.warnings.length}));
               } else {
-                App.ui.toast('ok','Đã áp U = '+res.U.toFixed(4)+' W/m²K');
+                App.ui.toast('ok',App.ui.t('Đã áp U = {u} W/m²K',{u:res.U.toFixed(4)}));
               }
             } else {
-              App.ui.toast('err','Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)');
+              App.ui.toast('err',App.ui.t('Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)'));
             }
-          }catch(err){ App.ui.toast('err','Lỗi tính U: '+err.message); }
+          }catch(err){ App.ui.toast('err',App.ui.t('Lỗi tính U:')+' '+err.message); }
         });
       });
       refreshU(); // Initial display
@@ -3227,7 +3227,7 @@
             const dpEl=body.querySelector('[data-rf="deltaPPa"]');
             if(achEl) achEl.value=r.achApplied;
             if(dpEl)  dpEl.value=r.deltaPPa;
-            App.ui.toast('ok','ACH='+r.achApplied+' · ΔP='+r.deltaPPa+'Pa từ '+r.classSystem+' '+r.classCode);
+            App.ui.toast('ok',App.ui.t('ACH={ach} · ΔP={dp}Pa từ {system} {code}',{ach:r.achApplied,dp:r.deltaPPa,system:r.classSystem,code:r.classCode}));
           }
           r._calcStale=true; hl.save(); hl._updateStaleBanner(r);
         });
@@ -3398,7 +3398,7 @@
             if(r.groupId){
               const curGroup=this.G().find(g=>g.id===r.groupId);
               const stillOk = curGroup && curGroup.equipType===val;
-              if(!stillOk){ r.groupId=''; App.ui.toast('warn','Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "'+val+'"'); }
+              if(!stillOk){ r.groupId=''; App.ui.toast('warn',App.ui.t('Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "{val}"',{val})); }
             }
             this.save();
             this._reRenderDrawer();
@@ -3449,11 +3449,11 @@
           const idx=parseInt(btn.getAttribute('data-copy-room'));
           const src=this.R()[idx]; if(!src) return;
           const copy=JSON.parse(JSON.stringify(src));
-          copy.id=this.uid(); copy.name=(src.name||'Phòng')+' (copy)';
+          copy.id=this.uid(); copy.name=(src.name||App.ui.t('Phòng'))+' (copy)';
           delete copy._coil; delete copy._ev; delete copy._airflow;
           delete copy._af; delete copy._valid; delete copy._flags;
           this.R().splice(idx+1,0,copy); this.save(); this.render();
-          App.ui.toast('ok','Đã copy: '+copy.name);
+          App.ui.toast('ok',App.ui.t('Đã copy: {name}',{name:copy.name}));
         });
       });
       // Mở room drawer khi click vào room row (event delegation thay inline onclick)
@@ -3464,7 +3464,7 @@
             this.openDrawer(idx);
           }catch(e){
             console.warn('[MultiHVAC] openDrawer error:',e.message);
-            App.ui.toast('err','Lỗi mở form phòng: '+e.message.slice(0,50));
+            App.ui.toast('err',App.ui.t('Lỗi mở form phòng:')+' '+e.message.slice(0,50));
           }
         });
       });
@@ -3485,7 +3485,7 @@
             this.R().push(copy);
           });
           this.save(); this.render();
-          App.ui.toast('ok','Đã copy '+srcFloor.name+' ('+srcRooms.length+' phòng)');
+          App.ui.toast('ok',App.ui.t('Đã copy {name} ({n} phòng)',{name:srcFloor.name,n:srcRooms.length}));
         });
       });
       // Thêm phòng vào tầng cụ thể
@@ -3723,7 +3723,7 @@
             if(f==='equipType'&&this.R()[i].groupId){
               const curGroup=this.G().find(g=>g.id===this.R()[i].groupId);
               const stillOk = curGroup && curGroup.equipType===val;
-              if(!stillOk){ this.R()[i].groupId=''; App.ui.toast('warn','Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "'+val+'"'); }
+              if(!stillOk){ this.R()[i].groupId=''; App.ui.toast('warn',App.ui.t('Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "{val}"',{val})); }
             }
             this.save();
             if(RERENDER_FIELDS.includes(f)) this.render();
@@ -3952,14 +3952,14 @@
               r.wallTypeId=''; // clear wall type to use custom U
               this.save(); this.render();
               if(result.warnings?.length){
-                App.ui.toast('warn',`Đã áp U = ${result.U.toFixed(4)} W/m²K vào phòng "${r.name||'?'}" — NHƯNG có ${result.warnings.length} cảnh báo, xem chi tiết trong bảng lớp vật liệu`);
+                App.ui.toast('warn',App.ui.t('Đã áp U = {u} W/m²K vào phòng "{name}" — NHƯNG có {n} cảnh báo, xem chi tiết trong bảng lớp vật liệu',{u:result.U.toFixed(4),name:r.name||'?',n:result.warnings.length}));
               } else {
-                App.ui.toast('ok',`Đã áp U = ${result.U.toFixed(4)} W/m²K vào phòng "${r.name||'?'}"`);
+                App.ui.toast('ok',App.ui.t('Đã áp U = {u} W/m²K vào phòng "{name}"',{u:result.U.toFixed(4),name:r.name||'?'}));
               }
             } else {
-              App.ui.toast('err','Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)');
+              App.ui.toast('err',App.ui.t('Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)'));
             }
-          }catch(err){ App.ui.toast('err','Lỗi tính U: '+err.message); }
+          }catch(err){ App.ui.toast('err',App.ui.t('Lỗi tính U:')+' '+err.message); }
         });
       });
 
@@ -4005,19 +4005,19 @@
         const t=this.MT()[i]; if(!t) return;
         const roomSel=root.querySelector(`[data-mt-room="${i}"]`);
         const roomId=roomSel?.value||null;
-        if(!roomId){ App.ui.toast('warn','Chọn phòng trước khi thêm từ mẫu.'); return; }
+        if(!roomId){ App.ui.toast('warn',App.ui.t('Chọn phòng trước khi thêm từ mẫu.')); return; }
         this.M().push({id:this.uid(),name:t.name||'',pKw:t.pKw||5.5,qty:t.qty||1,
           method:t.method||'A',position:t.position||'TH1',FL:1,FU:1,hasVFD:!!t.hasVFD,roomId});
         this.save(); this.render();
-        App.ui.toast('ok',`Đã thêm motor "${t.name||''}" vào phòng đã chọn.`);
+        App.ui.toast('ok',App.ui.t('Đã thêm motor "{name}" vào phòng đã chọn.',{name:t.name||''}));
       }));
       root.querySelectorAll('[data-msave-template]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-msave-template'));
         const m=this.M()[i]; if(!m) return;
-        this.MT().push({id:this.uid(),name:m.name||'Mẫu motor '+(this.MT().length+1),
+        this.MT().push({id:this.uid(),name:m.name||App.ui.t('Mẫu motor {n}',{n:this.MT().length+1}),
           pKw:m.pKw||5.5,qty:m.qty||1,method:m.method||'A',position:m.position||'TH1',hasVFD:!!m.hasVFD});
         this.save(); this.render();
-        App.ui.toast('ok','Đã lưu thành mẫu — xem ở khối "Mẫu Motor" phía trên.');
+        App.ui.toast('ok',App.ui.t('Đã lưu thành mẫu — xem ở khối "Mẫu Motor" phía trên.'));
       }));
       root.querySelectorAll('tr[data-mi]').forEach(tr=>{
         const i=parseInt(tr.getAttribute('data-mi'));
@@ -4043,7 +4043,7 @@
 
     // ── recalc() — tính toán đầy đủ tất cả phòng ────────────────────────────
     recalc(){
-      App.ui.setStatus('Đang tính phụ tải nhiệt...');
+      App.ui.setStatus(App.ui.t('Đang tính phụ tải nhiệt...'));
       try{
         const C=App.calc; const cl=this.CL();
         const psyOut=C.calcPsychro(cl.tOut,cl.rhOut,cl.elevationM||0);
@@ -4110,8 +4110,8 @@
             const Q_sup=volM3*ach;
             airflow={Q_supply:Q_sup,Q_fresh:Q_sup*0.2,Q_recirculation:Q_sup*0.8,
                      Q_return:Q_sup*0.8,Q_pressurization:0,Q_people_min:0,
-                     ACH_actual:ach,freshPct:20,modeNote:'Fallback generic',
-                     stdRef:'',warnings:[{level:'yellow',msg:'calcBuildingTypeAirflow error: '+e.message}]};
+                     ACH_actual:ach,freshPct:20,modeNote:App.ui.t('Fallback generic'),
+                     stdRef:'',warnings:[{level:'yellow',msg:App.ui.t('calcBuildingTypeAirflow error:')+' '+e.message}]};
           }
           r._airflow=airflow;
 
@@ -4233,11 +4233,11 @@
         this._renderResults(Q_motor_total/1000, paraList_all, valid, groupResults, fcuRooms);
         this._updateValidBadge(valid);
         this.save();
-        App.ui.setStatus(`Tính xong ${this.R().length} phòng · ${groups.length} nhóm.`);
-        App.ui.toast('ok',`${this.R().length} phòng · ESP tổng xem kết quả · ${valid.flags.length} cờ validation.`);
+        App.ui.setStatus(App.ui.t('Tính xong {n} phòng · {g} nhóm.',{n:this.R().length,g:groups.length}));
+        App.ui.toast('ok',App.ui.t('{n} phòng · ESP tổng xem kết quả · {f} cờ validation.',{n:this.R().length,f:valid.flags.length}));
       }catch(err){
-        App.ui.toast('err','Lỗi: '+err.message);
-        App.ui.setStatus('Lỗi'); console.error(err);
+        App.ui.toast('err',App.ui.t('Lỗi:')+' '+err.message);
+        App.ui.setStatus(App.ui.t('Lỗi')); console.error(err);
       }
     },
 
@@ -5048,7 +5048,7 @@
         this.closeModal();
         App.ui.renderAllTabs();
         this.autoSave(true);
-        App.ui.toast('ok','Đã tạo dự án mới.');
+        App.ui.toast('ok',App.ui.t('Đã tạo dự án mới.'));
       });
     },
 
@@ -5064,7 +5064,7 @@
       App.state.branches    = p.branches || [];
       App.state.results     = p.results || {};
       // ── restore heat load data ──
-      App.state.floors     = p.floors     || [{id:'fl1',name:'Tầng 1',order:1}];
+      App.state.floors     = p.floors     || [{id:'fl1',name:App.ui.t('Tầng {n}',{n:1}),order:1}];
       App.state.hlRooms    = p.hlRooms    || [];
       App.state.hlMotors   = p.hlMotors   || [];
       App.state.hlParasitic= p.hlParasitic|| [];
@@ -5074,16 +5074,16 @@
       App.state.hlMotorTemplates = p.hlMotorTemplates || [];
       App.state.hlParaTemplates  = p.hlParaTemplates  || [];
       App.ui.renderAllTabs();
-      App.ui.toast('ok','Đã nạp dự án: '+(p.inputs?.projectName||p.id)+' · '+(p.roomCount||0)+' phòng nhiệt tải');
+      App.ui.toast('ok',App.ui.t('Đã nạp dự án: {name} · {n} phòng nhiệt tải',{name:p.inputs?.projectName||p.id,n:p.roomCount||0}));
     },
 
     confirmDeleteProject(id){
       this.openModal(`
-        <h3 class="font-medium mb-3 text-red-400">Xoá dự án?</h3>
-        <p class="text-sm text-slate-400 mb-4">Hành động này không thể hoàn tác.</p>
+        <h3 class="font-medium mb-3 text-red-400">${App.ui.t('Xoá dự án?')}</h3>
+        <p class="text-sm text-slate-400 mb-4">${App.ui.t('Hành động này không thể hoàn tác.')}</p>
         <div class="flex justify-end gap-2">
-          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">Hủy</button>
-          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-red-600 rounded-lg">Xoá</button>
+          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">${App.ui.t('Hủy')}</button>
+          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-red-600 rounded-lg">${App.ui.t('Xoá')}</button>
         </div>
       `);
       document.getElementById('modal-cancel').addEventListener('click', ()=> this.closeModal());
@@ -5091,7 +5091,7 @@
         await App.db.deleteProject(id);
         this.closeModal();
         App.ui.admin.render();
-        App.ui.toast('ok','Đã xoá dự án.');
+        App.ui.toast('ok',App.ui.t('Đã xoá dự án.'));
       });
     },
 
@@ -5102,16 +5102,16 @@
       const a = document.createElement('a');
       a.href = url; a.download = 'multihvac_backup_'+Date.now()+'.json'; a.click();
       URL.revokeObjectURL(url);
-      App.ui.toast('ok','Đã export dữ liệu .json');
+      App.ui.toast('ok',App.ui.t('Đã export dữ liệu .json'));
     },
     async importJSON(file){
       if(!file) return;
       try{
         const text = await file.text();
         const count = await App.db.importAllJSON(text);
-        App.ui.toast('ok', `Đã nhập ${count} dự án.`);
+        App.ui.toast('ok', App.ui.t('Đã nhập {n} dự án.',{n:count}));
         App.ui.admin.render();
-      }catch(err){ App.ui.toast('err','Lỗi import: '+err.message); }
+      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi import:')+' '+err.message); }
     },
     importClimateFile(file){
       if(!file) return;
@@ -5126,11 +5126,11 @@
             tv: parseFloat(r.tv||r['Tv']||0), tt: parseFloat(r.tt||r['Tt']||0),
             tn: parseFloat(r.tn||r['Tn']||0), rh: parseFloat(r.rh||r['RH']||0)
           })).filter(r=>r.province);
-          if(parsed.length===0) throw new Error('Không đọc được dòng dữ liệu hợp lệ.');
+          if(parsed.length===0) throw new Error(App.ui.t('Không đọc được dòng dữ liệu hợp lệ.'));
           App.data.climateSample = parsed;
-          App.ui.toast('ok', `Đã nhập ${parsed.length} dòng dữ liệu khí hậu.`);
+          App.ui.toast('ok', App.ui.t('Đã nhập {n} dòng dữ liệu khí hậu.',{n:parsed.length}));
           App.ui.admin.render();
-        }catch(err){ App.ui.toast('err','Lỗi đọc file: '+err.message); }
+        }catch(err){ App.ui.toast('err',App.ui.t('Lỗi đọc file:')+' '+err.message); }
       };
       reader.readAsBinaryString(file);
     }
@@ -5573,8 +5573,8 @@
           y += pageH;
         }
         pdf.save(`BaoCao_HVAC_${App.state.inputs.projectName||'Draft'}_${new Date().toISOString().slice(0,10)}.pdf`);
-        App.ui.toast('ok','Đã xuất PDF.');
-      }catch(err){ App.ui.toast('err','Lỗi xuất PDF: '+err.message); }
+        App.ui.toast('ok',App.ui.t('Đã xuất PDF.'));
+      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi xuất PDF:')+' '+err.message); }
     },
 
     exportXLSX(scope='all'){
@@ -5777,8 +5777,8 @@
         }
 
         XLSX.writeFile(wb, `BaoCao_HVAC_${I.projectName||'Draft'}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        App.ui.toast('ok',`Đã xuất Excel: ${rooms.length} phòng, ${(App.state.branches||[]).length} nhánh ống.`);
-      }catch(err){ App.ui.toast('err','Lỗi xuất Excel: '+err.message); }
+        App.ui.toast('ok',App.ui.t('Đã xuất Excel: {n} phòng, {b} nhánh ống.',{n:rooms.length,b:(App.state.branches||[]).length}));
+      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi xuất Excel:')+' '+err.message); }
     }
   };
 
