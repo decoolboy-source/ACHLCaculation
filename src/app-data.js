@@ -1620,6 +1620,29 @@ MATERIAL_RATES:{
         'Lỗi đọc file:':'File read error:', 'Đã xuất PDF.':'PDF exported.', 'Lỗi xuất PDF:':'PDF export error:',
         'Đã xuất Excel: {n} phòng, {b} nhánh ống.':'Excel exported: {n} room(s), {b} duct branch(es).',
         'Lỗi xuất Excel:':'Excel export error:',
+
+        // Heat Load calc engine (app-calc.js) — validation/diagnostics messages
+        'Phòng #{n}: Thiếu tên phòng':'Room #{n}: Missing room name',
+        'Phòng #{n}: Thiếu loại thiết bị':'Room #{n}: Missing equipment type',
+        'Phòng #{n} ({name}): Thiếu diện tích sàn':'Room #{n} ({name}): Missing floor area',
+        'Phòng "{name}": {warn}':'Room "{name}": {warn}',
+        'Phòng "{name}": ACH {ach} ngoài dải {min}-{max}':'Room "{name}": ACH {ach} outside the {min}-{max} range',
+        'Motor "{name}": FL={fl} < 0.5 — kiểm tra lại công suất':'Motor "{name}": FL={fl} < 0.5 — check the power rating',
+        'ACH {ach} < tiêu chuẩn tối thiểu {min} ({system} {code}). Nguồn: IEST-RP-CC012.2':'ACH {ach} < standard minimum {min} ({system} {code}). Source: IEST-RP-CC012.2',
+        'ACH {ach} > tiêu chuẩn tối đa {max} — không kinh tế':'ACH {ach} > standard maximum {max} — not economical',
+        'Tỷ lệ gió tươi {pct}% < {min}% khuyến nghị ({system} {code})':'Fresh air ratio {pct}% < {min}% recommended ({system} {code})',
+        'ΔP thiết kế {dp} Pa < tiêu chuẩn tối thiểu {min} Pa. Nguồn: EU GMP Annex 1 §4.24':'Design ΔP {dp} Pa < standard minimum {min} Pa. Source: EU GMP Annex 1 §4.24',
+        'Mật độ {d} m²/người < {min} m²/ng tối thiểu (ASHRAE 62.1)':'Density {d} m²/person < {min} m²/person minimum (ASHRAE 62.1)',
+        'Mật độ {d} m²/người quá dày (< 1.2 m²/ng)':'Density {d} m²/person is too crowded (< 1.2 m²/person)',
+        'LPD {v} W/m² vượt {max} W/m² (ASHRAE 90.1-2022)':'LPD {v} W/m² exceeds {max} W/m² (ASHRAE 90.1-2022)',
+        'Gió tươi {v} L/s/ng < {min} L/s/ng (ASHRAE 62.1-2022)':'Fresh air {v} L/s/person < {min} L/s/person (ASHRAE 62.1-2022)',
+        'ACH {v} < {min} ACH tối thiểu cho {bt}':'ACH {v} < {min} ACH minimum for {bt}',
+        'Phòng sạch phải có áp dương (ISO 14644-1)':'Cleanrooms must have positive pressure (ISO 14644-1)',
+        'Tỷ lệ gió tươi {pct}% < 10% (ASHRAE 62.1)':'Fresh air ratio {pct}% < 10% (ASHRAE 62.1)',
+        'ACH {ach} < khuyến nghị {min} ({ref})':'ACH {ach} < recommended {min} ({ref})',
+        'Gió tươi < yêu cầu ASHRAE 62.1':'Fresh air below the ASHRAE 62.1 requirement',
+        'ACH tổng đang đặt ({ach}) THẤP HƠN ACH gió tươi tối thiểu bắt buộc ({min} ACH, {ref}) — phải tăng ACH tổng lên ít nhất {min}':'Total ACH currently set ({ach}) is LOWER than the required minimum fresh-air ACH ({min} ACH, {ref}) — total ACH must be increased to at least {min}',
+        'Đã tick "Có thiết bị hút thải cục bộ" nhưng chưa nhập lưu lượng hút cho thiết bị nào — gió bù chưa được tính':'"Has local exhaust equipment" is checked but no extraction airflow has been entered for any equipment — makeup air has not been calculated',
       }
     }
   };
