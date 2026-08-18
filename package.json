@@ -2,6 +2,9 @@
   "name": "multihvac-calculator",
   "version": "1.0.0",
   "description": "Công cụ tính toán tải nhiệt, lưu lượng gió và ống gió cho Cleanroom, Data Center, Phòng điện",
+  "engines": {
+    "node": ">=22.22.2"
+  },
   "scripts": {
     "test": "node tests/run-all.js"
   },
