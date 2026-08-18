@@ -4751,7 +4751,7 @@
           <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead><tr style="background:#071325">
               <th style="padding:8px 12px;text-align:left;color:var(--text-mid);font-size:10px;text-transform:uppercase">${t('Tầng')}</th>
-              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">${t('Phòng')}</th>
+              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">${t('rooms_count_col')}</th>
               <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:right">${t('Q tổng')}</th>
               <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:right">${t('TB/phòng')}</th>
               <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">${t('Trạng thái')}</th>
@@ -5201,10 +5201,10 @@
         </div>
         <!-- Thông tin dự án -->
         <table style="width:100%;margin-bottom:12px;border-collapse:collapse;color:#111;">
-          <tr><td style="width:50%;padding:2px 0;color:#111;"><b>Khách hàng:</b> ${repClient}</td><td style="color:#111;"><b>Dự án:</b> ${I.projectName||'—'}</td></tr>
-          <tr><td style="color:#111;"><b>Địa chỉ:</b> ${I.address||'—'}</td><td style="color:#111;"><b>Kỹ sư thiết kế:</b> ${repEngineer}</td></tr>
-          <tr><td style="color:#111;"><b>Ngày:</b> ${repDate}</td><td style="color:#111;"><b>Mã dự án:</b> ${repCode}</td></tr>
-          ${cl.tOut?`<tr><td style="color:#111;"><b>Điều kiện thiết kế:</b> Ngoài ${cl.tOut}°C/${cl.rhOut}%RH</td><td style="color:#111;">Trong ${cl.tIn}°C/${cl.rhIn}%RH · Cao độ ${cl.elevationM||0}m</td></tr>`:''}
+          <tr><td style="width:50%;padding:2px 0;color:#111;"><b>${App.ui.t('Khách hàng:')}</b> ${repClient}</td><td style="color:#111;"><b>${App.ui.t('Dự án:')}</b> ${I.projectName||'—'}</td></tr>
+          <tr><td style="color:#111;"><b>${App.ui.t('Địa chỉ:')}</b> ${I.address||'—'}</td><td style="color:#111;"><b>${App.ui.t('Kỹ sư thiết kế:')}</b> ${repEngineer}</td></tr>
+          <tr><td style="color:#111;"><b>${App.ui.t('Ngày:')}</b> ${repDate}</td><td style="color:#111;"><b>${App.ui.t('Mã dự án:')}</b> ${repCode}</td></tr>
+          ${cl.tOut?`<tr><td style="color:#111;"><b>${App.ui.t('Điều kiện thiết kế:')}</b> ${App.ui.t('Ngoài')} ${cl.tOut}°C/${cl.rhOut}%RH</td><td style="color:#111;">${App.ui.t('Trong')} ${cl.tIn}°C/${cl.rhIn}%RH · ${App.ui.t('Cao độ')} ${cl.elevationM||0}m</td></tr>`:''}
         </table>
         <!-- Mức độ tin cậy thông số đầu vào — gộp từ các cảnh báo "dùng giá trị mặc định/
              tham khảo" đã có sẵn trong hệ thống (không cần thêm cơ chế theo dõi mới), theo
@@ -5214,30 +5214,31 @@
           const notes = [];
           const climateEntry = (App.data.climateSample||[]).find(c=>c.province===cl.provinceId);
           if(climateEntry?.borrowedFrom){
-            notes.push(`Dữ liệu khí hậu tỉnh <b>${climateEntry.province}</b> được MƯỢN từ trạm <b>${climateEntry.borrowedFrom}</b> do QCVN 02:2022/BXD không có trạm khí tượng riêng cho tỉnh này.`);
+            notes.push(App.ui.t('Dữ liệu khí hậu tỉnh <b>{province}</b> được MƯỢN từ trạm <b>{station}</b> do QCVN 02:2022/BXD không có trạm khí tượng riêng cho tỉnh này.',{province:climateEntry.province,station:climateEntry.borrowedFrom}));
           }
           const partitionDefaultCount = rooms.reduce((s,r)=>s+(r._partitionWarnings||[]).length,0);
           if(partitionDefaultCount>0){
-            notes.push(`${partitionDefaultCount} vách ngăn nội bộ đang dùng giá trị mặc định (U và/hoặc nhiệt độ phòng kề chưa nhập cụ thể) — xem chi tiết ở bảng Chẩn đoán &amp; Kiểm tra bên dưới.`);
+            notes.push(App.ui.t('{n} vách ngăn nội bộ đang dùng giá trị mặc định (U và/hoặc nhiệt độ phòng kề chưa nhập cụ thể) — xem chi tiết ở bảng Chẩn đoán &amp; Kiểm tra bên dưới.',{n:partitionDefaultCount}));
           }
           const exhaustEmptyCount = rooms.filter(r=>r._airflow?.warnings?.some(w=>w.code==='LOCAL_EXHAUST_EMPTY')).length;
           if(exhaustEmptyCount>0){
-            notes.push(`${exhaustEmptyCount} phòng đã khai báo có gió thải cục bộ nhưng chưa nhập đủ lưu lượng thiết bị.`);
+            notes.push(App.ui.t('{n} phòng đã khai báo có gió thải cục bộ nhưng chưa nhập đủ lưu lượng thiết bị.',{n:exhaustEmptyCount}));
           }
           const achDefaultCount = rooms.filter(r=>{
             const bt=(App.data.BUILDING_TYPES||[]).find(b=>b.id===r.buildingType);
             return bt && r.achApplied===bt.achDefault;
           }).length;
           if(achDefaultCount>0){
-            notes.push(`${achDefaultCount}/${rooms.length} phòng đang dùng ACH mặc định theo loại phòng (achDefault) — chưa được kỹ sư điều chỉnh riêng theo điều kiện thực tế dự án.`);
+            notes.push(App.ui.t('{n}/{total} phòng đang dùng ACH mặc định theo loại phòng (achDefault) — chưa được kỹ sư điều chỉnh riêng theo điều kiện thực tế dự án.',{n:achDefaultCount,total:rooms.length}));
           }
-          notes.push('Catalog thiết bị (FCU/AHU/PAU) trong app là dữ liệu tổng hợp tham khảo, không phải catalog thật của hãng nào — cần kỹ sư xác nhận với nhà sản xuất trước khi lên đơn hàng.');
+          notes.push(App.ui.t('Catalog thiết bị (FCU/AHU/PAU) trong app là dữ liệu tổng hợp tham khảo, không phải catalog thật của hãng nào — cần kỹ sư xác nhận với nhà sản xuất trước khi lên đơn hàng.'));
 
           const level = climateEntry?.borrowedFrom || partitionDefaultCount>2 ? 'CẦN THẬN TRỌNG' : (notes.length>1?'TRUNG BÌNH':'CAO');
           const levelColor = level==='CẦN THẬN TRỌNG'?'#dc2626':(level==='TRUNG BÌNH'?'#d97706':'#059669');
+          const levelLabel = App.ui.t(level==='CẦN THẬN TRỌNG'?'CẦN THẬN TRỌNG':(level==='TRUNG BÌNH'?'TRUNG BÌNH':'CAO'));
           return `<div style="background:#f8fafc;border:1px solid ${levelColor};border-left:4px solid ${levelColor};border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:10px;color:#111;">
-            <b style="color:${levelColor};">Mức độ tin cậy thông số đầu vào: ${level}</b>
-            ${level!=='CAO'?' — có dùng giá trị mặc định/tham khảo, khuyến nghị đối chiếu kỹ trước khi dùng cho hồ sơ chính thức.':' — phần lớn thông số đã được nhập cụ thể cho dự án này.'}
+            <b style="color:${levelColor};">${App.ui.t('Mức độ tin cậy thông số đầu vào:')} ${levelLabel}</b>
+            ${level!=='CAO'?' — '+App.ui.t('có dùng giá trị mặc định/tham khảo, khuyến nghị đối chiếu kỹ trước khi dùng cho hồ sơ chính thức.'):' — '+App.ui.t('phần lớn thông số đã được nhập cụ thể cho dự án này.')}
             <ul style="margin:4px 0 0;padding-left:16px;color:#111;">
               ${notes.map(n=>`<li style="margin:1px 0;color:#111;">${n}</li>`).join('')}
             </ul>
@@ -5257,25 +5258,25 @@
            'IEC 60034-30-1 IE3 (Hiệu suất động cơ)','ISO 6946:2017 (Tính U cấu tạo lớp)'
           ].forEach(s=>stdSet.add(s));
           if((App.state.branches||[]).length>0) stdSet.add('SMACNA HVAC Duct Construction Standards');
-          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Cơ sở thiết kế — Tiêu chuẩn áp dụng</h3>
+          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_design_basis')}</h3>
           <ul style="margin:0 0 10px;padding-left:16px;font-size:10px;columns:2;color:#111;">
             ${[...stdSet].sort().map(s=>`<li style="margin:1px 0;color:#111;">${s}</li>`).join('')}
           </ul>`;
         })()}
         ${hasHL?`
         <!-- KPI tổng hợp -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">KPI Tổng hợp Phụ Tải Nhiệt (${rooms.length} phòng)</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_kpi_title')} (${App.ui.t('{n} phòng',{n:rooms.length})})</h3>
         <table style="width:100%;border-collapse:collapse;margin-bottom:10px;color:#111;">
           <tr style="background:#f1f5f9;color:#111;">
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>Tổng lạnh coil</b></td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>${App.ui.t('Tổng lạnh coil')}</b></td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;"><b style="color:#b45309;">${totalCoilKW.toFixed(1)} kW = ${(totalCoilKW/3.517).toFixed(1)} TR</b></td>
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>Tổng gió cấp</b></td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>${App.ui.t('Tổng gió cấp')}</b></td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;"><b>${totalSupply.toFixed(0)} m³/h</b></td>
           </tr>
           <tr>
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Tổng gió tươi</td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Tổng gió tươi')}</td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;">${totalFresh.toFixed(0)} m³/h (${totalSupply>0?((totalFresh/totalSupply)*100).toFixed(0):0}%)</td>
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Kw/m² sàn</td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Kw/m² sàn')}</td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;">${totalFloor>0?(totalCoilKW/totalFloor*1000).toFixed(0):'-'} W/m²</td>
           </tr>
           ${(()=>{
@@ -5283,31 +5284,31 @@
             const totalMakeupRaw = rooms.reduce((s,r)=>s+(r._airflow?.Q_makeupRaw||0),0);
             if(totalLocalExhaust<=0) return '';
             return `<tr>
-              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Tổng gió thải cục bộ (thiết bị)</td>
+              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Tổng gió thải cục bộ (thiết bị)')}</td>
               <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#ea580c;">${totalLocalExhaust.toFixed(0)} m³/h</td>
-              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Trong đó gió bù thuần túy (không qua coil)</td>
+              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Trong đó gió bù thuần túy (không qua coil)')}</td>
               <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;">${totalMakeupRaw.toFixed(0)} m³/h</td>
             </tr>`;
           })()}
         </table>
         <!-- Bảng per-room -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Chi tiết phụ tải từng phòng (${rooms.length} phòng)</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_room_detail')} (${App.ui.t('{n} phòng',{n:rooms.length})})</h3>
         <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px;color:#111;">
           <thead><tr style="background:#1e293b;color:#fff;">
-            <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">Tên phòng</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Loại TB</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">S.sàn(m²)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">L_cấp(m³/h)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">L_hồi</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">L_tươi</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_hiện(kW)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_ẩn(kW)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_coil(kW)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Reheat</th>
+            <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">${App.ui.t('Tên phòng')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Loại TB')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('S.sàn(m²)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('L_cấp(m³/h)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('L_hồi')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('L_tươi')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_hiện(kW)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_ẩn(kW)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_coil(kW)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Reheat')}</th>
           </tr></thead>
-          <tbody>${roomTableRows||'<tr><td colspan="10" style="color:#111;">Chưa có dữ liệu</td></tr>'}</tbody>
+          <tbody>${roomTableRows||`<tr><td colspan="10" style="color:#111;">${App.ui.t('Chưa có dữ liệu')}</td></tr>`}</tbody>
           <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;">
-            <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">Tổng cộng</td>
+            <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">${App.ui.t('Tổng cộng')}</td>
             <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${totalFloor.toFixed(0)}</td>
             <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${totalSupply.toFixed(0)}</td>
             <td style="border:1px solid #ddd;padding:4px;color:#111;"></td>
@@ -5323,16 +5324,16 @@
              khảo. Dữ liệu lấy từ r._ev đã tính sẵn cho từng phòng (không cần tính lại) —
              chỉ cộng dồn theo từng thành phần: vách, mái, kính/bức xạ, người, đèn, gió
              tươi (chỉ FCU thường cộng thẳng), vách ngăn nội bộ. -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Phân tích tải nhiệt theo thành phần (toàn dự án)</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_load_breakdown')}</h3>
         ${(()=>{
           const sums = {
-            'Q1 Vách/tường':       rooms.reduce((s,r)=>s+(r._ev?.Q_wall||0),0),
-            'Q2 Mái':              rooms.reduce((s,r)=>s+(r._ev?.Q_roof||0),0),
-            'Q3 Kính/bức xạ':      rooms.reduce((s,r)=>s+(r._ev?.Q_solar||0),0),
-            'Q4 Người':            rooms.reduce((s,r)=>s+(r._ev?.Q_ps||0)+(r._ev?.Q_pl||0),0),
-            'Q5 Chiếu sáng':       rooms.reduce((s,r)=>s+(r._ev?.Q_light||0),0),
-            'Q6 Gió tươi (FCU thường)': rooms.reduce((s,r)=>s+(r._ev?.Q_fresh_s||0)+(r._ev?.Q_fresh_l||0),0),
-            'Q7 Vách ngăn nội bộ': rooms.reduce((s,r)=>s+(r._partitionDetails||[]).reduce((ps,d)=>ps+(d.Q_W||0),0),0),
+            [App.ui.t('Q1 Vách/tường')]:       rooms.reduce((s,r)=>s+(r._ev?.Q_wall||0),0),
+            [App.ui.t('Q2 Mái')]:              rooms.reduce((s,r)=>s+(r._ev?.Q_roof||0),0),
+            [App.ui.t('Q3 Kính/bức xạ')]:      rooms.reduce((s,r)=>s+(r._ev?.Q_solar||0),0),
+            [App.ui.t('Q4 Người')]:            rooms.reduce((s,r)=>s+(r._ev?.Q_ps||0)+(r._ev?.Q_pl||0),0),
+            [App.ui.t('Q5 Chiếu sáng')]:       rooms.reduce((s,r)=>s+(r._ev?.Q_light||0),0),
+            [App.ui.t('Q6 Gió tươi (FCU thường)')]: rooms.reduce((s,r)=>s+(r._ev?.Q_fresh_s||0)+(r._ev?.Q_fresh_l||0),0),
+            [App.ui.t('Q7 Vách ngăn nội bộ')]: rooms.reduce((s,r)=>s+(r._partitionDetails||[]).reduce((ps,d)=>ps+(d.Q_W||0),0),0),
           };
           const totalW = Object.values(sums).reduce((a,b)=>a+b,0);
           const rowsHtml = Object.entries(sums).map(([label,w])=>{
@@ -5340,11 +5341,11 @@
             return `<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${kw.toFixed(2)}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${pct.toFixed(1)}%</td></tr>`;
           }).join('');
           return `<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px;color:#111;">
-            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">Hạng mục</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">kW</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">%</th></tr></thead>
+            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">${App.ui.t('Hạng mục')}</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">kW</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">%</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
-            <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;"><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">Tổng tải phòng (trước hệ số an toàn thiết bị)</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${(totalW/1000).toFixed(2)}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">100%</td></tr></tfoot>
+            <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;"><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${App.ui.t('Tổng tải phòng (trước hệ số an toàn thiết bị)')}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${(totalW/1000).toFixed(2)}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">100%</td></tr></tfoot>
           </table>
-          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">* Bảng này là tổng tải nhiệt PHÒNG theo từng thành phần (ASHRAE Fundamentals Ch.18) — không nhất thiết bằng Tổng lạnh coil (Q_coil) ở trên, vì Q_coil của hệ AHU/PAU tính theo phương pháp enthalpy lưu lượng gió (không cộng thẳng tải phòng), và Q_coil còn gồm cả tải motor/thiết bị điện chưa tách theo phòng ở đây.</p>`;
+          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">${App.ui.t('* Bảng này là tổng tải nhiệt PHÒNG theo từng thành phần (ASHRAE Fundamentals Ch.18) — không nhất thiết bằng Tổng lạnh coil (Q_coil) ở trên, vì Q_coil của hệ AHU/PAU tính theo phương pháp enthalpy lưu lượng gió (không cộng thẳng tải phòng), và Q_coil còn gồm cả tải motor/thiết bị điện chưa tách theo phòng ở đây.')}</p>`;
         })()}
         `:''}
         ${(()=>{
@@ -5353,7 +5354,7 @@
           const eqRows=eqRooms.map(r=>{
             const q=r.equipType==='FCU_OA' ? (r._coil.qCoilFcuKW??r._coil.qCoilKW) : r._coil.qCoilKW;
             const eqSel=App.calc.selectEquipAuto({qCoilKW:q, equipType:r.equipType||'FCU', designMarginPct:10, preferType:'cassette'});
-            if(!eqSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${r.name||'—'}</td><td colspan="6" style="border:1px solid #ddd;padding:4px;color:#64748b;">VENT — không cần coil</td></tr>`;
+            if(!eqSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${r.name||'—'}</td><td colspan="6" style="border:1px solid #ddd;padding:4px;color:#64748b;">${App.ui.t('VENT — không cần coil')}</td></tr>`;
             return `<tr>
               <td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${r.name||'—'}</td>
               <td style="border:1px solid #ddd;padding:4px;text-align:center;color:#111;">${r.equipType}</td>
@@ -5365,25 +5366,25 @@
             </tr>`;
           }).join('');
           const totalCoil2=eqRooms.reduce((s,r)=>s+(r._coil?.qCoilKW||0),0);
-          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Bảng thiết bị lựa chọn (Equipment Schedule)</h3>
+          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_equipment_schedule')}</h3>
           <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:6px;color:#111;">
             <thead><tr style="background:#1e293b;color:#fff;">
-              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">Tên phòng</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Loại HT</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_coil(kW)</th>
-              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">Model đề xuất</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">SL</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Tổng CS(kW)</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">H.suất SD</th>
+              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">${App.ui.t('Tên phòng')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Loại HT')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_coil(kW)')}</th>
+              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">${App.ui.t('Model đề xuất')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('SL')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Tổng CS(kW)')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('H.suất SD')}</th>
             </tr></thead>
             <tbody>${eqRows}</tbody>
             <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;">
-              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="5">Tổng công suất thiết bị</td>
+              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="5">${App.ui.t('Tổng công suất thiết bị')}</td>
               <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#b45309;">${totalCoil2.toFixed(2)} kW</td>
               <td style="border:1px solid #ddd;padding:4px;color:#111;"></td>
             </tr></tfoot>
           </table>
-          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ Model đề xuất tham khảo catalog thị trường VN — kỹ sư cần xác nhận với nhà sản xuất trước khi chọn thiết bị chính thức.</p>`;
+          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ ${App.ui.t('Model đề xuất tham khảo catalog thị trường VN — kỹ sư cần xác nhận với nhà sản xuất trước khi chọn thiết bị chính thức.')}</p>`;
         })()}
         <!-- Bảng Quạt thông gió / Gió thải cục bộ — bổ sung theo đề xuất người dùng: bảng
              thiết bị lựa chọn ở trên chỉ lọc theo Q_coil>0 (thiết bị làm lạnh), nên MỌI phòng
@@ -5398,17 +5399,17 @@
             if(r.equipType==='VENT' && r._airflow?.Q_supply>0){
               const staticPa=r.espPa||150;
               const fanSel=App.calc.selectFanAuto({airflowM3h:r._airflow.Q_supply, staticPaRequired:staticPa, preferType:'axial'});
-              fanRows.push({room:r.name||'—', type:'VENT (thông gió chính)', flow:r._airflow.Q_supply, staticPa, fanSel});
+              fanRows.push({room:r.name||'—', type:App.ui.t('VENT (thông gió chính)'), flow:r._airflow.Q_supply, staticPa, fanSel});
             }
             if(r.hasLocalExhaustEquip && r._airflow?.Q_localExhaust>0){
               const staticPa=100;
               const fanSel=App.calc.selectFanAuto({airflowM3h:r._airflow.Q_localExhaust, staticPaRequired:staticPa, preferType:'wall_exhaust'});
-              fanRows.push({room:r.name||'—', type:'Gió thải cục bộ', flow:r._airflow.Q_localExhaust, staticPa, fanSel});
+              fanRows.push({room:r.name||'—', type:App.ui.t('Gió thải cục bộ'), flow:r._airflow.Q_localExhaust, staticPa, fanSel});
             }
           });
           if(!fanRows.length) return '';
           const rowsHtml=fanRows.map(fr=>{
-            if(!fr.fanSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${fr.room}</td><td style="border:1px solid #ddd;padding:4px;color:#111;">${fr.type}</td><td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${fr.flow.toFixed(0)}</td><td colspan="4" style="border:1px solid #ddd;padding:4px;color:#64748b;">Không tìm được quạt phù hợp trong catalog tham khảo — chọn thủ công</td></tr>`;
+            if(!fr.fanSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${fr.room}</td><td style="border:1px solid #ddd;padding:4px;color:#111;">${fr.type}</td><td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${fr.flow.toFixed(0)}</td><td colspan="4" style="border:1px solid #ddd;padding:4px;color:#64748b;">${App.ui.t('Không tìm được quạt phù hợp trong catalog tham khảo — chọn thủ công')}</td></tr>`;
             return `<tr>
               <td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${fr.room}</td>
               <td style="border:1px solid #ddd;padding:4px;color:#111;">${fr.type}</td>
@@ -5420,31 +5421,31 @@
             </tr>`;
           }).join('');
           const totalFlow=fanRows.reduce((s,fr)=>s+fr.flow,0);
-          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Bảng quạt thông gió / gió thải cục bộ</h3>
+          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('Bảng quạt thông gió / gió thải cục bộ')}</h3>
           <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:6px;color:#111;">
             <thead><tr style="background:#1e293b;color:#fff;">
-              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">Tên phòng</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Mục đích</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Lưu lượng(m³/h)</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Cột áp(Pa)</th>
-              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">Model quạt đề xuất</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">SL</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">H.suất SD</th>
+              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">${App.ui.t('Tên phòng')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Mục đích')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Lưu lượng(m³/h)')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Cột áp(Pa)')}</th>
+              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">${App.ui.t('Model quạt đề xuất')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('SL')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('H.suất SD')}</th>
             </tr></thead>
             <tbody>${rowsHtml}</tbody>
             <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;">
-              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">Tổng lưu lượng quạt</td>
+              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">${App.ui.t('Tổng lưu lượng quạt')}</td>
               <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#b45309;">${totalFlow.toFixed(0)} m³/h</td>
               <td style="border:1px solid #ddd;padding:4px;color:#111;" colspan="4"></td>
             </tr></tfoot>
           </table>
-          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ Model quạt tham khảo catalog thị trường VN, cột áp là giá trị mặc định/ước tính (chưa tính tổn thất ma sát ống gió chi tiết) — kỹ sư cần xác nhận cột áp thực tế theo bảng nhánh ống gió và xác nhận model với nhà sản xuất trước khi chọn thiết bị chính thức.</p>`;
+          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ ${App.ui.t('Model quạt tham khảo catalog thị trường VN, cột áp là giá trị mặc định/ước tính (chưa tính tổn thất ma sát ống gió chi tiết) — kỹ sư cần xác nhận cột áp thực tế theo bảng nhánh ống gió và xác nhận model với nhà sản xuất trước khi chọn thiết bị chính thức.')}</p>`;
         })()}
         ${(App.state.branches||[]).length?`
         <!-- Bảng nhánh ống gió -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Bảng nhánh ống gió</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('branch_table_title')}</h3>
         <table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:10px;color:#111;">
-          <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px;color:#111;">Tên nhánh</th><th style="border:1px solid #ddd;padding:4px;color:#111;">Q(m³/h)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">v(m/s)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">Kích thước</th><th style="border:1px solid #ddd;padding:4px;color:#111;">ΔP ma sát(Pa)</th></tr></thead>
+          <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px;color:#111;">${App.ui.t('Tên nhánh')}</th><th style="border:1px solid #ddd;padding:4px;color:#111;">Q(m³/h)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">v(m/s)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">${App.ui.t('Kích thước')}</th><th style="border:1px solid #ddd;padding:4px;color:#111;">${App.ui.t('ΔP ma sát(Pa)')}</th></tr></thead>
           <tbody>${branchRows}</tbody>
         </table>`:''}
         <!-- Chẩn đoán — bảng checklist đầy đủ (hiện MỌI hạng mục kiểm tra, không chỉ
@@ -5452,7 +5453,7 @@
              tham khảo: mỗi hạng mục luôn có 1 dòng, cột "Kết quả" hiện ✓Đạt / ⚠/✗ kèm chi
              tiết cụ thể — giúp người thẩm định thấy rõ ĐàCÓ kiểm tra hạng mục đó, không
              chỉ suy đoán từ việc "không thấy báo lỗi". -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Chẩn đoán &amp; Kiểm tra</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_diagnostics')}</h3>
         ${(()=>{
           const allFlags = [...d.flags];
           // FIX: cảnh báo từ calcBuildingTypeAirflow() (vd ACH_FRESH_MIN) chỉ được gộp vào
@@ -5468,26 +5469,26 @@
           const byCode = code => allFlags.filter(f=>f.code===code || (code==='PARTITION'&&f.code==='PARTITION'));
           const rowFor = (label, code, passMsg) => {
             const hits = byCode(code);
-            if(!hits.length) return `<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;color:#059669;">✓ Đạt${passMsg?' — '+passMsg:''}</td></tr>`;
+            if(!hits.length) return `<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;color:#059669;">✓ ${App.ui.t('Đạt')}${passMsg?' — '+passMsg:''}</td></tr>`;
             return hits.map(f=>`<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;color:${f.level==='red'?'#dc2626':'#d97706'};">${f.level==='red'?'✗':'⚠'} ${f.msg}</td></tr>`).join('');
           };
           const knownCodes = ['MISS_AREA','RETURN_NEG','ACH_OUT','ACH_LOW','MOTOR_LOW_FL','FRESH_MIN','ACH_FRESH_MIN','PARTITION'];
           const rowsHtml = [
-            rowFor('Diện tích sàn hợp lệ (đã nhập L×W hoặc diện tích tuỳ chỉnh)', 'MISS_AREA'),
-            rowFor('Gió hồi không âm (Q_hồi ≥ 0)', 'RETURN_NEG'),
-            rowFor('ACH nằm trong dải khuyến nghị theo loại phòng', 'ACH_OUT'),
-            rowFor('ACH áp dụng ≥ khuyến nghị tối thiểu', 'ACH_LOW'),
-            rowFor('ACH gió tươi đạt yêu cầu riêng (phòng y tế theo ASHRAE 170, nếu có)', 'ACH_FRESH_MIN'),
-            rowFor('Gió tươi đạt yêu cầu tối thiểu ASHRAE 62.1 (theo người/diện tích)', 'FRESH_MIN'),
-            rowFor('Motor không chạy non tải (FL ≥ 0.5)', 'MOTOR_LOW_FL'),
-            rowFor('Vách ngăn nội bộ — đủ dữ liệu U/nhiệt độ phòng kề (không dùng mặc định)', 'PARTITION'),
+            rowFor(App.ui.t('Diện tích sàn hợp lệ (đã nhập L×W hoặc diện tích tuỳ chỉnh)'), 'MISS_AREA'),
+            rowFor(App.ui.t('Gió hồi không âm (Q_hồi ≥ 0)'), 'RETURN_NEG'),
+            rowFor(App.ui.t('ACH nằm trong dải khuyến nghị theo loại phòng'), 'ACH_OUT'),
+            rowFor(App.ui.t('ACH áp dụng ≥ khuyến nghị tối thiểu'), 'ACH_LOW'),
+            rowFor(App.ui.t('ACH gió tươi đạt yêu cầu riêng (phòng y tế theo ASHRAE 170, nếu có)'), 'ACH_FRESH_MIN'),
+            rowFor(App.ui.t('Gió tươi đạt yêu cầu tối thiểu ASHRAE 62.1 (theo người/diện tích)'), 'FRESH_MIN'),
+            rowFor(App.ui.t('Motor không chạy non tải (FL ≥ 0.5)'), 'MOTOR_LOW_FL'),
+            rowFor(App.ui.t('Vách ngăn nội bộ — đủ dữ liệu U/nhiệt độ phòng kề (không dùng mặc định)'), 'PARTITION'),
           ].join('');
           // Các cảnh báo khác không nằm trong danh sách mã đã biết (đề phòng thêm code mới
           // sau này mà quên cập nhật bảng checklist) — vẫn hiện đầy đủ, không bị bỏ sót.
           const otherFlags = allFlags.filter(f=>!knownCodes.includes(f.code));
-          const otherRows = otherFlags.map(f=>`<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${f.code||'Khác'}</td><td style="border:1px solid #ddd;padding:4px 8px;color:${f.level==='red'?'#dc2626':'#d97706'};">${f.level==='red'?'✗':'⚠'} ${f.msg}</td></tr>`).join('');
+          const otherRows = otherFlags.map(f=>`<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${f.code||App.ui.t('Khác')}</td><td style="border:1px solid #ddd;padding:4px 8px;color:${f.level==='red'?'#dc2626':'#d97706'};">${f.level==='red'?'✗':'⚠'} ${f.msg}</td></tr>`).join('');
           return `<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:10px;color:#111;">
-            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;width:55%;color:#111;">Hạng mục</th><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">Kết quả</th></tr></thead>
+            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;width:55%;color:#111;">${App.ui.t('Hạng mục')}</th><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">${App.ui.t('Kết quả')}</th></tr></thead>
             <tbody>${rowsHtml}${otherRows}</tbody>
           </table>`;
         })()}
@@ -5495,26 +5496,26 @@
         <table style="width:100%;margin-top:24px;border-collapse:collapse;page-break-inside:avoid;color:#111;">
           <tr>
             <td style="width:33%;text-align:center;padding:0 8px;color:#111;">
-              <div style="font-size:10px;font-weight:bold;color:#0f172a;">NGƯỜI LẬP</div>
-              <div style="font-size:9px;color:#64748b;">(Ký, ghi rõ họ tên)</div>
+              <div style="font-size:10px;font-weight:bold;color:#0f172a;">${App.ui.t('report_signoff_prepared')}</div>
+              <div style="font-size:9px;color:#64748b;">${App.ui.t('(Ký, ghi rõ họ tên)')}</div>
               <div style="height:60px;color:#111;"></div>
               <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:10px;color:#111;">${repEngineer!=='—'?repEngineer:'.....................'}</div>
             </td>
             <td style="width:33%;text-align:center;padding:0 8px;color:#111;">
-              <div style="font-size:10px;font-weight:bold;color:#0f172a;">KIỂM TRA</div>
-              <div style="font-size:9px;color:#64748b;">(Ký, ghi rõ họ tên)</div>
+              <div style="font-size:10px;font-weight:bold;color:#0f172a;">${App.ui.t('report_signoff_checked')}</div>
+              <div style="font-size:9px;color:#64748b;">${App.ui.t('(Ký, ghi rõ họ tên)')}</div>
               <div style="height:60px;color:#111;"></div>
               <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:10px;color:#111;">.....................</div>
             </td>
             <td style="width:33%;text-align:center;padding:0 8px;color:#111;">
-              <div style="font-size:10px;font-weight:bold;color:#0f172a;">PHÊ DUYỆT</div>
-              <div style="font-size:9px;color:#64748b;">(Ký, ghi rõ họ tên)</div>
+              <div style="font-size:10px;font-weight:bold;color:#0f172a;">${App.ui.t('report_signoff_approved')}</div>
+              <div style="font-size:9px;color:#64748b;">${App.ui.t('(Ký, ghi rõ họ tên)')}</div>
               <div style="height:60px;color:#111;"></div>
               <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:10px;color:#111;">.....................</div>
             </td>
           </tr>
         </table>
-        <div style="margin-top:14px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:9px;color:#6b7f96;">Tạo bởi: MultiHVAC Calculator · Created by Quocde · Ver 2606.22.01 — Kết quả tính toán tham khảo, kỹ sư chịu trách nhiệm xác nhận trước khi thi công.</div>
+        <div style="margin-top:14px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:9px;color:#6b7f96;">${App.ui.t('Tạo bởi:')} MultiHVAC Calculator · Created by Quocde · Ver 2606.22.01 — ${App.ui.t('report_footer_note')}</div>
       </div>`;
     },
 
@@ -5530,16 +5531,16 @@
         const rid=scope.slice(5);
         rooms=allRooms.filter(r=>r.id===rid);
       } else { rooms=allRooms; }
-      const scopeLabel=scope==='all'?'Toàn bộ dự án':scope.startsWith('floor:')?
-        (App.state.floors||[]).find(f=>f.id===scope.slice(6))?.name||'Tầng':
-        allRooms.find(r=>r.id===scope.slice(5))?.name||'Phòng';
+      const scopeLabel=scope==='all'?App.ui.t('Toàn bộ dự án'):scope.startsWith('floor:')?
+        (App.state.floors||[]).find(f=>f.id===scope.slice(6))?.name||App.ui.t('Tầng'):
+        allRooms.find(r=>r.id===scope.slice(5))?.name||App.ui.t('Phòng');
       App.state._exportRooms=rooms; App.state._exportScopeLabel=scopeLabel;
       return this._exportPDF_impl();
     },
     async _exportPDF_impl(){
       const preview = document.getElementById('report-preview');
       preview.innerHTML = this.buildPreviewHtml();
-      App.ui.toast('info','Đang tạo PDF...');
+      App.ui.toast('info',App.ui.t('Đang tạo PDF...'));
       try{
         // FIX (nguyên nhân THẬT của lỗi "chữ nhạt/trắng" trong PDF — xác nhận qua debug file
         // PDF thực tế người dùng gửi): html2canvas được gọi NGAY LẬP TỨC sau khi set
