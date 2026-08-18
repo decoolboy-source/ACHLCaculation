@@ -1680,6 +1680,25 @@ MATERIAL_RATES:{
         'Dự án':'Project', '{n} tầng':'{n} floor(s)',
         'Tính tải tất cả':'Calculate all loads',
         'Bấm "Tính tải" để tính toán phụ tải và phân phối gió tất cả phòng.':'Click "Calculate load" to compute heat load and air distribution for all rooms.',
+
+        // Tab Phụ Tải Nhiệt — Results panel (_renderResults / _updateValidBadge)
+        '⚠ {n} cảnh báo':'⚠ {n} warning(s)', '❌ {n} lỗi':'❌ {n} error(s)',
+        'Lưu lượng theo nhóm thiết bị':'Airflow by equipment group',
+        'Nhóm':'Group', 'Q_cấp tổng (m³/h)':'Total Q_supply (m³/h)', 'Q_hồi (m³/h)':'Q_return (m³/h)',
+        'FCU riêng lẻ (gồm FCU_OA — Q_coil là tổng cả 2 phần, xem chi tiết từng phòng ở tab Tính toán)':'Standalone FCU (includes FCU_OA — Q_coil is the sum of both parts, see per-room detail in the Calc tab)',
+        'Kết quả':'Results', '{n} nhóm AHU/PAU':'{n} AHU/PAU group(s)',
+        '{pct}% tươi/cấp':'{pct}% fresh/supply',
+        'Motor {m} | Ký sinh {p}':'Motor {m} | Parasitic {p}',
+        'Chi tiết từng phòng':'Per-room detail', 'Cấp sạch':'Cleanliness class',
+        'Q_cấp(m³/h)':'Q_supply(m³/h)', '% tươi':'% fresh', 'Chưa có phòng':'No rooms yet',
+        'Tổng cộng':'Total', 'Không phát hiện lỗi validation.':'No validation errors detected.',
+        'Bảng thiết bị tự chọn (Equipment Schedule) — dựa vào Q_coil từng phòng':'Auto-selected equipment schedule — based on each room\'s Q_coil',
+        'Loại hệ thống':'System type', 'Model đề xuất':'Suggested model',
+        'Tổng CS (kW)':'Total capacity (kW)', 'Hiệu suất sử dụng':'Utilization',
+        'Tổng thiết bị':'Total equipment',
+        'Đây là gợi ý tham chiếu. Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn thiết bị.':'This is a reference suggestion. The engineer must confirm with the actual manufacturer catalog before finalizing equipment selection.',
+        'Hiệu suất sử dụng xanh &lt;70% (oversized), vàng 70-90% (tối ưu), đỏ &gt;90% (cần kiểm tra). Design margin: +10%. Catalog tham chiếu thị trường VN 2024.':'Green utilization &lt;70% (oversized), yellow 70-90% (optimal), red &gt;90% (needs review). Design margin: +10%. Catalog references the VN 2024 market.',
+        '✅ 0 lỗi ({n} phòng)':'✅ 0 errors ({n} room(s))',
       }
     }
   };

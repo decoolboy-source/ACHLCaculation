@@ -4254,18 +4254,18 @@
       const qParaTotal=(paraList||[]).reduce((a,b)=>a+b,0)/1000;
 
       const vcBadge=valid.status==='pass'?'bg-emerald-700 text-emerald-100':valid.status==='yellow'?'bg-amber-700 text-amber-100':'bg-red-700 text-red-100';
-      const vcText =valid.status==='pass'?'✅ PASS':valid.status==='yellow'?`⚠ ${valid.flags.filter(f=>f.level==='yellow').length} cảnh báo`:`❌ ${valid.flags.filter(f=>f.level==='red').length} lỗi`;
+      const vcText =valid.status==='pass'?'✅ PASS':valid.status==='yellow'?App.ui.t('⚠ {n} cảnh báo',{n:valid.flags.filter(f=>f.level==='yellow').length}):App.ui.t('❌ {n} lỗi',{n:valid.flags.filter(f=>f.level==='red').length});
 
       // Per-group summary
       const groupHtml=groupResults.length?`
         <h3 class="font-medium text-xs text-slate-300 mt-4 mb-2 flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>Lưu lượng theo nhóm thiết bị
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>${App.ui.t('Lưu lượng theo nhóm thiết bị')}
         </h3>
         <div class="overflow-x-auto">
           <table class="zebra w-full text-xs">
             <thead class="text-slate-400"><tr>
-              <th class="text-left px-2 py-1.5">Nhóm</th><th class="px-2">Loại</th><th class="px-2">Phòng</th>
-              <th class="px-2">Q_cấp tổng (m³/h)</th><th class="px-2">Q_tươi (m³/h)</th><th class="px-2">Q_hồi (m³/h)</th><th class="px-2">Q_coil (kW)</th>
+              <th class="text-left px-2 py-1.5">${App.ui.t('Nhóm')}</th><th class="px-2">${App.ui.t('Loại')}</th><th class="px-2">${App.ui.t('Phòng')}</th>
+              <th class="px-2">${App.ui.t('Q_cấp tổng (m³/h)')}</th><th class="px-2">Q_tươi (m³/h)</th><th class="px-2">${App.ui.t('Q_hồi (m³/h)')}</th><th class="px-2">Q_coil (kW)</th>
             </tr></thead>
             <tbody>${groupResults.map(g=>`
               <tr>
@@ -4287,7 +4287,7 @@
               </tr>`).join('')}
             `).join('')}
             ${fcuRooms.filter(r=>r.equipType==='FCU'||r.equipType==='FCU_OA').length?`<tr class="border-t border-slate-700/50">
-              <td class="px-2 py-1 text-emerald-400 font-medium" colspan="3">FCU riêng lẻ (gồm FCU_OA — Q_coil là tổng cả 2 phần, xem chi tiết từng phòng ở tab Tính toán)</td>
+              <td class="px-2 py-1 text-emerald-400 font-medium" colspan="3">${App.ui.t('FCU riêng lẻ (gồm FCU_OA — Q_coil là tổng cả 2 phần, xem chi tiết từng phòng ở tab Tính toán)')}</td>
               <td class="px-2 text-right font-mono-data text-emerald-400">${fcuRooms.reduce((s,r)=>s+(r._airflow?.Q_supply||0),0).toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${fcuRooms.reduce((s,r)=>s+(r._airflow?.Q_fresh||0),0).toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${fcuRooms.reduce((s,r)=>s+(r._airflow?.Q_recirculation||0),0).toFixed(0)}</td>
@@ -4317,31 +4317,31 @@
         <div class="flex items-center justify-between mb-3">
           <span class="font-medium text-sm flex items-center gap-2">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-            Kết quả — ${rooms.length} phòng · ${groupResults.length} nhóm AHU/PAU
+            ${App.ui.t('Kết quả')} — ${App.ui.t('{n} phòng',{n:rooms.length})} · ${App.ui.t('{n} nhóm AHU/PAU',{n:groupResults.length})}
           </span>
           <span class="px-2 py-1 rounded text-[11px] font-medium ${vcBadge}">${vcText}</span>
         </div>
         <!-- KPI -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Tổng lạnh coil</div><div class="font-mono-data text-lg text-amber-400 font-bold">${totalCoilKW.toFixed(1)} <span class="text-xs text-slate-500">kW = ${(totalCoilKW/3.517).toFixed(1)} TR</span></div></div>
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Tổng gió cấp</div><div class="font-mono-data text-lg text-cyan-400 font-bold">${totalSupply.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div></div>
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Gió tươi / Tuần hoàn</div><div class="font-mono-data text-sm text-emerald-400">${totalFresh.toFixed(0)} / ${totalRecirc.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div><div class="text-[10px] text-slate-500">${totalSupply>0?((totalFresh/totalSupply)*100).toFixed(0):0}% tươi/cấp</div></div>
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Motor + Tải ký sinh</div><div class="font-mono-data text-sm text-violet-400">${(qMotorKW+qParaTotal).toFixed(2)} <span class="text-xs text-slate-500">kW</span></div><div class="text-[10px] text-slate-500">Motor ${qMotorKW.toFixed(2)} | Ký sinh ${qParaTotal>=0?'+':''}${qParaTotal.toFixed(2)}</div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Tổng lạnh coil')}</div><div class="font-mono-data text-lg text-amber-400 font-bold">${totalCoilKW.toFixed(1)} <span class="text-xs text-slate-500">kW = ${(totalCoilKW/3.517).toFixed(1)} TR</span></div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Tổng gió cấp')}</div><div class="font-mono-data text-lg text-cyan-400 font-bold">${totalSupply.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Gió tươi / Tuần hoàn')}</div><div class="font-mono-data text-sm text-emerald-400">${totalFresh.toFixed(0)} / ${totalRecirc.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div><div class="text-[10px] text-slate-500">${App.ui.t('{pct}% tươi/cấp',{pct:totalSupply>0?((totalFresh/totalSupply)*100).toFixed(0):0})}</div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Motor + Tải ký sinh')}</div><div class="font-mono-data text-sm text-violet-400">${(qMotorKW+qParaTotal).toFixed(2)} <span class="text-xs text-slate-500">kW</span></div><div class="text-[10px] text-slate-500">${App.ui.t('Motor {m} | Ký sinh {p}',{m:qMotorKW.toFixed(2),p:(qParaTotal>=0?'+':'')+qParaTotal.toFixed(2)})}</div></div>
         </div>
         ${groupHtml}
         <!-- Per-room table -->
-        <h3 class="font-medium text-xs text-slate-300 mt-4 mb-2">Chi tiết từng phòng</h3>
+        <h3 class="font-medium text-xs text-slate-300 mt-4 mb-2">${App.ui.t('Chi tiết từng phòng')}</h3>
         <div class="overflow-x-auto">
           <table class="zebra w-full text-xs min-w-[1000px]">
             <thead class="text-slate-400 sticky top-0 bg-base-900"><tr>
-              <th class="text-left px-2 py-1.5">Phòng</th><th class="px-2">Loại TB</th><th class="px-2">Cấp sạch</th>
-              <th class="px-2">ACH thực</th><th class="px-2">Q_cấp(m³/h)</th><th class="px-2">Q_tuần hoàn</th>
-              <th class="px-2">Q_tươi</th><th class="px-2">% tươi</th>
-              <th class="px-2">Q_hiện(kW)</th><th class="px-2">Q_coil(kW)</th><th class="px-2">Ghi chú</th>
+              <th class="text-left px-2 py-1.5">${App.ui.t('Phòng')}</th><th class="px-2">${App.ui.t('Loại TB')}</th><th class="px-2">${App.ui.t('Cấp sạch')}</th>
+              <th class="px-2">${App.ui.t('ACH thực')}</th><th class="px-2">${App.ui.t('Q_cấp(m³/h)')}</th><th class="px-2">${App.ui.t('Q_tuần hoàn')}</th>
+              <th class="px-2">Q_tươi</th><th class="px-2">${App.ui.t('% tươi')}</th>
+              <th class="px-2">${App.ui.t('Q_hiện(kW)')}</th><th class="px-2">Q_coil(kW)</th><th class="px-2">${App.ui.t('Ghi chú')}</th>
             </tr></thead>
-            <tbody>${roomRows||'<tr><td colspan="11" class="text-center py-4 text-slate-500">Chưa có phòng</td></tr>'}</tbody>
+            <tbody>${roomRows||`<tr><td colspan="11" class="text-center py-4 text-slate-500">${App.ui.t('Chưa có phòng')}</td></tr>`}</tbody>
             <tfoot class="border-t border-slate-700 font-medium"><tr>
-              <td class="px-2 py-1.5" colspan="4">Tổng cộng</td>
+              <td class="px-2 py-1.5" colspan="4">${App.ui.t('Tổng cộng')}</td>
               <td class="px-2 text-right font-mono-data">${totalSupply.toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${totalRecirc.toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${totalFresh.toFixed(0)}</td>
@@ -4355,27 +4355,27 @@
         ${valid.flags.length?`<div class="mt-3 border border-slate-700/50 rounded-lg p-3 text-xs space-y-1">
           ${valid.flags.map(f=>`<div class="flex items-center gap-1.5 ${f.level==='red'?'text-red-400':'text-amber-400'}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${f.msg}</div>`).join('')}
-        </div>`:'<div class="mt-2 text-xs text-emerald-400 flex items-center gap-1.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Không phát hiện lỗi validation.</div>'}
+        </div>`:`<div class="mt-2 text-xs text-emerald-400 flex items-center gap-1.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${App.ui.t('Không phát hiện lỗi validation.')}</div>`}
 
         <!-- ── EQUIPMENT SCHEDULE — Tự động chọn FCU/AHU ── -->
         ${rooms.filter(r=>r._coil?.qCoilKW>0).length>0?`
         <div class="mt-4 border-t border-slate-700/60 pt-4">
           <h3 class="font-medium text-xs text-slate-300 mb-2 flex items-center gap-1.5">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-            Bảng thiết bị tự chọn (Equipment Schedule) — dựa vào Q_coil từng phòng
+            ${App.ui.t('Bảng thiết bị tự chọn (Equipment Schedule) — dựa vào Q_coil từng phòng')}
           </h3>
           <div class="overflow-x-auto">
             <table class="zebra w-full text-xs min-w-[800px]">
               <thead class="text-slate-400 sticky top-0 bg-base-900"><tr>
-                <th class="text-left px-2 py-1.5">Phòng</th>
-                <th class="px-2">Loại hệ thống</th>
+                <th class="text-left px-2 py-1.5">${App.ui.t('Phòng')}</th>
+                <th class="px-2">${App.ui.t('Loại hệ thống')}</th>
                 <th class="px-2">Q_coil (kW)</th>
-                <th class="px-2">Model đề xuất</th>
-                <th class="px-2">SL</th>
-                <th class="px-2">Tổng CS (kW)</th>
-                <th class="px-2">Hiệu suất sử dụng</th>
-                <th class="px-2">Lưu lượng (m³/h)</th>
-                <th class="px-2">Ghi chú</th>
+                <th class="px-2">${App.ui.t('Model đề xuất')}</th>
+                <th class="px-2">${App.ui.t('SL')}</th>
+                <th class="px-2">${App.ui.t('Tổng CS (kW)')}</th>
+                <th class="px-2">${App.ui.t('Hiệu suất sử dụng')}</th>
+                <th class="px-2">${App.ui.t('Lưu lượng (m³/h)')}</th>
+                <th class="px-2">${App.ui.t('Ghi chú')}</th>
               </tr></thead>
               <tbody>
               ${rooms.filter(r=>r._coil?.qCoilKW>0).map(r=>{
@@ -4387,7 +4387,7 @@
                   qCoilKW:q, equipType:r.equipType||'FCU',
                   designMarginPct:10, preferType:'cassette'
                 });
-                if(!eqSel) return `<tr><td class="px-2 py-1.5">${r.name}</td><td colspan="8" class="px-2 text-slate-500">VENT — không cần coil</td></tr>`;
+                if(!eqSel) return `<tr><td class="px-2 py-1.5">${r.name}</td><td colspan="8" class="px-2 text-slate-500">${App.ui.t('VENT — không cần coil')}</td></tr>`;
                 const util=parseInt(eqSel.utilization);
                 const utilColor=util<70?'text-slate-400':util<90?'text-emerald-400':'text-amber-400';
                 return `<tr class="${eqSel.isOversized?'bg-amber-950/20':''}">
@@ -4404,15 +4404,15 @@
               }).join('')}
               </tbody>
               <tfoot class="border-t border-slate-700/50 font-medium"><tr>
-                <td class="px-2 py-1.5" colspan="2">Tổng thiết bị</td>
+                <td class="px-2 py-1.5" colspan="2">${App.ui.t('Tổng thiết bị')}</td>
                 <td class="px-2 text-right font-mono-data text-amber-400">${totalCoilKW.toFixed(2)} kW</td>
                 <td colspan="6" class="px-2 text-[10px] text-slate-500">
-                  ⚠ Đây là gợi ý tham chiếu. Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn thiết bị.
+                  ⚠ ${App.ui.t('Đây là gợi ý tham chiếu. Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn thiết bị.')}
                 </td>
               </tr></tfoot>
             </table>
           </div>
-          <p class="text-[10px] text-slate-500 mt-2">Hiệu suất sử dụng xanh &lt;70% (oversized), vàng 70-90% (tối ưu), đỏ &gt;90% (cần kiểm tra). Design margin: +10%. Catalog tham chiếu thị trường VN 2024.</p>
+          <p class="text-[10px] text-slate-500 mt-2">${App.ui.t('Hiệu suất sử dụng xanh &lt;70% (oversized), vàng 70-90% (tối ưu), đỏ &gt;90% (cần kiểm tra). Design margin: +10%. Catalog tham chiếu thị trường VN 2024.')}</p>
         </div>`:''}
 `;
       if(window.lucide) lucide.createIcons();
@@ -4428,10 +4428,10 @@
         badge.addEventListener('click',()=>{ App.ui.showTab('heatload'); document.getElementById('hl-results')?.scrollIntoView({behavior:'smooth'}); });
       }
       const cfg=valid.status==='pass'
-        ?{cls:'bg-emerald-700 text-emerald-100 border-emerald-600',txt:`✅ 0 lỗi (${this.R().length} phòng)`}
+        ?{cls:'bg-emerald-700 text-emerald-100 border-emerald-600',txt:App.ui.t('✅ 0 lỗi ({n} phòng)',{n:this.R().length})}
         :valid.status==='yellow'
-        ?{cls:'bg-amber-700 text-amber-100 border-amber-600',txt:`⚠ ${valid.flags.filter(f=>f.level==='yellow').length} cảnh báo`}
-        :{cls:'bg-red-700 text-red-100 border-red-600',txt:`❌ ${valid.flags.filter(f=>f.level==='red').length} lỗi`};
+        ?{cls:'bg-amber-700 text-amber-100 border-amber-600',txt:App.ui.t('⚠ {n} cảnh báo',{n:valid.flags.filter(f=>f.level==='yellow').length})}
+        :{cls:'bg-red-700 text-red-100 border-red-600',txt:App.ui.t('❌ {n} lỗi',{n:valid.flags.filter(f=>f.level==='red').length})};
       badge.className='fixed bottom-10 right-4 z-40 px-3 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer shadow-lg border '+cfg.cls;
       badge.textContent=cfg.txt;
     }
