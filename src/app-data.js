@@ -1130,6 +1130,24 @@ MATERIAL_RATES:{
         report_equipment_schedule:'Bảng thiết bị lựa chọn (Equipment Schedule)', report_diagnostics:'Chẩn đoán & Kiểm tra',
         report_reliability:'Mức độ tin cậy thông số đầu vào', report_signoff_prepared:'NGƯỜI LẬP',
         report_signoff_checked:'KIỂM TRA', report_signoff_approved:'PHÊ DUYỆT',
+
+        // Chuỗi ĐỘNG (có {tham số}) — phải khai báo tường minh ở CẢ vi lẫn en, xem quy ước ở
+        // App.ui.t() trong app-ui.js.
+        group_room_count:'{n} phòng',
+        group_type_mismatch_warning:'Tên nhóm nhắc tới "{type}" nhưng đang thực sự thuộc loại "{actual}" — phòng {type} sẽ KHÔNG tìm thấy nhóm này. Kiểm tra lại ô loại hệ thống bên trên nếu đây là nhầm lẫn.',
+        group_help_text:'Mỗi nhóm = 1 thiết bị (AHU/PAU/FCU/FCU+OA) phục vụ nhiều phòng — <b>nhớ chọn đúng loại hệ thống ở ô dropdown</b> (không chỉ đổi tên), vì phòng chỉ tìm được nhóm khớp CHÍNH XÁC loại hệ thống của nó. Nhóm mới tạo mặc định là AHU, đổi lại nếu cần. Gán phòng vào nhóm trong form từng phòng.',
+        room_n:'Phòng {n}',
+        motor_unassigned_warning:'{n} motor chưa gán phòng (nền cam) — nhiệt tỏa sẽ không được tính vào bất kỳ phòng nào!',
+        para_unassigned_warning:'{n} tải ký sinh chưa gán phòng (viền cam)',
+        confirm_del_parasitic_title:'Xoá tải ký sinh "{name}"?',
+        confirm_del_branch_title:'Xoá nhánh "{name}"?',
+        confirm_del_branch_msg_children:'Không thể hoàn tác. Nhánh này đang có {n} nhánh con — các nhánh con sẽ trở thành nhánh gốc mới, không bị xoá theo.',
+        confirm_del_room_title:'Xóa phòng "{name}"?',
+        confirm_del_floor_title:'Xóa {name}?',
+        confirm_del_group_title:'Xoá nhóm thiết bị "{name}"?',
+        confirm_del_group_rooms:'{n} phòng đang gán nhóm này sẽ mất liên kết (không bị xoá, chỉ gỡ nhóm).',
+        confirm_del_group_branches:'{n} nhánh ống đang thuộc nhóm này sẽ không còn nằm trong cụm thiết bị nào ở Tab Tính Toán.',
+        confirm_del_motor_title:'Xoá motor "{name}"?',
       },
       en: {
         app_title:'MultiHVAC Calculator', app_subtitle:'Cleanroom · Data Center · Electrical Room',
@@ -1161,6 +1179,104 @@ MATERIAL_RATES:{
         report_equipment_schedule:'Equipment Schedule', report_diagnostics:'Diagnostics & Checks',
         report_reliability:'Input Data Reliability', report_signoff_prepared:'PREPARED BY',
         report_signoff_checked:'CHECKED BY', report_signoff_approved:'APPROVED BY',
+
+        // ── Từ đây trở xuống: bản dịch dùng CHUỖI TIẾNG VIỆT GỐC làm key (xem quy ước ở
+        // App.ui.t() trong app-ui.js) — không cần khai báo gì ở dict.vi, chỉ khai báo ở đây.
+        // Nhóm theo tab để dễ tra/bổ sung.
+
+        // Tab Dự Án
+        'Thông tin dự án':'Project information', 'Tên dự án':'Project name',
+        'VD: Kho lạnh thủy sản Cần Thơ':'e.g. Can Tho Seafood Cold Storage',
+        'Khách hàng':'Customer', 'Tên khách hàng':'Customer name', 'Ngày lập':'Date prepared',
+        'Địa chỉ công trình':'Site address', 'Địa chỉ':'Address',
+        'Kỹ sư thiết kế':'Design engineer', 'Họ tên':'Full name', 'Mã dự án':'Project code',
+        'Lưu thông tin dự án':'Save project info', 'Số tầng':'Floors', 'Số phòng':'Rooms',
+        'tầng':'floor(s)', 'phòng':'room(s)', 'Đã tính':'Calculated', 'Q_coil tổng':'Total Q_coil',
+        'Lỗi / Cảnh báo':'Errors / Warnings', 'Trung bình / phòng':'Average / room', 'kW/phòng':'kW/room',
+        'Tổng hợp theo tầng':'Summary by floor', 'Tầng':'Floor', 'Phòng':'Rooms', 'Q tổng':'Total Q',
+        'TB/phòng':'Avg/room', 'Trạng thái':'Status', 'Lỗi':'Error', 'Cảnh báo':'Warning',
+        'TỔNG CỘNG':'TOTAL', 'Tính tất cả phòng':'Calculate all rooms', 'Tab Phụ Tải':'Heat Load tab',
+        'Xuất Báo Cáo':'Export Report', 'Đã lưu thông tin dự án':'Project info saved',
+
+        // Tab Phụ Tải Nhiệt — Nhóm thiết bị
+        'Tên AHU/PAU':'AHU/PAU name',
+        'AHU (có hồi gió)':'AHU (with return air)', 'PAU (100% gió tươi)':'PAU (100% outdoor air)',
+        'FCU (fan coil có gió hồi)':'FCU (fan coil with return air)',
+        'FCU+OA (fan coil + gió tươi)':'FCU+OA (fan coil + outdoor air)',
+        'VENT (thông gió thuần — chỉ chọn quạt, Q_coil=0)':'VENT (ventilation only — fan selection, Q_coil=0)',
+        'Mô tả':'Description', 'Thêm nhóm thiết bị':'Add equipment group',
+        group_room_count:'{n} room(s)',
+        group_type_mismatch_warning:'Group name mentions "{type}" but is actually set to type "{actual}" — {type} rooms will NOT find this group. Check the system-type dropdown above if this is a mistake.',
+        group_help_text:'Each group = 1 piece of equipment (AHU/PAU/FCU/FCU+OA) serving multiple rooms — <b>be sure to pick the correct system type in the dropdown</b> (not just the name), since a room only finds a group that EXACTLY matches its system type. New groups default to AHU — change if needed. Assign rooms to a group from each room\'s form.',
+        room_n:'Room {n}',
+        motor_unassigned_warning:'{n} motor(s) not assigned to a room (orange background) — their heat gain will not be counted for any room!',
+        para_unassigned_warning:'{n} parasitic load(s) not assigned to a room (orange border)',
+        confirm_del_parasitic_title:'Delete parasitic load "{name}"?',
+
+        // Tab Phụ Tải Nhiệt — Mẫu Motor / Motor
+        'Tên mẫu (VD: Quạt cấp AHU)':'Template name (e.g. AHU supply fan)',
+        'Số lượng mặc định':'Default quantity', 'B (đơn giản)':'B (simple)',
+        'Thêm vào phòng':'Add to room',
+        'Mẫu Motor — khai báo spec 1 lần, gán nhanh vào nhiều phòng':'Motor templates — define a spec once, quickly assign to multiple rooms',
+        'Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 motor sẵn có bên dưới.':'No templates yet. Create one, or click "💾 Save as template" on an existing motor below.',
+        'Thêm mẫu motor':'Add motor template', 'Tên motor':'Motor name',
+        'Gán motor vào phòng cụ thể để tính nhiệt tải đúng':'Assign the motor to a specific room for correct heat load calculation',
+        'TH1 (motor+tải trong)':'Case 1 (motor+load indoors)', 'TH2 (motor trong/tải ngoài)':'Case 2 (motor indoors/load outdoors)',
+        'TH3 (tải trong/motor ngoài)':'Case 3 (load indoors/motor outdoors)',
+        'Lưu spec motor này thành mẫu để tái sử dụng cho phòng khác':'Save this motor spec as a template for reuse on other rooms',
+        'Gán vào phòng *':'Assign to room *', 'SL':'Qty', 'Phương pháp':'Method', 'Vị trí TH':'Case',
+        'Q tỏa':'Heat gain', 'Chưa có motor. Thêm motor rồi gán vào phòng tương ứng.':'No motors yet. Add one and assign it to the corresponding room.',
+        'Thêm motor':'Add motor',
+        'η nội suy tuyến tính giữa các mức IEC 60034-30-1 IE3. Gán từng motor vào đúng phòng để tính nhiệt tỏa per-room.':'η is linearly interpolated between IEC 60034-30-1 IE3 levels. Assign each motor to the correct room to calculate per-room heat gain.',
+
+        // Tab Phụ Tải Nhiệt — Tải ký sinh (field theo loại IQF/GLAZE/ICE/ROTOR)
+        'L buồng(m)':'Chamber L (m)', 'U vách(W/m²K)':'Wall U (W/m²K)', 'T buồng(°C)':'Chamber T (°C)',
+        'Loại cửa':'Door type',
+        'Q âm = thiết bị hút nhiệt khỏi phòng ĐHKK → giảm tải (Peak Design: không trừ vào Q_coil để an toàn)':'Negative Q = equipment removes heat from the AC room → reduces load (Peak Design: not subtracted from Q_coil, for safety)',
+        'S bể mạ băng(m²)':'Glazing tank area (m²)', 'T nước mạ(°C)':'Glazing water T (°C)', 'K trao đổi nhiệt':'Heat transfer coefficient K',
+        'Sản lượng đá(kg/h)':'Ice output (kg/h)', 'T nước đầu ra(°C)':'Outlet water T (°C)',
+        'G_gió(m³/h)':'Air flow (m³/h)', 'T vào Rotor(°C)':'Rotor inlet T (°C)', 'T ra Rotor(°C)':'Rotor outlet T (°C)',
+        'Rotor tỏa nhiệt vào phòng → tải dương, cộng vào Q_sensible phòng được gán.':'Rotor releases heat into the room → positive load, added to the assigned room\'s Q_sensible.',
+
+        // Tab Phụ Tải Nhiệt — Mẫu tải ký sinh / Tải ký sinh
+        'Tên mẫu':'Template name',
+        'Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 tải ký sinh sẵn có bên dưới.':'No templates yet. Create one, or click "💾 Save as template" on an existing parasitic load below.',
+        'Mẫu tải ký sinh — khai báo 1 lần, gán nhanh vào nhiều phòng':'Parasitic-load templates — define once, quickly assign to multiple rooms',
+        'Thêm mẫu tải ký sinh':'Add parasitic-load template', 'Chưa gán phòng':'Not assigned to a room',
+        'Tên thiết bị':'Equipment name', 'Gán vào phòng':'Assign to room',
+        'lạnh ký sinh':'parasitic cooling', 'nhiệt tỏa':'heat gain',
+        'Lưu tải ký sinh này thành mẫu để tái sử dụng cho phòng khác':'Save this parasitic load as a template for reuse on other rooms',
+        'Thêm tải ký sinh':'Add parasitic load',
+        'Tải ký sinh trong phòng ĐHKK nhà máy chế biến: IQF/mạ băng/đá vảy hút nhiệt (âm) → giảm tải ĐHKK. Rotor tỏa nhiệt (dương). Peak Design: không trừ tải âm (conservative).':'Parasitic loads in industrial AC rooms: IQF/glazing/ice flake units remove heat (negative) → reduce the AC load. Rotor releases heat (positive). Peak Design: negative loads are not subtracted (conservative).',
+        'Không thể hoàn tác.':'This cannot be undone.', 'Xoá tải ký sinh':'Delete parasitic load', 'này':'this',
+
+        // Xác nhận trước khi xoá (branch/room/floor/group/motor)
+        confirm_del_branch_title:'Delete branch "{name}"?',
+        confirm_del_branch_msg_children:'This cannot be undone. This branch currently has {n} child branch(es) — the children will become new root branches, they will not be deleted.',
+        confirm_del_room_title:'Delete room "{name}"?',
+        confirm_del_floor_title:'Delete {name}?',
+        confirm_del_group_title:'Delete equipment group "{name}"?',
+        confirm_del_group_rooms:'{n} room(s) assigned to this group will lose that link (not deleted, just unassigned).',
+        confirm_del_group_branches:'{n} duct branch(es) in this group will no longer belong to any equipment cluster in the Calc tab.',
+        confirm_del_motor_title:'Delete motor "{name}"?',
+        'Xoá nhánh':'Delete branch', 'Xóa phòng':'Delete room', 'tầng này':'this floor',
+        'Xóa tầng & phòng':'Delete floor & rooms', 'Toàn bộ phòng thuộc tầng này cũng bị xóa.':'All rooms on this floor will also be deleted.',
+        'Xoá nhóm':'Delete group', 'Xoá motor':'Delete motor',
+        'Nhiệt tỏa của motor này sẽ không còn được tính vào phòng nào.':'This motor\'s heat gain will no longer be counted for any room.',
+        'Không thể hoàn tác. Nhiệt tỏa của motor này sẽ không còn được tính vào phòng nào.':'This cannot be undone. This motor\'s heat gain will no longer be counted for any room.',
+
+        // Tiêu đề panel (App.ui.panelShell titleKey — đã tự động đi qua t(), chỉ cần khai báo
+        // bản dịch, không cần sửa code UI)
+        'Export / Import dữ liệu dự án':'Export / Import project data',
+        'Catalog thiết bị (AHU/FCU/PAU)':'Equipment catalog (AHU/FCU/PAU)',
+        'Danh mục loại phòng & Nhóm áp suất':'Room type & pressure group catalog',
+        'Vật liệu: Tường / Vách':'Materials: Wall / Partition', 'Vật liệu: Kính':'Materials: Glass',
+        'Vật liệu: Ống gió (tôn kẽm/inox...)':'Materials: Ductwork (galvanized steel/stainless...)',
+        'Vật liệu: Cách nhiệt':'Materials: Insulation', 'Vật liệu: Cửa':'Materials: Doors',
+        'Điều kiện khí hậu thiết kế':'Design climate conditions',
+        'Nhóm thiết bị (AHU / PAU)':'Equipment groups (AHU / PAU)',
+        'Tải Ký Sinh (IQF / Mạ băng / Đá vảy / Rotor)':'Parasitic Loads (IQF / Glazing / Ice Flake / Rotor)',
+        'Hủy':'Cancel', 'Xác nhận':'Confirm',
       }
     }
   };
