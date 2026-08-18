@@ -714,7 +714,7 @@
     // ── Import lưu lượng từ Tab Phụ Tải Nhiệt ─────────────────────────────────
     _doImportHL(replace){
       const hlRooms = (App.state.hlRooms||[]).filter(r=>r._af?.L_supply>0);
-      if(!hlRooms.length){ App.ui.toast('warn','Chưa có dữ liệu từ Tab Phụ Tải Nhiệt. Tính toán Tab đó trước.'); return; }
+      if(!hlRooms.length){ App.ui.toast('warn',App.ui.t('Chưa có dữ liệu từ Tab Phụ Tải Nhiệt. Tính toán Tab đó trước.')); return; }
       const cl = App.state.hlClimate || {};
       const prov = App.data.climateSample.find(c=>c.province===App.state.inputs.climateProvince);
       const newBranches = hlRooms.map((r,idx)=>({
@@ -724,7 +724,7 @@
         // giả dự phòng cho hiển thị, nhưng vẫn cần id THẬT ổn định để ghi lại được (vd
         // parentId của 1 nhánh con thêm sau trỏ đúng vào nhánh import này).
         id: 'b'+Date.now().toString(36)+'_'+idx+Math.trunc(Math.random()*999),
-        name: r.name||'Nhánh',
+        name: r.name||App.ui.t('Nhánh'),
         qM3h: Math.round(r._af.L_supply),
         vType: 'mainDuct',
         vMs: r.equipType==='VENT' ? 7 : 6,
@@ -746,13 +746,13 @@
       }));
       if(replace) App.state.branches = newBranches;
       else        App.state.branches = [...(App.state.branches||[]), ...newBranches];
-      App.ui.toast('ok', `${replace?'Đã thay thế':'Đã thêm'} ${newBranches.length} nhánh ống từ Tab Phụ Tải Nhiệt.`);
+      App.ui.toast('ok', App.ui.t(replace?'Đã thay thế {n} nhánh ống từ Tab Phụ Tải Nhiệt.':'Đã thêm {n} nhánh ống từ Tab Phụ Tải Nhiệt.',{n:newBranches.length}));
       App.admin.autoSave(); this.render();
     },
 
     // ── Tính toán ống gió (duct-only) ─────────────────────────────────────────
     recalc(){
-      App.ui.setStatus('Đang tính ống gió...');
+      App.ui.setStatus(App.ui.t('Đang tính ống gió...'));
       try{
         const C = App.calc;
         const branches = App.state.branches||[];
@@ -766,8 +766,8 @@
           // FIX (Bước 3): trước đây thiếu Q chỉ set _result=null rồi bỏ qua im lặng — giao
           // diện chỉ hiện dấu "—" ở mọi ô, không giải thích lý do. Giờ ghi rõ lý do vào
           // _resultError để giao diện hiển thị cảnh báo cụ thể thay vì im lặng.
-          if(!b.qM3h){ b._result=null; b._resultError='Thiếu lưu lượng Q (m³/h)'; return; }
-          if(!b.vMs){ b._result=null; b._resultError='Thiếu vận tốc thiết kế (m/s)'; return; }
+          if(!b.qM3h){ b._result=null; b._resultError=App.ui.t('Thiếu lưu lượng Q (m³/h)'); return; }
+          if(!b.vMs){ b._result=null; b._resultError=App.ui.t('Thiếu vận tốc thiết kế (m/s)'); return; }
           b._resultError=null;
           const area = C.ductArea(b.qM3h, b.vMs);
           let dimsLabel, dUsed, aspectWarn=false;
@@ -847,25 +847,25 @@
           const roomVelKey = b.roomType && VBApp[b.roomType] ? b.roomType : (b.vType==='mainDuct'?'main_duct':null);
           const vRef = roomVelKey && VBApp[roomVelKey] ? VBApp[roomVelKey].supply
             : (b.vType==='mainDuct' ? App.data.velocity.mainDuct : App.data.velocity.branchDuct);
-          if(v > vRef.max) flags.push({level:'yellow', msg:`Nhánh "${b.name}": v=${v.toFixed(1)} m/s > ${vRef.max} m/s (${vRef.note||'SMACNA'})`});
-          if(v < vRef.min) flags.push({level:'yellow', msg:`Nhánh "${b.name}": v=${v.toFixed(1)} m/s < ${vRef.min} m/s (nguy cơ bụi lắng đọng)`});
+          if(v > vRef.max) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": v={v} m/s > {max} m/s ({note})',{name:b.name,v:v.toFixed(1),max:vRef.max,note:vRef.note||'SMACNA'})});
+          if(v < vRef.min) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": v={v} m/s < {min} m/s (nguy cơ bụi lắng đọng)',{name:b.name,v:v.toFixed(1),min:vRef.min})});
         });
-        aspectWarnings.forEach((w,i)=>{ if(w) flags.push({level:'yellow', msg:`Nhánh "${branches[i].name}": Aspect Ratio > 4:1`}); });
-        condensationRisks.forEach((r,i)=>{ if(r) flags.push({level:'red', msg:`Nhánh "${branches[i].name}": nguy cơ đọng sương — tăng độ dày cách nhiệt (≥ ${branches[i]._result?.minInsulationMm?.toFixed(0)||'?'} mm)`}); });
-        ncLevels.forEach((nc,i)=>{ if(nc?.startsWith('>')) flags.push({level:'yellow', msg:`Nhánh "${branches[i].name}": ${nc}`}); });
-        if(criticalPa > 0) flags.push({level:'yellow',msg:`Critical path: ${criticalPa.toFixed(0)} Pa`});
-        if(totalESP > 1500) flags.push({level:'yellow', msg:`ESP thiết kế ${totalESP.toFixed(0)} Pa > 1500 Pa — kiểm tra lại`});
+        aspectWarnings.forEach((w,i)=>{ if(w) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": Aspect Ratio > 4:1',{name:branches[i].name})}); });
+        condensationRisks.forEach((r,i)=>{ if(r) flags.push({level:'red', msg:App.ui.t('Nhánh "{name}": nguy cơ đọng sương — tăng độ dày cách nhiệt (≥ {mm} mm)',{name:branches[i].name,mm:branches[i]._result?.minInsulationMm?.toFixed(0)||'?'})}); });
+        ncLevels.forEach((nc,i)=>{ if(nc?.startsWith('>')) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": {nc}',{name:branches[i].name,nc})}); });
+        if(criticalPa > 0) flags.push({level:'yellow',msg:App.ui.t('Critical path: {pa} Pa',{pa:criticalPa.toFixed(0)})});
+        if(totalESP > 1500) flags.push({level:'yellow', msg:App.ui.t('ESP thiết kế {esp} Pa > 1500 Pa — kiểm tra lại',{esp:totalESP.toFixed(0)})});
 
         const status = flags.some(f=>f.level==='red') ? 'red' : (flags.filter(f=>f.level==='yellow').length>1 ? 'yellow' : 'pass');
         App.state.results = { pressure:{frictionTotal,localPa,filterMax,totalLoss:totalESP,criticalPa}, diagnostics:{flags,status}, branches_calculated: branches.length };
 
         this._renderResults(frictionTotal, localPa, filterMax, totalESP, flags, status);
         App.admin.autoSave();
-        App.ui.setStatus(`Tính xong ${branches.length} nhánh · Critical path = ${criticalPa.toFixed(0)} Pa · ESP = ${totalESP.toFixed(0)} Pa.`);
-        App.ui.toast('ok', `${branches.length} nhánh ống · ESP = ${totalESP.toFixed(0)} Pa`);
+        App.ui.setStatus(App.ui.t('Tính xong {n} nhánh · Critical path = {cp} Pa · ESP = {esp} Pa.',{n:branches.length,cp:criticalPa.toFixed(0),esp:totalESP.toFixed(0)}));
+        App.ui.toast('ok', App.ui.t('{n} nhánh ống · ESP = {esp} Pa',{n:branches.length,esp:totalESP.toFixed(0)}));
       }catch(err){
-        App.ui.toast('err','Lỗi tính ống: '+err.message);
-        App.ui.setStatus('Lỗi');
+        App.ui.toast('err',App.ui.t('Lỗi tính ống:')+' '+err.message);
+        App.ui.setStatus(App.ui.t('Lỗi'));
         console.error(err);
       }
     },
@@ -876,29 +876,29 @@
       const rEl = document.getElementById('duct-results');
       if(rEl) rEl.innerHTML = `
         <div class="bg-panel-800/60 border border-slate-800 rounded-xl p-4 space-y-2">
-          <div class="text-xs text-slate-400">ESP yêu cầu</div>
+          <div class="text-xs text-slate-400">${App.ui.t('ESP yêu cầu')}</div>
           <div class="font-mono-data text-2xl text-amber-400 font-bold">${totalESP.toFixed(0)}<span class="text-sm font-normal text-slate-500"> Pa</span></div>
           <div class="text-xs space-y-1 pt-2 border-t border-slate-800/70">
-            <div class="flex justify-between"><span class="text-slate-400">Ma sát đường ống</span><span class="font-mono-data">${frictionTotal.toFixed(0)} Pa</span></div>
-            <div class="flex justify-between"><span class="text-slate-400">Cục bộ (sơ bộ 4 phụ kiện)</span><span class="font-mono-data">${localPa.toFixed(0)} Pa</span></div>
-            <div class="flex justify-between"><span class="text-slate-400">Lọc (cuối đời, nhánh lớn nhất)</span><span class="font-mono-data">${filterMax.toFixed(0)} Pa</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">${App.ui.t('Ma sát đường ống')}</span><span class="font-mono-data">${frictionTotal.toFixed(0)} Pa</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">${App.ui.t('Cục bộ (sơ bộ 4 phụ kiện)')}</span><span class="font-mono-data">${localPa.toFixed(0)} Pa</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">${App.ui.t('Lọc (cuối đời, nhánh lớn nhất)')}</span><span class="font-mono-data">${filterMax.toFixed(0)} Pa</span></div>
           </div>
-          <p class="text-[11px] text-slate-500 pt-1">→ Chọn quạt/AHU: Q ≥ lưu lượng nhánh lớn nhất và ESP ≥ ${totalESP.toFixed(0)} Pa.</p>
+          <p class="text-[11px] text-slate-500 pt-1">${App.ui.t('→ Chọn quạt/AHU: Q ≥ lưu lượng nhánh lớn nhất và ESP ≥ {esp} Pa.',{esp:totalESP.toFixed(0)})}</p>
         </div>`;
 
       // Diagnostics
       const dEl = document.getElementById('duct-diag');
       const stampColor = status==='pass'?'border-emerald-500 text-emerald-400':status==='yellow'?'border-amber-500 text-amber-400':'border-red-500 text-red-400';
-      const stampText  = status==='pass'?'PASS':status==='yellow'?'CẢNH BÁO':'LỖI';
+      const stampText  = status==='pass'?'PASS':status==='yellow'?App.ui.t('CẢNH BÁO'):App.ui.t('LỖI');
       if(dEl) dEl.innerHTML = `
         <div class="bg-panel-800/60 border border-slate-800 rounded-xl p-4">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs text-slate-400">Chẩn đoán ống gió</span>
+            <span class="text-xs text-slate-400">${App.ui.t('Chẩn đoán ống gió')}</span>
             <span class="border-2 ${stampColor} rounded-lg px-3 py-1 text-sm font-bold tracking-wider" style="transform:rotate(-3deg)">${stampText}</span>
           </div>
           <ul class="text-xs space-y-1">
             ${flags.length===0
-              ? '<li class="text-emerald-400 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>Tất cả nhánh ống đạt yêu cầu.</li>'
+              ? `<li class="text-emerald-400 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${App.ui.t('Tất cả nhánh ống đạt yêu cầu.')}</li>`
               : flags.map(f=>`<li class="flex items-center gap-1.5 ${f.level==='red'?'text-red-400':'text-amber-400'}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${f.msg}</li>`).join('')}
           </ul>
         </div>`;

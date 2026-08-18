@@ -1557,6 +1557,28 @@ MATERIAL_RATES:{
         'lưu ngay':'save immediately', 'phím số':'number keys', 'chuyển tab.':'switch tabs.',
         'Giới hạn & lưu ý':'Limitations & notes',
         'Dữ liệu khí hậu từ QCVN 02:2022/BXD; 7 tỉnh không có trạm riêng dùng số liệu lân cận (đánh dấu trong tab Quản Lý). Hệ số tổn thất cục bộ phụ kiện là giá trị sơ bộ (SMACNA), cần hiệu chỉnh theo bản vẽ thực tế. Giá trị R/η motor là tham khảo — cập nhật theo datasheet thực tế trong tab Quản Lý &amp; Admin.':'Climate data is from QCVN 02:2022/BXD; 7 provinces without their own station use nearby data (marked in the Management tab). Fitting local-loss coefficients are preliminary values (SMACNA) and should be adjusted to match actual drawings. Motor R/η values are for reference — update them with actual datasheets in the Management &amp; Admin tab.',
+
+        // Tab Tính Toán — Duct calc engine (toast/status/diagnostics)
+        'Đã thay thế {n} nhánh ống từ Tab Phụ Tải Nhiệt.':'Replaced with {n} duct branch(es) from the Heat Load tab.',
+        'Đã thêm {n} nhánh ống từ Tab Phụ Tải Nhiệt.':'Added {n} duct branch(es) from the Heat Load tab.',
+        'Chưa có dữ liệu từ Tab Phụ Tải Nhiệt. Tính toán Tab đó trước.':'No data from the Heat Load tab yet. Calculate that tab first.',
+        'Đang tính ống gió...':'Calculating ductwork...',
+        'Thiếu lưu lượng Q (m³/h)':'Missing airflow Q (m³/h)', 'Thiếu vận tốc thiết kế (m/s)':'Missing design velocity (m/s)',
+        'Nhánh "{name}": v={v} m/s > {max} m/s ({note})':'Branch "{name}": v={v} m/s > {max} m/s ({note})',
+        'Nhánh "{name}": v={v} m/s < {min} m/s (nguy cơ bụi lắng đọng)':'Branch "{name}": v={v} m/s < {min} m/s (dust settling risk)',
+        'Nhánh "{name}": Aspect Ratio > 4:1':'Branch "{name}": Aspect Ratio > 4:1',
+        'Nhánh "{name}": nguy cơ đọng sương — tăng độ dày cách nhiệt (≥ {mm} mm)':'Branch "{name}": condensation risk — increase insulation thickness (≥ {mm} mm)',
+        'Nhánh "{name}": {nc}':'Branch "{name}": {nc}',
+        'ESP thiết kế {esp} Pa > 1500 Pa — kiểm tra lại':'Design ESP {esp} Pa > 1500 Pa — please review',
+        'Tính xong {n} nhánh · Critical path = {cp} Pa · ESP = {esp} Pa.':'Calculation done: {n} branch(es) · Critical path = {cp} Pa · ESP = {esp} Pa.',
+        '{n} nhánh ống · ESP = {esp} Pa':'{n} duct branch(es) · ESP = {esp} Pa',
+        'Lỗi tính ống:':'Duct calculation error:', 'Lỗi':'Error',
+        'ESP yêu cầu':'Required ESP', 'Ma sát đường ống':'Duct friction',
+        'Cục bộ (sơ bộ 4 phụ kiện)':'Local loss (approx. 4 fittings)',
+        'Lọc (cuối đời, nhánh lớn nhất)':'Filter (end-of-life, largest branch)',
+        '→ Chọn quạt/AHU: Q ≥ lưu lượng nhánh lớn nhất và ESP ≥ {esp} Pa.':'→ Select fan/AHU: Q ≥ the largest branch airflow and ESP ≥ {esp} Pa.',
+        'Chẩn đoán ống gió':'Duct diagnostics', 'CẢNH BÁO':'WARNING', 'LỖI':'ERROR',
+        'Tất cả nhánh ống đạt yêu cầu.':'All duct branches meet requirements.',
       }
     }
   };
