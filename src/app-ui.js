@@ -7,9 +7,27 @@
 
   // ============== UI — Render giao diện ==============
   App.ui = {
-    t(key){
+    // t(key, params?) — tra bản dịch theo App.state.lang.
+    //
+    // QUY ƯỚC dịch toàn app (để có thể phủ hết hàng nghìn chuỗi UI tiếng Việt sẵn có mà
+    // không phải bịa key ngữ nghĩa cho từng chuỗi, và KHÔNG cần đụng vào App.data.i18n.vi —
+    // giữ nguyên hành vi mặc định tiếng Việt 100%, an toàn với mọi test cũ đang so khớp
+    // chuỗi tiếng Việt):
+    //   • Chuỗi TĨNH (nhãn, nút, tiêu đề, placeholder, tooltip — không có số/tên chèn vào)
+    //     → dùng THẲNG nguyên văn tiếng Việt làm key: t('Tên phòng'). Vì dict[key]||key,
+    //     tiếng Việt không cần khai báo gì thêm (tự fallback về đúng key = đúng chuỗi gốc);
+    //     chỉ cần thêm bản dịch vào App.data.i18n.en với đúng key là chuỗi tiếng Việt gốc.
+    //     Bỏ sót key nào ở bản Anh chỉ khiến chỗ đó hiện tạm tiếng Việt (không lỗi, không rỗng).
+    //   • Chuỗi ĐỘNG (có chèn số đếm/tên riêng qua template literal, vd "Đã thêm 3 nhánh...")
+    //     → KHÔNG dùng được cách trên (mỗi lần gọi ra 1 key khác nhau). Dùng key ngữ nghĩa
+    //     ổn định + params: t('branches_added_count', {n:3}) — phải khai báo TƯỜNG MINH cả
+    //     2 bản vi/en trong App.data.i18n với placeholder dạng {n} trong chuỗi.
+    // params: object đơn giản {tenBien: giá trị} — thay thế {tenBien} trong chuỗi kết quả.
+    t(key, params){
       const dict = App.data.i18n[App.state.lang] || App.data.i18n.vi;
-      return dict[key] || key;
+      let s = dict[key] || key;
+      if(params) Object.keys(params).forEach(k=>{ s = s.split('{'+k+'}').join(params[k]); });
+      return s;
     },
     applyI18n(){
       document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -31,7 +49,7 @@
     },
     setStatusProject(){
       const p = App.state.activeProjectId;
-      document.getElementById('status-project').textContent = p ? ('Dự án: ' + (App.state.inputs.projectName||p)) : '';
+      document.getElementById('status-project').textContent = p ? (App.ui.t('Dự án:') + ' ' + (App.state.inputs.projectName||p)) : '';
     },
 
     TABS: [
@@ -101,8 +119,8 @@
           <h3 style="font-size:15px;font-weight:700;color:#edf2f8;margin-bottom:6px">${title}</h3>
           ${message?`<p style="font-size:13px;color:#8eaac2;margin-bottom:16px">${message}</p>`:'<div style="height:12px"></div>'}
           <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button id="sc-cancel" style="background:#122032;border:1px solid #234168;color:#8eaac2;border-radius:7px;padding:8px 16px;font-size:13px;cursor:pointer">Hủy</button>
-            <button id="sc-ok" style="background:#b91c1c;border:none;color:white;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">${confirmLabel||'Xác nhận'}</button>
+            <button id="sc-cancel" style="background:#122032;border:1px solid #234168;color:#8eaac2;border-radius:7px;padding:8px 16px;font-size:13px;cursor:pointer">${this.t('Hủy')}</button>
+            <button id="sc-ok" style="background:#b91c1c;border:none;color:white;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">${confirmLabel||this.t('Xác nhận')}</button>
           </div>
         </div>`;
       modal.classList.remove('hidden');
@@ -243,9 +261,9 @@
           <div class="bg-panel-800/60 border border-slate-800 rounded-xl p-4">
             <button id="btn-duct-calc" style="width:100%;background:#059669;color:#ffffff;border:none;border-radius:10px;padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;-webkit-appearance:none">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span style="color:#ffffff;font-size:14px;font-weight:700">Tính ống gió</span>
+              <span style="color:#ffffff;font-size:14px;font-weight:700">${App.ui.t('Tính ống gió')}</span>
             </button>
-            <p style="font-size:11px;color:#4a6680;margin-top:6px;text-align:center">Ctrl+Enter để tính nhanh</p>
+            <p style="font-size:11px;color:#4a6680;margin-top:6px;text-align:center">${App.ui.t('Ctrl+Enter để tính nhanh')}</p>
           </div>
           <div id="duct-results" style="scroll-margin-top:80px"></div>
           <div id="duct-diag"></div>
@@ -273,17 +291,16 @@
       return hlRooms.length === 0 ? `
         <div class="text-xs text-slate-500 flex items-center gap-2 py-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-          Tính toán Tab "Phụ Tải Nhiệt" trước để import lưu lượng tự động.
-          Hoặc nhập tay Q (m³/h) cho từng nhánh ống trong bảng bên dưới.
+          ${App.ui.t('Tính toán Tab "Phụ Tải Nhiệt" trước để import lưu lượng tự động. Hoặc nhập tay Q (m³/h) cho từng nhánh ống trong bảng bên dưới.')}
         </div>` : `
         <div class="space-y-3">
-          <p class="text-xs text-slate-400">Tìm thấy <span class="text-emerald-400 font-medium">${hlRooms.length} phòng</span> đã tính trong Tab Phụ Tải Nhiệt. Import lưu lượng L_cấp làm đầu vào nhánh ống chính.</p>
+          <p class="text-xs text-slate-400">${App.ui.t('duct_import_found_rooms',{n:hlRooms.length})}</p>
           <div class="overflow-x-auto">
             <table class="zebra w-full text-xs">
               <thead class="text-slate-400"><tr>
-                <th class="text-left px-2 py-1.5">Phòng</th><th class="px-2">Loại TB</th>
-                <th class="px-2">L_cấp (m³/h)</th><th class="px-2">L_tươi</th>
-                <th class="px-2">L_hồi</th><th class="px-2">Q_coil (kW)</th>
+                <th class="text-left px-2 py-1.5">${App.ui.t('Phòng')}</th><th class="px-2">${App.ui.t('Loại TB')}</th>
+                <th class="px-2">L_cấp (m³/h)</th><th class="px-2">${App.ui.t('L_tươi')}</th>
+                <th class="px-2">${App.ui.t('L_hồi')}</th><th class="px-2">Q_coil (kW)</th>
               </tr></thead>
               <tbody>${previewRows}</tbody>
             </table>
@@ -292,22 +309,22 @@
             <!-- Nút thêm nhánh theo từng thiết bị -->
           ${(App.state.hlEquipGroups||[]).length>0?`
           <div style="margin-bottom:10px">
-            <p style="font-size:10px;color:#4a6680;margin-bottom:6px">Thêm nhánh ống nhanh theo thiết bị:</p>
+            <p style="font-size:10px;color:#4a6680;margin-bottom:6px">${App.ui.t('Thêm nhánh ống nhanh theo thiết bị:')}</p>
             <div style="display:flex;flex-wrap:wrap;gap:6px">
               ${(App.state.hlEquipGroups||[]).map(g=>`
                 <button data-quick-branch="${g.id}" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34d399;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">
-                  + ${g.equipType||'AHU'} ${g.name}: Nhánh ống
+                  + ${g.equipType||'AHU'} ${g.name}: ${App.ui.t('Nhánh ống')}
                 </button>`).join('')}
             </div>
           </div>`:''}
           <button id="btn-import-hl-append" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i>Import thêm vào bảng ống hiện tại
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i>${App.ui.t('Import thêm vào bảng ống hiện tại')}
             </button>
             <button id="btn-import-hl-replace" class="border border-amber-600 text-amber-400 hover:bg-amber-600 hover:text-white rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 transition">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>Thay thế toàn bộ bảng ống
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${App.ui.t('Thay thế toàn bộ bảng ống')}
             </button>
           </div>
-          ${hasCurrent?'<p class="text-[11px] text-slate-500">Bảng ống hiện tại có '+App.state.branches.length+' nhánh.</p>':''}
+          ${hasCurrent?`<p class="text-[11px] text-slate-500">${App.ui.t('duct_current_table_count',{n:App.state.branches.length})}</p>`:''}
         </div>`;
     },
 
@@ -353,7 +370,7 @@
       const idxById={}; rows.forEach((b,i)=>idxById[b.id||('_'+i)]=i);
       // Tùy chọn parent (dùng trong khối "Thông tin chung" thu gọn — gán cha thủ công,
       // trường hợp hiếm gặp khi cần sửa lại cấu trúc cây thay vì dựng mới bằng nút "+").
-      const parentOpts=`<option value="">(Ống gốc / Root)</option>`+
+      const parentOpts=`<option value="">${App.ui.t('(Ống gốc / Root)')}</option>`+
         rows.map(b=>`<option value="${b.id}">${'　'.repeat(depthMap[b.id]||0)}${b.name||b.id}</option>`).join('');
 
       const renderNode = (node, depth) => {
@@ -368,12 +385,12 @@
         return `<div style="${depth>0?'margin-left:16px;border-left:2px solid #1a3050;padding-left:10px;':''}">
           <div class="border rounded-lg p-2.5 space-y-2 ${isCP?'border-amber-500 bg-amber-950/20':'border-slate-700/50'}" data-bidx="${i}">
             <div class="flex items-center gap-2">
-              <input data-brow="name" value="${b.name||'Nhánh '+(i+1)}" placeholder="Tên nhánh"
+              <input data-brow="name" value="${b.name||App.ui.t('Nhánh {n}',{n:i+1})}" placeholder="${App.ui.t('Tên nhánh')}"
                 class="flex-1 bg-base-900 border ${isCP?'border-amber-600':'border-slate-700'} rounded px-2 py-1.5 text-xs font-medium">
-              <button data-badd-child="${i}" title="Thêm nhánh con dưới nhánh này" class="flex-shrink-0 text-emerald-400 hover:text-emerald-300 p-1">
+              <button data-badd-child="${i}" title="${App.ui.t('Thêm nhánh con dưới nhánh này')}" class="flex-shrink-0 text-emerald-400 hover:text-emerald-300 p-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
-              <button data-badv-toggle="${b.id}" title="Thông tin chung (vật liệu/cách nhiệt/lọc...)" class="flex-shrink-0 text-slate-500 hover:text-slate-300 p-1">
+              <button data-badv-toggle="${b.id}" title="${App.ui.t('Thông tin chung (vật liệu/cách nhiệt/lọc...)')}" class="flex-shrink-0 text-slate-500 hover:text-slate-300 p-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               </button>
               <button data-brow-del="${i}" class="flex-shrink-0 text-slate-500 hover:text-red-400 p-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
@@ -381,10 +398,10 @@
             <div class="grid grid-cols-3 gap-2">
               <div><label class="text-[9px] text-slate-500">Q (m³/h)</label><input data-brow="qM3h" type="number" value="${b.qM3h||''}" placeholder="m³/h" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
               <div><label class="text-[9px] text-slate-500">v (m/s)</label><input data-brow="vMs" type="number" step="0.1" value="${b.vMs||''}" placeholder="m/s" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-              <div><label class="text-[9px] text-slate-500">Loại ống</label>
+              <div><label class="text-[9px] text-slate-500">${App.ui.t('Loại ống')}</label>
                 <select data-brow="vType" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                  <option value="mainDuct"   ${b.vType==='mainDuct'  ?'selected':''}>Chính</option>
-                  <option value="branchDuct" ${b.vType==='branchDuct'?'selected':''}>Nhánh</option>
+                  <option value="mainDuct"   ${b.vType==='mainDuct'  ?'selected':''}>${App.ui.t('Chính')}</option>
+                  <option value="branchDuct" ${b.vType==='branchDuct'?'selected':''}>${App.ui.t('Nhánh')}</option>
                 </select>
               </div>
             </div>
@@ -392,72 +409,72 @@
             ${b._resultError?`
             <div class="bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 text-[10px] text-amber-400 flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Chưa tính được — ${b._resultError}
+              ${App.ui.t('Chưa tính được')} — ${b._resultError}
             </div>`:`
             <div class="bg-slate-950/50 rounded-lg p-2 grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[10px]">
-              <div class="text-slate-500">Kích thước <span class="font-mono-data ${b._result?'text-emerald-400':'text-slate-600'}">${b._result?b._result.dimsLabel:'—'}</span></div>
-              <div class="text-slate-500">ΔP ma sát <span class="font-mono-data text-slate-300">${b._result?(b._result.frictionPa.toFixed(0)+' Pa'):'—'}</span></div>
-              <div class="text-slate-500">ΔP cục bộ <span class="font-mono-data text-slate-300">${localPa>0?localPa.toFixed(0)+' Pa':'0 Pa'}</span></div>
-              <div class="text-slate-500">ΔP tích lũy <span class="font-mono-data ${isCP?'text-amber-400 font-bold':'text-slate-300'}">${cumPa>0?cumPa.toFixed(0)+' Pa':'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('Kích thước')} <span class="font-mono-data ${b._result?'text-emerald-400':'text-slate-600'}">${b._result?b._result.dimsLabel:'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('ΔP ma sát')} <span class="font-mono-data text-slate-300">${b._result?(b._result.frictionPa.toFixed(0)+' Pa'):'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('ΔP cục bộ')} <span class="font-mono-data text-slate-300">${localPa>0?localPa.toFixed(0)+' Pa':'0 Pa'}</span></div>
+              <div class="text-slate-500">${App.ui.t('ΔP tích lũy')} <span class="font-mono-data ${isCP?'text-amber-400 font-bold':'text-slate-300'}">${cumPa>0?cumPa.toFixed(0)+' Pa':'—'}</span></div>
               <div class="text-slate-500">NC <span class="font-mono-data ${b._result?.ncFlag?'text-amber-400':'text-slate-300'}">${b._result?b._result.nc:'—'}</span></div>
-              <div class="text-slate-500">Đọng sương <span class="font-mono-data ${b._result?.condensationRisk?'text-red-400':'text-emerald-400'}">${b._result?(b._result.condensationRisk?'⚠ Có':'OK'):'—'}</span></div>
+              <div class="text-slate-500">${App.ui.t('Đọng sương')} <span class="font-mono-data ${b._result?.condensationRisk?'text-red-400':'text-emerald-400'}">${b._result?(b._result.condensationRisk?'⚠ '+App.ui.t('Có'):'OK'):'—'}</span></div>
             </div>`}
             <!-- Thông tin chung — thu gọn mặc định -->
             <button data-badv-toggle="${b.id}" class="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform:rotate(${advOpen?90:0}deg);transition:transform .15s"><polyline points="9 18 15 12 9 6"/></svg>
-              Thông tin chung (thiết bị, vật liệu, cách nhiệt, lọc...)
+              ${App.ui.t('Thông tin chung (thiết bị, vật liệu, cách nhiệt, lọc...)')}
             </button>
             <div class="space-y-2" style="${advOpen?'':'display:none'}">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div><label class="text-[9px] text-slate-500">Thiết bị (nhóm)</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Thiết bị (nhóm)')}</label>
                   <select data-brow="equipGroupId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                    <option value="">-- Chung --</option>
+                    <option value="">${App.ui.t('-- Chung --')}</option>
                     ${(App.state.hlEquipGroups||[]).map(g=>`<option value="${g.id}" ${b.equipGroupId===g.id?'selected':''}>${g.equipType||''} ${g.name||g.id}</option>`).join('')}
                   </select>
                 </div>
-                <div><label class="text-[9px] text-slate-500">Nhánh cha (Parent) — chỉ cần khi sửa cấu trúc cây thủ công</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Nhánh cha (Parent) — chỉ cần khi sửa cấu trúc cây thủ công')}</label>
                   <select data-brow="parentId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
                     ${parentOpts.replace(`value="${b.parentId||''}"`,`value="${b.parentId||''}" selected`)}
                   </select>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-2">
-                <div><label class="text-[9px] text-slate-500">Hình dạng</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Hình dạng')}</label>
                   <select data-brow="shape" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                    <option value="rect"  ${b.shape==='rect' ?'selected':''}>□ Chữ nhật</option>
-                    <option value="round" ${b.shape==='round'?'selected':''}>○ Tròn</option>
+                    <option value="rect"  ${b.shape==='rect' ?'selected':''}>□ ${App.ui.t('Chữ nhật')}</option>
+                    <option value="round" ${b.shape==='round'?'selected':''}>○ ${App.ui.t('Tròn')}</option>
                   </select>
                 </div>
-                <div><label class="text-[9px] text-slate-500">Vật liệu ống</label>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Vật liệu ống')}</label>
                   <select data-brow="materialId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${matOpts.replace(`value="${b.materialId}"`,`value="${b.materialId}" selected`)}</select>
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-2">
                 <div><label class="text-[9px] text-slate-500">L (m)</label><input data-brow="lengthM" type="number" step="1" value="${b.lengthM||10}" placeholder="m" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-                <div><label class="text-[9px] text-slate-500" title="Chọn nhanh preset Σζ phụ kiện điển hình">Preset Σζ</label>
+                <div><label class="text-[9px] text-slate-500" title="${App.ui.t('Chọn nhanh preset Σζ phụ kiện điển hình')}">${App.ui.t('Preset Σζ')}</label>
                   <select data-brow="fittingPreset" class="bg-base-900 border border-violet-800 rounded px-1 py-1.5 text-[10px] w-full">
-                    <option value="">-- Preset --</option>
-                    <option value="0.3" ${b.fittingPreset==='0.3'?'selected':''}>Đơn giản (0.3)</option>
-                    <option value="0.8" ${b.fittingPreset==='0.8'?'selected':''}>Tiêu chuẩn (0.8)</option>
-                    <option value="1.5" ${b.fittingPreset==='1.5'?'selected':''}>Nhiều cút (1.5)</option>
-                    <option value="2.5" ${b.fittingPreset==='2.5'?'selected':''}>Rất phức tạp (2.5)</option>
+                    <option value="">${App.ui.t('-- Preset --')}</option>
+                    <option value="0.3" ${b.fittingPreset==='0.3'?'selected':''}>${App.ui.t('Đơn giản (0.3)')}</option>
+                    <option value="0.8" ${b.fittingPreset==='0.8'?'selected':''}>${App.ui.t('Tiêu chuẩn (0.8)')}</option>
+                    <option value="1.5" ${b.fittingPreset==='1.5'?'selected':''}>${App.ui.t('Nhiều cút (1.5)')}</option>
+                    <option value="2.5" ${b.fittingPreset==='2.5'?'selected':''}>${App.ui.t('Rất phức tạp (2.5)')}</option>
                   </select>
                 </div>
-                <div><label class="text-[9px] text-slate-500" title="1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5">Σζ phụ kiện</label>
+                <div><label class="text-[9px] text-slate-500" title="${App.ui.t('1 cút 90° R/D=1.5 ≈ 0.17, tê nhánh ≈ 0.75, damper mở ≈ 0.20, diffuser ≈ 2.5')}">${App.ui.t('Σζ phụ kiện')}</label>
                   <input data-brow="fittingsZeta" type="number" step="0.05" min="0" value="${b.fittingsZeta??0.8}"
                     class="bg-base-900 border border-violet-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right">
                 </div>
               </div>
-              <div><label class="text-[9px] text-slate-500">Cách nhiệt</label>
+              <div><label class="text-[9px] text-slate-500">${App.ui.t('Cách nhiệt')}</label>
                 <select data-brow="insulationId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">${insOpts.replace(`value="${b.insulationId}"`,`value="${b.insulationId}" selected`)}</select>
               </div>
               <div class="grid grid-cols-2 gap-2">
-                <div><label class="text-[9px] text-slate-500">Dày cách nhiệt (mm)</label><input data-brow="thicknessMm" type="number" step="5" value="${b.thicknessMm||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
-                <div><label class="text-[9px] text-slate-500">T môi trường (°C)</label><input data-brow="ambientTC" type="number" step="0.5" value="${b.ambientTC||32}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('Dày cách nhiệt (mm)')}</label><input data-brow="thicknessMm" type="number" step="5" value="${b.thicknessMm||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
+                <div><label class="text-[9px] text-slate-500">${App.ui.t('T môi trường (°C)')}</label><input data-brow="ambientTC" type="number" step="0.5" value="${b.ambientTC||32}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
               </div>
-              <div><label class="text-[9px] text-slate-500">Lọc (nếu ống này qua bộ lọc)</label>
+              <div><label class="text-[9px] text-slate-500">${App.ui.t('Lọc (nếu ống này qua bộ lọc)')}</label>
                 <select data-brow="filterStageId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
-                  <option value="">(Không)</option>
+                  <option value="">${App.ui.t('(Không)')}</option>
                   ${filterOpts.replace(`value="${b.filterStageId}"`,`value="${b.filterStageId}" selected`)}
                 </select>
               </div>
@@ -477,40 +494,40 @@
         clusterByGid[gid].roots.push(rootNode);
       });
       const clusterLabel=gid=>{
-        if(!gid) return 'Chung / chưa gán thiết bị';
+        if(!gid) return App.ui.t('Chung / chưa gán thiết bị');
         const g=(App.state.hlEquipGroups||[]).find(x=>x.id===gid);
-        return g ? `${g.equipType||'AHU'} ${g.name||g.id}` : 'Thiết bị đã bị xoá';
+        return g ? `${g.equipType||'AHU'} ${g.name||g.id}` : App.ui.t('Thiết bị đã bị xoá');
       };
       const clustersHtml=clusters.map(cl=>`
         <div class="mb-3">
           <div class="flex items-center gap-2 mb-1.5 px-0.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400 flex-shrink-0"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
             <span class="text-xs font-medium text-cyan-300">${clusterLabel(cl.gid)}</span>
-            <span class="text-[10px] text-slate-500">${cl.roots.length} nhánh gốc</span>
+            <span class="text-[10px] text-slate-500">${App.ui.t('{n} nhánh gốc',{n:cl.roots.length})}</span>
             <button data-baddroot="${cl.gid}" class="ml-auto text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ nhánh gốc
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('+ nhánh gốc')}
             </button>
           </div>
           <div class="space-y-2">${cl.roots.map(r=>renderNode(r,0)).join('')}</div>
         </div>`).join('');
 
       return `
-        ${clustersHtml||'<p class="text-center text-slate-500 py-4 text-xs">Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.</p>'}
+        ${clustersHtml||`<p class="text-center text-slate-500 py-4 text-xs">${App.ui.t('Chưa có nhánh ống. Thêm thủ công hoặc Import từ Tab Phụ Tải Nhiệt.')}</p>`}
         ${maxCumPa>0?`<div class="mt-2 px-3 py-2 bg-amber-950/30 border border-amber-700/40 rounded-lg text-xs flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-          <span class="text-amber-400 font-medium">Critical path (nhánh màu cam):</span>
-          <span class="font-mono-data text-amber-300">${maxCumPa.toFixed(0)} Pa tích lũy</span>
-          <span class="text-slate-500">— Đây là tổn thất áp thiết kế cho fan (ESP)</span>
+          <span class="text-amber-400 font-medium">${App.ui.t('Critical path (nhánh màu cam):')}</span>
+          <span class="font-mono-data text-amber-300">${App.ui.t('{n} Pa tích lũy',{n:maxCumPa.toFixed(0)})}</span>
+          <span class="text-slate-500">— ${App.ui.t('Đây là tổn thất áp thiết kế cho fan (ESP)')}</span>
         </div>`:''}
         <button id="btn-add-branch" class="mt-2 text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></i>Thêm nhánh ống
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></i>${App.ui.t('Thêm nhánh ống')}
         </button>
         <div class="grid grid-cols-3 md:grid-cols-5 gap-2 mt-3 pt-3 border-t border-slate-800/60 text-[11px] text-slate-500">
-          <div>Ống chính: <span class="text-slate-300">5–9 m/s</span></div>
-          <div>Ống nhánh: <span class="text-slate-300">2.5–5 m/s</span></div>
-          <div>Trước lọc: <span class="text-slate-300">2–3.5 m/s</span></div>
-          <div>Σζ điển hình: <span class="text-slate-300">2 cút=0.6, tê=0.9, van=0.2</span></div>
-          <div>Critical path = ESP thiết kế quạt</div>
+          <div>${App.ui.t('Ống chính:')} <span class="text-slate-300">5–9 m/s</span></div>
+          <div>${App.ui.t('Ống nhánh:')} <span class="text-slate-300">2.5–5 m/s</span></div>
+          <div>${App.ui.t('Trước lọc:')} <span class="text-slate-300">2–3.5 m/s</span></div>
+          <div>${App.ui.t('Σζ điển hình:')} <span class="text-slate-300">2 cút=0.6, tê=0.9, van=0.2</span></div>
+          <div>${App.ui.t('Critical path = ESP thiết kế quạt')}</div>
         </div>`;
     },
 
@@ -555,7 +572,7 @@
           // "Tính ống gió" ra kết quả ngay, không cần biết phải tự nhập vận tốc trước.
           App.state.branches.push({
             id:'b'+Date.now().toString(36),
-            name:(g.equipType||'AHU')+' '+g.name+' - Nhánh '+(App.state.branches.filter(b=>b.equipGroupId===gid).length+1),
+            name:(g.equipType||'AHU')+' '+g.name+' - '+App.ui.t('Nhánh {n}',{n:App.state.branches.filter(b=>b.equipGroupId===gid).length+1}),
             parentId:'', equipGroupId:gid,
             qM3h:null, vType: isFirst?'mainDuct':'branchDuct', vMs: isFirst?7:3.75,
             shape:'rect', materialId:'galv', lengthM:10,
@@ -563,7 +580,7 @@
             filterStageId:'', fittingsZeta:0.8
           });
           App.admin.autoSave(); this.render();
-          App.ui.toast('ok','Đã thêm nhánh cho '+(g.equipType||'AHU')+' '+g.name+' — nhập Q (m³/h) rồi bấm Tính ống gió');
+          App.ui.toast('ok',App.ui.t('Đã thêm nhánh cho {equip} {name} — nhập Q (m³/h) rồi bấm Tính ống gió',{equip:g.equipType||'AHU',name:g.name}));
         });
       });
       root.querySelector('#btn-import-hl-append')?.addEventListener('click', ()=>this._doImportHL(false));
@@ -586,7 +603,7 @@
         branches.push({
           id: newId,
           parentId: isFirst ? null : (mainBranch?.id||null),
-          name:'Nhánh '+(branches.length+1),
+          name:App.ui.t('Nhánh {n}',{n:branches.length+1}),
           vType: isFirst?'mainDuct':'branchDuct',
           equipGroupId: lastBranch?.equipGroupId || '',
           // FIX: trước đây không set vMs mặc định — recalc() bỏ qua hoàn toàn nhánh nào thiếu
@@ -612,11 +629,11 @@
         const branch=App.state.branches[idx]; if(!branch) return;
         const childCount=App.state.branches.filter(x=>x.parentId===branch.id).length;
         App.ui.showConfirm(
-          'Xoá nhánh "'+(branch.name||'này')+'"?',
+          App.ui.t('confirm_del_branch_title',{name:branch.name||App.ui.t('này')}),
           childCount>0
-            ? `Không thể hoàn tác. Nhánh này đang có ${childCount} nhánh con — các nhánh con sẽ trở thành nhánh gốc mới, không bị xoá theo.`
-            : 'Không thể hoàn tác.',
-          'Xoá nhánh',
+            ? App.ui.t('confirm_del_branch_msg_children',{n:childCount})
+            : App.ui.t('Không thể hoàn tác.'),
+          App.ui.t('Xoá nhánh'),
           ()=>{
             App.state.branches.splice(idx,1);
             App.admin.autoSave(); this.render();
@@ -633,7 +650,7 @@
         branches.push({
           id:'b'+(Date.now()%1e6).toString(36)+Math.trunc(Math.random()*99),
           parentId: parent.id, equipGroupId: parent.equipGroupId||'',
-          name:'Nhánh '+(branches.length+1),
+          name:App.ui.t('Nhánh {n}',{n:branches.length+1}),
           vType:'branchDuct', vMs:3.75,
           shape:'rect', materialId: parent.materialId||'galv',
           insulationId: parent.insulationId||'glasswool', lengthM:10,
@@ -655,7 +672,7 @@
         branches.push({
           id:'b'+(Date.now()%1e6).toString(36)+Math.trunc(Math.random()*99),
           parentId:'', equipGroupId:gid,
-          name:(g?((g.equipType||'AHU')+' '+g.name):'Chung')+' - Nhánh gốc '+(rootsInCluster+1),
+          name:(g?((g.equipType||'AHU')+' '+g.name):App.ui.t('Chung'))+' - '+App.ui.t('Nhánh gốc {n}',{n:rootsInCluster+1}),
           vType:'mainDuct', vMs:7,
           shape:'rect', materialId:'galv', insulationId:'glasswool', lengthM:10,
           ambientTC:32, ambientRH:80, thicknessMm:25, fittingsZeta:0.8
@@ -697,7 +714,7 @@
     // ── Import lưu lượng từ Tab Phụ Tải Nhiệt ─────────────────────────────────
     _doImportHL(replace){
       const hlRooms = (App.state.hlRooms||[]).filter(r=>r._af?.L_supply>0);
-      if(!hlRooms.length){ App.ui.toast('warn','Chưa có dữ liệu từ Tab Phụ Tải Nhiệt. Tính toán Tab đó trước.'); return; }
+      if(!hlRooms.length){ App.ui.toast('warn',App.ui.t('Chưa có dữ liệu từ Tab Phụ Tải Nhiệt. Tính toán Tab đó trước.')); return; }
       const cl = App.state.hlClimate || {};
       const prov = App.data.climateSample.find(c=>c.province===App.state.inputs.climateProvince);
       const newBranches = hlRooms.map((r,idx)=>({
@@ -707,7 +724,7 @@
         // giả dự phòng cho hiển thị, nhưng vẫn cần id THẬT ổn định để ghi lại được (vd
         // parentId của 1 nhánh con thêm sau trỏ đúng vào nhánh import này).
         id: 'b'+Date.now().toString(36)+'_'+idx+Math.trunc(Math.random()*999),
-        name: r.name||'Nhánh',
+        name: r.name||App.ui.t('Nhánh'),
         qM3h: Math.round(r._af.L_supply),
         vType: 'mainDuct',
         vMs: r.equipType==='VENT' ? 7 : 6,
@@ -729,13 +746,13 @@
       }));
       if(replace) App.state.branches = newBranches;
       else        App.state.branches = [...(App.state.branches||[]), ...newBranches];
-      App.ui.toast('ok', `${replace?'Đã thay thế':'Đã thêm'} ${newBranches.length} nhánh ống từ Tab Phụ Tải Nhiệt.`);
+      App.ui.toast('ok', App.ui.t(replace?'Đã thay thế {n} nhánh ống từ Tab Phụ Tải Nhiệt.':'Đã thêm {n} nhánh ống từ Tab Phụ Tải Nhiệt.',{n:newBranches.length}));
       App.admin.autoSave(); this.render();
     },
 
     // ── Tính toán ống gió (duct-only) ─────────────────────────────────────────
     recalc(){
-      App.ui.setStatus('Đang tính ống gió...');
+      App.ui.setStatus(App.ui.t('Đang tính ống gió...'));
       try{
         const C = App.calc;
         const branches = App.state.branches||[];
@@ -749,8 +766,8 @@
           // FIX (Bước 3): trước đây thiếu Q chỉ set _result=null rồi bỏ qua im lặng — giao
           // diện chỉ hiện dấu "—" ở mọi ô, không giải thích lý do. Giờ ghi rõ lý do vào
           // _resultError để giao diện hiển thị cảnh báo cụ thể thay vì im lặng.
-          if(!b.qM3h){ b._result=null; b._resultError='Thiếu lưu lượng Q (m³/h)'; return; }
-          if(!b.vMs){ b._result=null; b._resultError='Thiếu vận tốc thiết kế (m/s)'; return; }
+          if(!b.qM3h){ b._result=null; b._resultError=App.ui.t('Thiếu lưu lượng Q (m³/h)'); return; }
+          if(!b.vMs){ b._result=null; b._resultError=App.ui.t('Thiếu vận tốc thiết kế (m/s)'); return; }
           b._resultError=null;
           const area = C.ductArea(b.qM3h, b.vMs);
           let dimsLabel, dUsed, aspectWarn=false;
@@ -830,25 +847,25 @@
           const roomVelKey = b.roomType && VBApp[b.roomType] ? b.roomType : (b.vType==='mainDuct'?'main_duct':null);
           const vRef = roomVelKey && VBApp[roomVelKey] ? VBApp[roomVelKey].supply
             : (b.vType==='mainDuct' ? App.data.velocity.mainDuct : App.data.velocity.branchDuct);
-          if(v > vRef.max) flags.push({level:'yellow', msg:`Nhánh "${b.name}": v=${v.toFixed(1)} m/s > ${vRef.max} m/s (${vRef.note||'SMACNA'})`});
-          if(v < vRef.min) flags.push({level:'yellow', msg:`Nhánh "${b.name}": v=${v.toFixed(1)} m/s < ${vRef.min} m/s (nguy cơ bụi lắng đọng)`});
+          if(v > vRef.max) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": v={v} m/s > {max} m/s ({note})',{name:b.name,v:v.toFixed(1),max:vRef.max,note:vRef.note||'SMACNA'})});
+          if(v < vRef.min) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": v={v} m/s < {min} m/s (nguy cơ bụi lắng đọng)',{name:b.name,v:v.toFixed(1),min:vRef.min})});
         });
-        aspectWarnings.forEach((w,i)=>{ if(w) flags.push({level:'yellow', msg:`Nhánh "${branches[i].name}": Aspect Ratio > 4:1`}); });
-        condensationRisks.forEach((r,i)=>{ if(r) flags.push({level:'red', msg:`Nhánh "${branches[i].name}": nguy cơ đọng sương — tăng độ dày cách nhiệt (≥ ${branches[i]._result?.minInsulationMm?.toFixed(0)||'?'} mm)`}); });
-        ncLevels.forEach((nc,i)=>{ if(nc?.startsWith('>')) flags.push({level:'yellow', msg:`Nhánh "${branches[i].name}": ${nc}`}); });
-        if(criticalPa > 0) flags.push({level:'yellow',msg:`Critical path: ${criticalPa.toFixed(0)} Pa`});
-        if(totalESP > 1500) flags.push({level:'yellow', msg:`ESP thiết kế ${totalESP.toFixed(0)} Pa > 1500 Pa — kiểm tra lại`});
+        aspectWarnings.forEach((w,i)=>{ if(w) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": Aspect Ratio > 4:1',{name:branches[i].name})}); });
+        condensationRisks.forEach((r,i)=>{ if(r) flags.push({level:'red', msg:App.ui.t('Nhánh "{name}": nguy cơ đọng sương — tăng độ dày cách nhiệt (≥ {mm} mm)',{name:branches[i].name,mm:branches[i]._result?.minInsulationMm?.toFixed(0)||'?'})}); });
+        ncLevels.forEach((nc,i)=>{ if(nc?.startsWith('>')) flags.push({level:'yellow', msg:App.ui.t('Nhánh "{name}": {nc}',{name:branches[i].name,nc})}); });
+        if(criticalPa > 0) flags.push({level:'yellow',msg:App.ui.t('Critical path: {pa} Pa',{pa:criticalPa.toFixed(0)})});
+        if(totalESP > 1500) flags.push({level:'yellow', msg:App.ui.t('ESP thiết kế {esp} Pa > 1500 Pa — kiểm tra lại',{esp:totalESP.toFixed(0)})});
 
         const status = flags.some(f=>f.level==='red') ? 'red' : (flags.filter(f=>f.level==='yellow').length>1 ? 'yellow' : 'pass');
         App.state.results = { pressure:{frictionTotal,localPa,filterMax,totalLoss:totalESP,criticalPa}, diagnostics:{flags,status}, branches_calculated: branches.length };
 
         this._renderResults(frictionTotal, localPa, filterMax, totalESP, flags, status);
         App.admin.autoSave();
-        App.ui.setStatus(`Tính xong ${branches.length} nhánh · Critical path = ${criticalPa.toFixed(0)} Pa · ESP = ${totalESP.toFixed(0)} Pa.`);
-        App.ui.toast('ok', `${branches.length} nhánh ống · ESP = ${totalESP.toFixed(0)} Pa`);
+        App.ui.setStatus(App.ui.t('Tính xong {n} nhánh · Critical path = {cp} Pa · ESP = {esp} Pa.',{n:branches.length,cp:criticalPa.toFixed(0),esp:totalESP.toFixed(0)}));
+        App.ui.toast('ok', App.ui.t('{n} nhánh ống · ESP = {esp} Pa',{n:branches.length,esp:totalESP.toFixed(0)}));
       }catch(err){
-        App.ui.toast('err','Lỗi tính ống: '+err.message);
-        App.ui.setStatus('Lỗi');
+        App.ui.toast('err',App.ui.t('Lỗi tính ống:')+' '+err.message);
+        App.ui.setStatus(App.ui.t('Lỗi'));
         console.error(err);
       }
     },
@@ -859,29 +876,29 @@
       const rEl = document.getElementById('duct-results');
       if(rEl) rEl.innerHTML = `
         <div class="bg-panel-800/60 border border-slate-800 rounded-xl p-4 space-y-2">
-          <div class="text-xs text-slate-400">ESP yêu cầu</div>
+          <div class="text-xs text-slate-400">${App.ui.t('ESP yêu cầu')}</div>
           <div class="font-mono-data text-2xl text-amber-400 font-bold">${totalESP.toFixed(0)}<span class="text-sm font-normal text-slate-500"> Pa</span></div>
           <div class="text-xs space-y-1 pt-2 border-t border-slate-800/70">
-            <div class="flex justify-between"><span class="text-slate-400">Ma sát đường ống</span><span class="font-mono-data">${frictionTotal.toFixed(0)} Pa</span></div>
-            <div class="flex justify-between"><span class="text-slate-400">Cục bộ (sơ bộ 4 phụ kiện)</span><span class="font-mono-data">${localPa.toFixed(0)} Pa</span></div>
-            <div class="flex justify-between"><span class="text-slate-400">Lọc (cuối đời, nhánh lớn nhất)</span><span class="font-mono-data">${filterMax.toFixed(0)} Pa</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">${App.ui.t('Ma sát đường ống')}</span><span class="font-mono-data">${frictionTotal.toFixed(0)} Pa</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">${App.ui.t('Cục bộ (sơ bộ 4 phụ kiện)')}</span><span class="font-mono-data">${localPa.toFixed(0)} Pa</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">${App.ui.t('Lọc (cuối đời, nhánh lớn nhất)')}</span><span class="font-mono-data">${filterMax.toFixed(0)} Pa</span></div>
           </div>
-          <p class="text-[11px] text-slate-500 pt-1">→ Chọn quạt/AHU: Q ≥ lưu lượng nhánh lớn nhất và ESP ≥ ${totalESP.toFixed(0)} Pa.</p>
+          <p class="text-[11px] text-slate-500 pt-1">${App.ui.t('→ Chọn quạt/AHU: Q ≥ lưu lượng nhánh lớn nhất và ESP ≥ {esp} Pa.',{esp:totalESP.toFixed(0)})}</p>
         </div>`;
 
       // Diagnostics
       const dEl = document.getElementById('duct-diag');
       const stampColor = status==='pass'?'border-emerald-500 text-emerald-400':status==='yellow'?'border-amber-500 text-amber-400':'border-red-500 text-red-400';
-      const stampText  = status==='pass'?'PASS':status==='yellow'?'CẢNH BÁO':'LỖI';
+      const stampText  = status==='pass'?'PASS':status==='yellow'?App.ui.t('CẢNH BÁO'):App.ui.t('LỖI');
       if(dEl) dEl.innerHTML = `
         <div class="bg-panel-800/60 border border-slate-800 rounded-xl p-4">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs text-slate-400">Chẩn đoán ống gió</span>
+            <span class="text-xs text-slate-400">${App.ui.t('Chẩn đoán ống gió')}</span>
             <span class="border-2 ${stampColor} rounded-lg px-3 py-1 text-sm font-bold tracking-wider" style="transform:rotate(-3deg)">${stampText}</span>
           </div>
           <ul class="text-xs space-y-1">
             ${flags.length===0
-              ? '<li class="text-emerald-400 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>Tất cả nhánh ống đạt yêu cầu.</li>'
+              ? `<li class="text-emerald-400 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${App.ui.t('Tất cả nhánh ống đạt yêu cầu.')}</li>`
               : flags.map(f=>`<li class="flex items-center gap-1.5 ${f.level==='red'?'text-red-400':'text-amber-400'}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${f.msg}</li>`).join('')}
           </ul>
         </div>`;
@@ -894,7 +911,7 @@
       const root = document.getElementById('panel-admin');
       root.innerHTML = `
         ${App.ui.panelShell('exportimport','Export / Import dữ liệu dự án','file-down', `
-          <p style="font-size:11px;color:#4a6680;margin-bottom:8px">Tạo/quản lý dự án trong <b style="color:#34d399">Tab Dự Án</b>. Dùng Export/Import để sao lưu hoặc chuyển dự án hiện tại giữa các máy.</p>
+          <p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('Tạo/quản lý dự án trong')} <b style="color:#34d399">${App.ui.t('tab_project')}</b>. ${App.ui.t('Dùng Export/Import để sao lưu hoặc chuyển dự án hiện tại giữa các máy.')}</p>
           <div class="flex gap-2">
             <button id="btn-export-json" class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i> Export .json</button>
             <label class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
@@ -935,32 +952,32 @@
         </tr>`).join('');
       const addForm=`
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end">
-          <div><label>Loại</label>
+          <div><label>${App.ui.t('Loại')}</label>
             <select id="eq-type" style="width:90px">
               <option>FCU</option><option>AHU</option><option>PAU</option><option>FCU+OA</option>
             </select></div>
-          <div><label>Model</label><input id="eq-model" type="text" placeholder="VD: FWD-T18" style="width:120px"></div>
+          <div><label>Model</label><input id="eq-model" type="text" placeholder="${App.ui.t('VD: FWD-T18')}" style="width:120px"></div>
           <div><label>Q (kW)</label><input id="eq-qkw" type="number" placeholder="5.6" step="0.1" style="width:70px"></div>
-          <div><label>Lưu lượng (m³/h)</label><input id="eq-flow" type="number" placeholder="1000" style="width:90px"></div>
-          <div><label>Nhà sản xuất</label><input id="eq-mfr" type="text" placeholder="Daikin" style="width:90px"></div>
-          <div><label>Ghi chú</label><input id="eq-note" type="text" placeholder="" style="width:100px"></div>
-          <button id="btn-add-equip" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm</button>
+          <div><label>${App.ui.t('Lưu lượng (m³/h)')}</label><input id="eq-flow" type="number" placeholder="1000" style="width:90px"></div>
+          <div><label>${App.ui.t('Nhà sản xuất')}</label><input id="eq-mfr" type="text" placeholder="Daikin" style="width:90px"></div>
+          <div><label>${App.ui.t('Ghi chú')}</label><input id="eq-note" type="text" placeholder="" style="width:100px"></div>
+          <button id="btn-add-equip" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ ${App.ui.t('add')}</button>
         </div>`;
       return addForm+(catalog.length?`
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;min-width:600px">
             <thead><tr style="background:#071325">
-              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">Loại</th>
+              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">${App.ui.t('Loại')}</th>
               <th style="padding:8px;color:#8eaac2;font-size:10px">Model</th>
               <th style="padding:8px;color:#8eaac2;font-size:10px">Q (kW)</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Lưu lượng</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Nhà SX</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Ghi chú</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Lưu lượng')}</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Nhà SX')}</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Ghi chú')}</th>
               <th style="width:30px"></th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
-        </div>`:'<p style="color:#3a5470;font-size:12px;text-align:center;padding:20px">Chưa có thiết bị. Điền form phía trên để thêm.</p>');
+        </div>`:`<p style="color:#3a5470;font-size:12px;text-align:center;padding:20px">${App.ui.t('Chưa có thiết bị. Điền form phía trên để thêm.')}</p>`);
     },
     // ── Danh mục loại phòng & Nhóm áp suất ──────────────────────────────────
     // Bảng tổng hợp toàn bộ BUILDING_TYPES (built-in + EXTRA + tự thêm), nhóm theo
@@ -971,26 +988,26 @@
       const customIds = new Set((App.state.customBuildingTypes||[]).map(b=>b.id));
       const all = App.data.BUILDING_TYPES||[];
       const pgMeta = {
-        positive:{label:'▲ Nhóm áp dương',color:'#34d399'},
-        neutral: {label:'■ Nhóm áp trung hòa',color:'#94a3b8'},
-        negative:{label:'▼ Nhóm áp âm',color:'#fb923c'},
+        positive:{label:'▲ '+App.ui.t('Nhóm áp dương'),color:'#34d399'},
+        neutral: {label:'■ '+App.ui.t('Nhóm áp trung hòa'),color:'#94a3b8'},
+        negative:{label:'▼ '+App.ui.t('Nhóm áp âm'),color:'#fb923c'},
       };
       const rowHtml=(b)=>{
         const isHidden = hidden.includes(b.id);
         const isCustom = customIds.has(b.id);
         return `
         <tr style="border-bottom:1px solid rgba(26,48,80,.4);${isHidden?'opacity:.45':''}">
-          <td style="padding:6px 8px;color:#edf2f8;font-size:11px;font-weight:500">${b.name}${isCustom?' <span style="color:#38bdf8;font-size:9px">· tự thêm</span>':''}${isHidden?' <span style="color:#fb923c;font-size:9px">· đã ẩn</span>':''}</td>
-          <td style="padding:6px 8px;color:#8eaac2;font-size:11px;text-align:right;font-family:monospace">${b.freshAirLsP!=null?b.freshAirLsP:(b.freshAirPerFixture?'—(theo TB)':'—')}</td>
+          <td style="padding:6px 8px;color:#edf2f8;font-size:11px;font-weight:500">${b.name}${isCustom?` <span style="color:#38bdf8;font-size:9px">· ${App.ui.t('tự thêm')}</span>`:''}${isHidden?` <span style="color:#fb923c;font-size:9px">· ${App.ui.t('đã ẩn')}</span>`:''}</td>
+          <td style="padding:6px 8px;color:#8eaac2;font-size:11px;text-align:right;font-family:monospace">${b.freshAirLsP!=null?b.freshAirLsP:(b.freshAirPerFixture?App.ui.t('—(theo TB)'):'—')}</td>
           <td style="padding:6px 8px;color:#8eaac2;font-size:11px;text-align:right;font-family:monospace">${b.deltaPPa!=null?(b.deltaPPa>0?'+':'')+b.deltaPPa:'—'}</td>
-          <td style="padding:6px 8px;font-size:10px;text-align:center">${b.hasLocalExhaust?'<span style="color:#fbbf24">có</span>':'<span style="color:#3a5070">—</span>'}</td>
+          <td style="padding:6px 8px;font-size:10px;text-align:center">${b.hasLocalExhaust?`<span style="color:#fbbf24">${App.ui.t('có')}</span>`:'<span style="color:#3a5070">—</span>'}</td>
           <td style="padding:6px 8px;color:#4a6680;font-size:9px;max-width:180px">${(b.stdRef||'').slice(0,50)}</td>
           <td style="padding:4px;text-align:right;white-space:nowrap">
             ${isCustom
-              ? `<button data-del-roomtype="${b.id}" title="Xóa hẳn (phòng tự thêm)" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
+              ? `<button data-del-roomtype="${b.id}" title="${App.ui.t('Xóa hẳn (phòng tự thêm)')}" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
               : (isHidden
-                ? `<button data-restore-roomtype="${b.id}" title="Khôi phục" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺ Khôi phục</button>`
-                : `<button data-hide-roomtype="${b.id}" title="Ẩn khỏi dropdown chọn" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
+                ? `<button data-restore-roomtype="${b.id}" title="${App.ui.t('Khôi phục')}" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺ ${App.ui.t('Khôi phục')}</button>`
+                : `<button data-hide-roomtype="${b.id}" title="${App.ui.t('Ẩn khỏi dropdown chọn')}" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
             }
           </td>
         </tr>`;
@@ -1000,18 +1017,18 @@
         if(!rooms.length) return '';
         const meta=pgMeta[pg];
         return `
-        <tr><td colspan="6" style="padding:10px 8px 4px;color:${meta.color};font-size:11px;font-weight:700;letter-spacing:.02em">${meta.label} (${rooms.length} phòng)</td></tr>
+        <tr><td colspan="6" style="padding:10px 8px 4px;color:${meta.color};font-size:11px;font-weight:700;letter-spacing:.02em">${meta.label} (${App.ui.t('{n} phòng',{n:rooms.length})})</td></tr>
         ${rooms.map(rowHtml).join('')}`;
       };
       const table = `
         <div class="overflow-x-auto">
           <table style="width:100%;border-collapse:collapse;min-width:600px">
             <thead><tr style="background:#071325">
-              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">Tên phòng</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Gió tươi<br>(L/s/người)</th>
+              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">${App.ui.t('Tên phòng')}</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Gió tươi')}<br>(L/s/${App.ui.t('người')})</th>
               <th style="padding:8px;color:#8eaac2;font-size:10px">ΔP<br>(Pa)</th>
-              <th style="padding:8px;color:#8eaac2;font-size:10px">Gió thải<br>cục bộ</th>
-              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">Nguồn chuẩn</th>
+              <th style="padding:8px;color:#8eaac2;font-size:10px">${App.ui.t('Gió thải<br>cục bộ')}</th>
+              <th style="padding:8px;text-align:left;color:#8eaac2;font-size:10px">${App.ui.t('Nguồn chuẩn')}</th>
               <th style="width:40px"></th>
             </tr></thead>
             <tbody>${section('positive')}${section('neutral')}${section('negative')}</tbody>
@@ -1019,19 +1036,19 @@
         </div>`;
       const addForm=`
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;padding-bottom:10px;border-bottom:1px solid rgba(26,48,80,.4)">
-          <div><label style="font-size:10px;color:#8eaac2">Tên phòng *</label><br><input id="rt-name" type="text" placeholder="VD: Phòng lưu trữ hồ sơ" style="width:170px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <div><label style="font-size:10px;color:#8eaac2">Nhóm áp suất</label><br>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Tên phòng')} *</label><br><input id="rt-name" type="text" placeholder="${App.ui.t('VD: Phòng lưu trữ hồ sơ')}" style="width:170px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Nhóm áp suất')}</label><br>
             <select id="rt-pgroup" style="width:100px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8">
-              <option value="positive">Dương</option><option value="neutral" selected>Trung hòa</option><option value="negative">Âm</option>
+              <option value="positive">${App.ui.t('Dương')}</option><option value="neutral" selected>${App.ui.t('Trung hòa')}</option><option value="negative">${App.ui.t('Âm')}</option>
             </select></div>
-          <div><label style="font-size:10px;color:#8eaac2">Gió tươi (L/s/người)</label><br><input id="rt-fresh" type="number" step="0.1" placeholder="8.5" style="width:80px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Gió tươi (L/s/người)')}</label><br><input id="rt-fresh" type="number" step="0.1" placeholder="8.5" style="width:80px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
           <div><label style="font-size:10px;color:#8eaac2">ΔP (Pa)</label><br><input id="rt-dp" type="number" step="1" placeholder="0" style="width:70px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <div><label style="font-size:10px;color:#8eaac2">ACH mặc định</label><br><input id="rt-ach" type="number" step="1" placeholder="8" style="width:70px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <div style="display:flex;align-items:center;gap:5px;padding-bottom:7px"><input id="rt-exhaust" type="checkbox" style="width:14px;height:14px"><label for="rt-exhaust" style="font-size:10px;color:#8eaac2">Có gió thải cục bộ</label></div>
-          <div><label style="font-size:10px;color:#8eaac2">Nguồn chuẩn</label><br><input id="rt-stdref" type="text" placeholder="VD: TCVN 5687:2010" style="width:150px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
-          <button id="btn-add-roomtype" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm loại phòng</button>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('ACH mặc định')}</label><br><input id="rt-ach" type="number" step="1" placeholder="8" style="width:70px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <div style="display:flex;align-items:center;gap:5px;padding-bottom:7px"><input id="rt-exhaust" type="checkbox" style="width:14px;height:14px"><label for="rt-exhaust" style="font-size:10px;color:#8eaac2">${App.ui.t('Có gió thải cục bộ')}</label></div>
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t('Nguồn chuẩn')}</label><br><input id="rt-stdref" type="text" placeholder="VD: TCVN 5687:2010" style="width:150px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8"></div>
+          <button id="btn-add-roomtype" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ ${App.ui.t('Thêm loại phòng')}</button>
         </div>`;
-      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">Nhóm theo dấu ΔP thiết kế. "Ẩn" với phòng có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng đã tạo trước đó vẫn tính đúng.</p>`
+      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('Nhóm theo dấu ΔP thiết kế. "Ẩn" với phòng có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng đã tạo trước đó vẫn tính đúng.')}</p>`
         + addForm + table;
     },
 
@@ -1048,13 +1065,13 @@
         const isHidden=hidden.includes(key), isCustom=customIds.has(key);
         return `
         <tr style="border-bottom:1px solid rgba(26,48,80,.4);${isHidden?'opacity:.45':''}">
-          ${meta.fields.map(f=>`<td style="padding:6px 8px;color:${f.key==='name'?'#edf2f8':'#8eaac2'};font-size:11px;${f.key==='name'?'font-weight:500':'text-align:right;font-family:monospace'}">${item[f.key]??'—'}${f.key==='name'&&isCustom?' <span style="color:#38bdf8;font-size:9px">· tự thêm</span>':''}${f.key==='name'&&isHidden?' <span style="color:#fb923c;font-size:9px">· đã ẩn</span>':''}</td>`).join('')}
+          ${meta.fields.map(f=>`<td style="padding:6px 8px;color:${f.key==='name'?'#edf2f8':'#8eaac2'};font-size:11px;${f.key==='name'?'font-weight:500':'text-align:right;font-family:monospace'}">${item[f.key]??'—'}${f.key==='name'&&isCustom?` <span style="color:#38bdf8;font-size:9px">· ${App.ui.t('tự thêm')}</span>`:''}${f.key==='name'&&isHidden?` <span style="color:#fb923c;font-size:9px">· ${App.ui.t('đã ẩn')}</span>`:''}</td>`).join('')}
           <td style="padding:4px;text-align:right;white-space:nowrap">
             ${isCustom
-              ? `<button data-del-mat="${catKey}:${key}" title="Xóa hẳn (tự thêm)" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
+              ? `<button data-del-mat="${catKey}:${key}" title="${App.ui.t('Xóa hẳn (tự thêm)')}" style="background:none;border:none;color:#f87171;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`
               : (isHidden
-                ? `<button data-restore-mat="${catKey}:${key}" title="Khôi phục" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺</button>`
-                : `<button data-hide-mat="${catKey}:${key}" title="Ẩn khỏi dropdown chọn" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
+                ? `<button data-restore-mat="${catKey}:${key}" title="${App.ui.t('Khôi phục')}" style="background:none;border:none;color:#34d399;cursor:pointer;padding:3px;font-size:10px">↺</button>`
+                : `<button data-hide-mat="${catKey}:${key}" title="${App.ui.t('Ẩn khỏi dropdown chọn')}" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>`)
             }
           </td>
         </tr>`;
@@ -1063,7 +1080,7 @@
         <div class="overflow-x-auto">
           <table style="width:100%;border-collapse:collapse;min-width:500px">
             <thead><tr style="background:#071325">
-              ${meta.fields.map(f=>`<th style="padding:8px;${f.key==='name'?'text-align:left':''};color:#8eaac2;font-size:10px;${f.width?'width:'+f.width+'px':''}">${f.label}</th>`).join('')}
+              ${meta.fields.map(f=>`<th style="padding:8px;${f.key==='name'?'text-align:left':''};color:#8eaac2;font-size:10px;${f.width?'width:'+f.width+'px':''}">${App.ui.t(f.label)}</th>`).join('')}
               <th style="width:40px"></th>
             </tr></thead>
             <tbody>${arr.map(rowHtml).join('')}</tbody>
@@ -1072,12 +1089,12 @@
       const addForm=`
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;padding-bottom:10px;border-bottom:1px solid rgba(26,48,80,.4)">
           ${meta.fields.map(f=>`
-          <div><label style="font-size:10px;color:#8eaac2">${f.label}${f.key==='name'?' *':''}</label><br>
-            <input id="mat-${catKey}-${f.key}" type="${f.type}" ${f.step?'step="'+f.step+'"':''} placeholder="${f.placeholder||''}" style="width:${f.width||130}px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8">
+          <div><label style="font-size:10px;color:#8eaac2">${App.ui.t(f.label)}${f.key==='name'?' *':''}</label><br>
+            <input id="mat-${catKey}-${f.key}" type="${f.type}" ${f.step?'step="'+f.step+'"':''} placeholder="${f.placeholder?App.ui.t(f.placeholder):''}" style="width:${f.width||130}px;background:#0b1420;border:1px solid #1a3050;border-radius:6px;padding:6px 8px;font-size:11px;color:#edf2f8">
           </div>`).join('')}
-          <button data-add-mat="${catKey}" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm</button>
+          <button data-add-mat="${catKey}" style="background:#059669;border:none;color:white;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer">+ ${App.ui.t('add')}</button>
         </div>`;
-      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">"Ẩn" với vật liệu có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng/hạng mục đã dùng vật liệu này vẫn tính đúng.</p>`
+      return `<p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('"Ẩn" với vật liệu có sẵn chỉ gỡ khỏi dropdown chọn — không xóa dữ liệu gốc, phòng/hạng mục đã dùng vật liệu này vẫn tính đúng.')}</p>`
         + addForm + table;
     },
 
@@ -1090,35 +1107,35 @@
           <td class="px-2 py-1"><input data-eref="eta" type="number" step="0.001" value="${r.eta??''}" class="w-20 bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs font-mono-data text-right eref-input" readonly style="opacity:.6;cursor:not-allowed"></td>
         </tr>`).join('');
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-          <span style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);color:#fb923c;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">📝 CÓ THỂ CHỈNH SỬA</span>
+          <span style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);color:#fb923c;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">📝 ${App.ui.t('CÓ THỂ CHỈNH SỬA')}</span>
           <button id="btn-toggle-eref-edit" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;border-radius:5px;padding:3px 10px;font-size:10px;font-weight:600;cursor:pointer">
-            ✏ Mở khóa để sửa
+            ✏ ${App.ui.t('Mở khóa để sửa')}
           </button>
-          <span style="font-size:11px;color:#4a6680">Giá trị tham khảo chung — chỉnh sửa theo datasheet thực tế.</span>
+          <span style="font-size:11px;color:#4a6680">${App.ui.t('Giá trị tham khảo chung — chỉnh sửa theo datasheet thực tế.')}</span>
         </div>
-        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> Giá trị tham khảo chung — chỉnh sửa theo datasheet thiết bị thực tế của dự án.</p>
+        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> ${App.ui.t('Giá trị tham khảo chung — chỉnh sửa theo datasheet thiết bị thực tế của dự án.')}</p>
         <div class="overflow-x-auto"><table class="zebra w-full text-xs">
-          <thead class="text-slate-400"><tr><th class="text-left px-2 py-1.5">Thiết bị</th><th class="text-left px-2 py-1.5">Loại</th><th class="px-2 py-1.5">R (Ω)</th><th class="px-2 py-1.5">η</th></tr></thead>
+          <thead class="text-slate-400"><tr><th class="text-left px-2 py-1.5">${App.ui.t('Thiết bị')}</th><th class="text-left px-2 py-1.5">${App.ui.t('Loại')}</th><th class="px-2 py-1.5">R (Ω)</th><th class="px-2 py-1.5">η</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>`;
     },
     climateTableHtml(){
       const rows = App.data.climateSample.map(c=>`
-        <tr><td class="px-2 py-1">${c.province}${c.borrowedFrom?` <span class="text-amber-400 text-[10px]">(mượn: ${c.borrowedFrom})</span>`:''}</td>
+        <tr><td class="px-2 py-1">${c.province}${c.borrowedFrom?` <span class="text-amber-400 text-[10px]">(${App.ui.t('mượn:')} ${c.borrowedFrom})</span>`:''}</td>
         <td class="px-2 py-1 text-slate-500">${c.station||''}</td>
         <td class="px-2 py-1 text-right font-mono-data">${c.tv}</td><td class="px-2 py-1 text-right font-mono-data">${c.tt}</td>
         <td class="px-2 py-1 text-right font-mono-data">${c.tn}</td><td class="px-2 py-1 text-right font-mono-data">${c.rh}%</td></tr>`).join('');
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-          <span style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#34d399;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">🔒 CHỈ ĐỌC — Tiêu chuẩn QCVN</span>
-          <span style="font-size:11px;color:#4a6680">Dữ liệu chuẩn không chỉnh sửa. Import CSV để cập nhật.</span>
+          <span style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#34d399;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">🔒 ${App.ui.t('CHỈ ĐỌC — Tiêu chuẩn QCVN')}</span>
+          <span style="font-size:11px;color:#4a6680">${App.ui.t('Dữ liệu chuẩn không chỉnh sửa. Import CSV để cập nhật.')}</span>
         </div>
-        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> Nguồn: QCVN 02:2022/BXD, Phụ lục A (63 tỉnh thành). Các tỉnh không có trạm khí tượng riêng trong QCVN (đánh dấu "mượn") dùng số liệu trạm lân cận có khí hậu tương đồng — kiểm tra lại nếu dự án ở các tỉnh này.</p>
+        <p class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></i> ${App.ui.t('Nguồn: QCVN 02:2022/BXD, Phụ lục A (63 tỉnh thành). Các tỉnh không có trạm khí tượng riêng trong QCVN (đánh dấu "mượn") dùng số liệu trạm lân cận có khí hậu tương đồng — kiểm tra lại nếu dự án ở các tỉnh này.')}</p>
         <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="zebra w-full text-xs">
-          <thead class="text-slate-400 sticky top-0 bg-base-900"><tr><th class="text-left px-2 py-1.5">Tỉnh/TP</th><th class="text-left px-2 py-1.5">Trạm</th><th class="px-2 py-1.5">Tv max (°C)</th><th class="px-2 py-1.5">Tt TB (°C)</th><th class="px-2 py-1.5">Tn min (°C)</th><th class="px-2 py-1.5">RH TB (%)</th></tr></thead>
+          <thead class="text-slate-400 sticky top-0 bg-base-900"><tr><th class="text-left px-2 py-1.5">${App.ui.t('Tỉnh/TP')}</th><th class="text-left px-2 py-1.5">${App.ui.t('Trạm')}</th><th class="px-2 py-1.5">${App.ui.t('Tv max (°C)')}</th><th class="px-2 py-1.5">${App.ui.t('Tt TB (°C)')}</th><th class="px-2 py-1.5">${App.ui.t('Tn min (°C)')}</th><th class="px-2 py-1.5">${App.ui.t('RH TB (%)')}</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
         <label class="mt-2 inline-flex border border-slate-700 rounded-lg px-3 py-1.5 text-xs items-center gap-1.5 cursor-pointer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg> Import / cập nhật khí hậu .csv/.xlsx
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg> ${App.ui.t('Import / cập nhật khí hậu .csv/.xlsx')}
           <input id="input-import-climate" type="file" accept=".csv,.xlsx" class="hidden">
         </label>`;
     },
@@ -1134,10 +1151,10 @@
           manufacturer:root.querySelector('#eq-mfr')?.value||'',
           note:root.querySelector('#eq-note')?.value||''
         };
-        if(!eq.model){ App.ui.toast('warn','Nhập Model thiết bị'); return; }
+        if(!eq.model){ App.ui.toast('warn',App.ui.t('Nhập Model thiết bị')); return; }
         App.state.equipCatalog.push(eq);
         App.admin.autoSave(); this.render();
-        App.ui.toast('ok','Đã thêm '+eq.type+' '+eq.model);
+        App.ui.toast('ok',App.ui.t('Đã thêm {type} {model}',{type:eq.type,model:eq.model}));
       });
       // Xóa thiết bị
       root.querySelectorAll('[data-del-equip]').forEach(btn=>{
@@ -1150,7 +1167,7 @@
       // ── Danh mục loại phòng: thêm / ẩn / khôi phục / xóa ──────────────────
       root.querySelector('#btn-add-roomtype')?.addEventListener('click',()=>{
         const name=(root.querySelector('#rt-name')?.value||'').trim();
-        if(!name){ App.ui.toast('warn','Nhập tên phòng'); return; }
+        if(!name){ App.ui.toast('warn',App.ui.t('Nhập tên phòng')); return; }
         const pressureGroup=root.querySelector('#rt-pgroup')?.value||'neutral';
         const freshAirLsP=parseFloat(root.querySelector('#rt-fresh')?.value)||0;
         const deltaPPa=parseFloat(root.querySelector('#rt-dp')?.value)||0;
@@ -1161,17 +1178,17 @@
         const bt={
           id, name, category:'custom',
           pressureGroup, standardModule:null,
-          hasLocalExhaust, localExhaustNote: hasLocalExhaust?'Do người dùng khai báo — kiểm tra lưu lượng thực tế theo thiết bị':undefined,
+          hasLocalExhaust, localExhaustNote: hasLocalExhaust?App.ui.t('Do người dùng khai báo — kiểm tra lưu lượng thực tế theo thiết bị'):undefined,
           achMin:Math.max(1,Math.round(achDefault*0.6)), achMax:Math.round(achDefault*1.4), achDefault,
-          freshAirLsP, deltaPPa, stdRef: stdRef||'Do người dùng tự khai báo — kiểm tra lại theo tiêu chuẩn áp dụng',
-          systemRec:'', note:'Loại phòng tự thêm trong tab Database.',
+          freshAirLsP, deltaPPa, stdRef: stdRef||App.ui.t('Do người dùng tự khai báo — kiểm tra lại theo tiêu chuẩn áp dụng'),
+          systemRec:'', note:App.ui.t('Loại phòng tự thêm trong tab Database.'),
         };
         App.state.customBuildingTypes = App.state.customBuildingTypes||[];
         App.state.customBuildingTypes.push(bt);
         App.data.BUILDING_TYPES.push(bt);
         App.admin.saveRoomTypesSettings();
         this.render();
-        App.ui.toast('ok','Đã thêm loại phòng "'+name+'"');
+        App.ui.toast('ok',App.ui.t('Đã thêm loại phòng "{name}"',{name}));
       });
       root.querySelectorAll('[data-hide-roomtype]').forEach(btn=>{
         btn.addEventListener('click',()=>{
@@ -1198,7 +1215,7 @@
           if(idx>=0) App.data.BUILDING_TYPES.splice(idx,1);
           App.admin.saveRoomTypesSettings();
           this.render();
-          App.ui.toast('ok','Đã xóa loại phòng tự thêm');
+          App.ui.toast('ok',App.ui.t('Đã xóa loại phòng tự thêm'));
         });
       });
       // ── Danh mục vật liệu (tường/kính/ống gió/cách nhiệt/cửa): thêm/ẩn/khôi phục/xóa ──
@@ -1216,7 +1233,7 @@
             item[f.key]=v;
             if(f.key==='name') nameVal=v;
           });
-          if(!nameVal.trim()){ App.ui.toast('warn','Nhập tên vật liệu'); return; }
+          if(!nameVal.trim()){ App.ui.toast('warn',App.ui.t('Nhập tên vật liệu')); return; }
           item[meta.idField]='custom_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
           App.state.customMaterials=App.state.customMaterials||{};
           App.state.customMaterials[catKey]=App.state.customMaterials[catKey]||[];
@@ -1225,7 +1242,7 @@
           App.data[meta.arrayName].push(item);
           App.admin.saveRoomTypesSettings();
           this.render();
-          App.ui.toast('ok','Đã thêm "'+nameVal+'"');
+          App.ui.toast('ok',App.ui.t('Đã thêm "{name}"',{name:nameVal}));
         });
       });
       root.querySelectorAll('[data-hide-mat]').forEach(btn=>{
@@ -1258,7 +1275,7 @@
           if(idx>=0) arr.splice(idx,1);
           App.admin.saveRoomTypesSettings();
           this.render();
-          App.ui.toast('ok','Đã xóa vật liệu tự thêm');
+          App.ui.toast('ok',App.ui.t('Đã xóa vật liệu tự thêm'));
         });
       });
       const newBtn = root.querySelector('#btn-new-project');
@@ -1278,7 +1295,7 @@
           else{ inp.setAttribute('readonly',''); inp.style.opacity='.6'; inp.style.cursor='not-allowed'; }
         });
         const b=root.querySelector('#btn-toggle-eref-edit');
-        if(b) b.textContent=isLocked?'🔒 Khóa lại':'✏ Mở khóa để sửa';
+        if(b) b.textContent=isLocked?'🔒 '+App.ui.t('Khóa lại'):'✏ '+App.ui.t('Mở khóa để sửa');
       });
       root.querySelectorAll('[data-eref]').forEach(el=>{
         const tr = el.closest('tr'); const idx = parseInt(tr.getAttribute('data-erefidx'));
@@ -1303,13 +1320,13 @@
             </div>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-sm">Hệ đơn vị</span>
+            <span class="text-sm">${App.ui.t('Hệ đơn vị')}</span>
             <div class="flex gap-1.5">
               <button data-unit="SI" class="unit-btn px-3 py-1.5 rounded-lg text-xs border ${App.state.unit==='SI'?'border-emerald-500 text-emerald-400':'border-slate-700'}">SI</button>
-              <button data-unit="IP" class="unit-btn px-3 py-1.5 rounded-lg text-xs border ${App.state.unit==='IP'?'border-emerald-500 text-emerald-400':'border-slate-700'}" disabled title="Phiên bản hiện tại tính theo SI">IP</button>
+              <button data-unit="IP" class="unit-btn px-3 py-1.5 rounded-lg text-xs border ${App.state.unit==='IP'?'border-emerald-500 text-emerald-400':'border-slate-700'}" disabled title="${App.ui.t('Phiên bản hiện tại tính theo SI')}">IP</button>
             </div>
           </div>
-          <p class="text-[11px] text-slate-500">Chuyển đơn vị IP (CFM, in.w.g, °F) sẽ bổ sung ở phiên bản kế tiếp — toàn bộ công thức hiện hành tính theo SI.</p>
+          <p class="text-[11px] text-slate-500">${App.ui.t('Chuyển đơn vị IP (CFM, in.w.g, °F) sẽ bổ sung ở phiên bản kế tiếp — toàn bộ công thức hiện hành tính theo SI.')}</p>
         </div>
       `);
       root.querySelectorAll('.lang-btn').forEach(b=> b.addEventListener('click', ()=>{
@@ -1382,7 +1399,7 @@
     rfSel(f,opts,v){ return `<select data-rf="${f}" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">${opts.map(o=>`<option value="${o.v??o}" ${(v===(o.v??o))?'selected':''}>${o.n||o}</option>`).join('')}</select>`; },
 
     // ── Floor management helpers ──────────────────────────────────────────
-    FL(){ return App.state.floors || (App.state.floors=[{id:'fl1',name:'Tầng 1',order:1}]); },
+    FL(){ return App.state.floors || (App.state.floors=[{id:'fl1',name:App.ui.t('Tầng {n}',{n:1}),order:1}]); },
     _getUwall(r){
       if(r.wallTypeId){ const wt=(App.data.WALL_TYPES||[]).find(w=>w.id===r.wallTypeId); if(wt) return wt.U; }
       return parseFloat(r.uWall)||0.45;
@@ -1390,24 +1407,24 @@
     addFloor(){
       const F=this.FL();
       const max=Math.max(0,...F.map(f=>f.order||0));
-      F.push({id:'fl'+Date.now().toString(36),name:'Tầng '+(F.length+1),order:max+1});
+      F.push({id:'fl'+Date.now().toString(36),name:App.ui.t('Tầng {n}',{n:F.length+1}),order:max+1});
       this.save(); this.render();
     },
     deleteFloor(fid){
-      if(this.FL().length<=1){ App.ui.toast('warn','Phải có ít nhất 1 tầng'); return; }
-      const flName=this.FL().find(f=>f.id===fid)?.name||'tầng';
+      if(this.FL().length<=1){ App.ui.toast('warn',App.ui.t('Phải có ít nhất 1 tầng')); return; }
+      const flName=this.FL().find(f=>f.id===fid)?.name||App.ui.t('tầng');
       const cnt=this.R().filter(r=>r.floorId===fid).length;
       App.state.hlRooms=this.R().filter(r=>r.floorId!==fid);
       App.state.floors=this.FL().filter(f=>f.id!==fid);
       this.save(); this.render();
-      App.ui.toast('ok','Đã xóa '+flName+' và '+cnt+' phòng');
+      App.ui.toast('ok',App.ui.t('Đã xóa {name} và {n} phòng',{name:flName,n:cnt}));
     },
     addRoomToFloor(floorId){
       const F=this.FL().find(f=>f.id===floorId);
       const n=this.R().filter(r=>r.floorId===floorId).length+1;
       this.R().push({
         id:this.uid(), floorId:floorId,
-        name:(F?.name||'Tầng')+'-P'+n,
+        name:(F?.name||App.ui.t('Tầng'))+'-P'+n,
         buildingType:'office', equipType:'AHU', classSystem:'GENERAL', classCode:'',
         achApplied:8, deltaPPa:5, pressACH:1, freshAirPerPersonLs:8.5,
         L:10, W:8, H:3.2, roomShape:'rect',
@@ -1437,16 +1454,16 @@
       <div data-ri="${globalIdx}" style="border-bottom:1px solid #0f1e30">
         <div class="room-hd" data-open-room="${globalIdx}" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;min-height:44px;user-select:none">
           <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;${statusDot}"></span>
-          <span style="flex:1;font-size:13px;color:#c2d4e2;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name||'Phòng'}</span>
+          <span style="flex:1;font-size:13px;color:#c2d4e2;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name||App.ui.t('Phòng')}</span>
           ${btBadge}
           <span style="font-size:11px;color:#3a5470;white-space:nowrap">${area}m²</span>
           <span style="font-size:11px;color:#4a6680;white-space:nowrap">${r.equipType||'—'}</span>
           ${qStr}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a4060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
-          <button data-copy-room="${globalIdx}" title="Copy phòng" onclick="event.stopPropagation()" style="background:none;border:none;color:#34d399;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
+          <button data-copy-room="${globalIdx}" title="${App.ui.t('Copy phòng')}" onclick="event.stopPropagation()" style="background:none;border:none;color:#34d399;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
           </button>
-          <button data-del-room="${globalIdx}" title="Xóa phòng" onclick="event.stopPropagation()" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
+          <button data-del-room="${globalIdx}" title="${App.ui.t('Xóa phòng')}" onclick="event.stopPropagation()" style="background:none;border:none;color:#3a5070;cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
           </button>
         </div>
@@ -1460,26 +1477,26 @@
         const totalKW=rooms.reduce((s,r)=>s+(r._coil?.qCoilKW||0),0);
         const hasErr=rooms.some(r=>r._valid?.status==='red');
         const hasWarn=rooms.some(r=>r._valid?.status==='yellow');
-        const badge=hasErr?'<span style="color:#f87171;font-size:10px">● LỖI</span>':hasWarn?'<span style="color:#fbbf24;font-size:10px">● CẢNH BÁO</span>':'<span style="color:#34d399;font-size:10px">✓ OK</span>';
+        const badge=hasErr?`<span style="color:#f87171;font-size:10px">● ${App.ui.t('LỖI')}</span>`:hasWarn?`<span style="color:#fbbf24;font-size:10px">● ${App.ui.t('CẢNH BÁO')}</span>`:'<span style="color:#34d399;font-size:10px">✓ OK</span>';
         const roomRows=rooms.length===0
-          ?`<div style="padding:20px;text-align:center;color:#3a5470;font-size:12px">Chưa có phòng nào · <button data-add-room-floor="${fl.id}" style="color:#34d399;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600">+ Thêm phòng</button></div>`
+          ?`<div style="padding:20px;text-align:center;color:#3a5470;font-size:12px">${App.ui.t('Chưa có phòng nào')} · <button data-add-room-floor="${fl.id}" style="color:#34d399;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600">+ ${App.ui.t('Thêm phòng')}</button></div>`
           :rooms.map((r,ri)=>this._roomRowHtml(r,ri,fl.id)).join('');
         return `
         <div class="floor-group" data-floor-id="${fl.id}" style="margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #1a3050">
           <div class="floor-header" style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(90deg,#0d2038 0%,#091825 100%);border-bottom:1px solid #1a3050;min-height:44px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <input data-floor-rename="${fl.id}" value="${fl.name}" style="background:none;border:none;color:#c2d4e2;font-weight:700;font-size:13px;outline:none;min-width:80px;max-width:160px;padding:2px 4px;border-radius:4px;cursor:text" onclick="event.stopPropagation()" title="Nhấp để đổi tên tầng">
-            <span style="color:#3a5470;font-size:11px">${rooms.length} phòng</span>
+            <input data-floor-rename="${fl.id}" value="${fl.name}" style="background:none;border:none;color:#c2d4e2;font-weight:700;font-size:13px;outline:none;min-width:80px;max-width:160px;padding:2px 4px;border-radius:4px;cursor:text" onclick="event.stopPropagation()" title="${App.ui.t('Nhấp để đổi tên tầng')}">
+            <span style="color:#3a5470;font-size:11px">${App.ui.t('{n} phòng',{n:rooms.length})}</span>
             ${totalKW>0?`<span style="color:#22d3ee;font-size:12px;font-family:monospace;font-weight:600">${totalKW.toFixed(1)} kW</span>`:''}
             ${badge}
             <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
               <button data-add-room-floor="${fl.id}" style="display:flex;align-items:center;gap:4px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#34d399;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm phòng
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm phòng')}
               </button>
-              <button data-copy-floor="${fl.id}" title="Copy toàn bộ tầng" style="display:flex;align-items:center;gap:4px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy tầng
+              <button data-copy-floor="${fl.id}" title="${App.ui.t('Copy toàn bộ tầng')}" style="display:flex;align-items:center;gap:4px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>${App.ui.t('Copy tầng')}
               </button>
-              ${floors.length>1?`<button data-del-floor="${fl.id}" title="Xóa tầng (các phòng sẽ chuyển về tầng còn lại)" style="background:none;border:1px solid #1e3050;border-radius:5px;color:#3a5470;cursor:pointer;padding:5px;display:flex;align-items:center">
+              ${floors.length>1?`<button data-del-floor="${fl.id}" title="${App.ui.t('Xóa tầng (các phòng sẽ chuyển về tầng còn lại)')}" style="background:none;border:1px solid #1e3050;border-radius:5px;color:#3a5470;cursor:pointer;padding:5px;display:flex;align-items:center">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
               </button>`:''}
             </div>
@@ -1489,7 +1506,7 @@
       }).join('')+`
       <button id="btn-add-floor" style="display:flex;align-items:center;gap:6px;background:rgba(56,189,248,.06);border:1px dashed #1a3a55;color:#38bdf8;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:600;width:100%;justify-content:center;cursor:pointer;margin-top:4px">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Thêm tầng mới
+        ${App.ui.t('Thêm tầng mới')}
       </button>`;
     },
 
@@ -1505,8 +1522,8 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
           <h2 class="font-semibold text-base flex items-center gap-2">
             <i data-lucide="thermometer" class="w-5 h-5 text-amber-400"></i>
-            Phụ Tải Nhiệt & Phân Phối Gió
-            <span class="text-[11px] text-slate-500 font-normal">${this.R().length} phòng · ${this.G().length} nhóm thiết bị</span>
+            ${App.ui.t('Phụ Tải Nhiệt & Phân Phối Gió')}
+            <span class="text-[11px] text-slate-500 font-normal">${App.ui.t('{n} phòng',{n:this.R().length})} · ${App.ui.t('{n} nhóm thiết bị',{n:this.G().length})}</span>
           </h2>
           <div class="flex gap-2 flex-wrap">
             <select id="hl-calcmode" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
@@ -1520,23 +1537,23 @@
         <!-- Climate -->
         ${App.ui.panelShell('hl-climate','Điều kiện khí hậu thiết kế','cloud',`
           <div style="margin-bottom:12px">
-            <label>Tỉnh/TP (T môi trường ống — kiểm tra đọng sương)</label>
+            <label>${App.ui.t('Tỉnh/TP (T môi trường ống — kiểm tra đọng sương)')}</label>
             <select data-cf="provinceId" style="width:100%">
-              <option value="">── Chọn tỉnh/thành để tự điền T, RH ──</option>
+              <option value="">── ${App.ui.t('Chọn tỉnh/thành để tự điền T, RH')} ──</option>
               ${(App.data.climateSample||[]).map(c=>`<option value="${c.province}" ${cl.provinceId===c.province?'selected':''}>${c.province} (tv=${c.tv}°C / RH=${c.rh}%)</option>`).join('')}
             </select>
-            ${cl.provinceId?`<p style="font-size:10px;color:#f59e0b;margin-top:3px">Số liệu khí hậu theo QCVN 02:2022/BXD.</p>`:''}
+            ${cl.provinceId?`<p style="font-size:10px;color:#f59e0b;margin-top:3px">${App.ui.t('Số liệu khí hậu theo QCVN 02:2022/BXD.')}</p>`:''}
           </div>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div><label>T ngoài (°C)</label>${this.cfInp('tOut',cl.tOut,'35')}</div>
-            <div><label>RH ngoài (%)</label>${this.cfInp('rhOut',cl.rhOut,'80')}</div>
-            <div><label>T trong (°C)</label>${this.cfInp('tIn',cl.tIn,'22')}</div>
-            <div><label>RH trong (%)</label>${this.cfInp('rhIn',cl.rhIn,'55')}</div>
-            <div><label>Cao độ (m)</label>${this.cfInp('elevationM',cl.elevationM,'0')}</div>
+            <div><label>${App.ui.t('T ngoài (°C)')}</label>${this.cfInp('tOut',cl.tOut,'35')}</div>
+            <div><label>${App.ui.t('RH ngoài (%)')}</label>${this.cfInp('rhOut',cl.rhOut,'80')}</div>
+            <div><label>${App.ui.t('T trong (°C)')}</label>${this.cfInp('tIn',cl.tIn,'22')}</div>
+            <div><label>${App.ui.t('RH trong (%)')}</label>${this.cfInp('rhIn',cl.rhIn,'55')}</div>
+            <div><label>${App.ui.t('Cao độ (m)')}</label>${this.cfInp('elevationM',cl.elevationM,'0')}</div>
           </div>
           <div class="mt-2 pt-2 border-t border-slate-800/60 text-[11px] font-mono-data text-slate-400 flex flex-wrap gap-4">
-            <span>Ngoài: h=<span class="text-cyan-300">${psyOut.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-cyan-300">${psyOut.dGperKg.toFixed(1)}</span> g/kg · Td=<span class="text-cyan-300">${psyOut.dewPointC.toFixed(1)}</span>°C</span>
-            <span>Trong: h=<span class="text-emerald-300">${psyIn.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-emerald-300">${psyIn.dGperKg.toFixed(1)}</span> g/kg · P_atm=<span class="text-emerald-300">${psyOut.pAtmKPa.toFixed(3)}</span> kPa</span>
+            <span>${App.ui.t('Ngoài:')} h=<span class="text-cyan-300">${psyOut.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-cyan-300">${psyOut.dGperKg.toFixed(1)}</span> g/kg · Td=<span class="text-cyan-300">${psyOut.dewPointC.toFixed(1)}</span>°C</span>
+            <span>${App.ui.t('Trong:')} h=<span class="text-emerald-300">${psyIn.hKJperKg.toFixed(1)}</span> kJ/kg · d=<span class="text-emerald-300">${psyIn.dGperKg.toFixed(1)}</span> g/kg · P_atm=<span class="text-emerald-300">${psyOut.pAtmKPa.toFixed(3)}</span> kPa</span>
           </div>
         `)}
         <!-- Nhóm thiết bị -->
@@ -1546,10 +1563,10 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
             <h3 style="font-size:13px;font-weight:600;color:#c2d4e2;display:flex;align-items:center;gap:8px">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="14" rx="1.5"/><rect width="7" height="7" x="3" y="14" rx="1.5"/></svg>
-              Dự án · ${(App.state.floors||[]).length} tầng · ${this.R().length} phòng
+              ${App.ui.t('Dự án')} · ${App.ui.t('{n} tầng',{n:(App.state.floors||[]).length})} · ${App.ui.t('{n} phòng',{n:this.R().length})}
             </h3>
             <button id="hl-recalc-btn-main" style="display:flex;align-items:center;gap:5px;background:#059669;color:white;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>Tính tải tất cả
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>${App.ui.t('Tính tải tất cả')}
             </button>
           </div>
           ${this._floorsHtml()}
@@ -1561,7 +1578,7 @@
         <!-- Results -->
         <div id="hl-results" class="bg-panel-800/60 border border-slate-800 rounded-xl p-4">
           <div class="text-xs text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="info" class="w-3.5 h-3.5"></i>Bấm "Tính tải" để tính toán phụ tải và phân phối gió tất cả phòng.
+            <i data-lucide="info" class="w-3.5 h-3.5"></i>${App.ui.t('Bấm "Tính tải" để tính toán phụ tải và phân phối gió tất cả phòng.')}
           </div>
         </div>
       </div>`;
@@ -1599,19 +1616,19 @@
         return `<div class="border ${nameTypeMismatch?'border-amber-600':'border-slate-700/50'} rounded-lg p-3" data-gi="${i}">
           <div class="flex items-center gap-3">
             <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input data-gf="name" value="${g.name||''}" placeholder="Tên AHU/PAU" type="text"
+              <input data-gf="name" value="${g.name||''}" placeholder="${App.ui.t('Tên AHU/PAU')}" type="text"
                 class="bg-base-900 border border-slate-700 rounded px-2 py-1.5 text-xs">
               <select data-gf="equipType" class="bg-base-900 border border-slate-700 rounded px-2 py-1.5 text-xs">
-                <option value="AHU" ${g.equipType==='AHU'?'selected':''}>AHU (có hồi gió)</option>
-                <option value="PAU" ${g.equipType==='PAU'?'selected':''}>PAU (100% gió tươi)</option>
-                <option value="FCU" ${g.equipType==='FCU'?'selected':''}>FCU (fan coil có gió hồi)</option>
-                <option value="FCU_OA" ${g.equipType==='FCU_OA'?'selected':''}>FCU+OA (fan coil + gió tươi)</option>
-                <option value="VENT" ${g.equipType==='VENT'?'selected':''}>VENT (thông gió thuần — chỉ chọn quạt, Q_coil=0)</option>
+                <option value="AHU" ${g.equipType==='AHU'?'selected':''}>${App.ui.t('AHU (có hồi gió)')}</option>
+                <option value="PAU" ${g.equipType==='PAU'?'selected':''}>${App.ui.t('PAU (100% gió tươi)')}</option>
+                <option value="FCU" ${g.equipType==='FCU'?'selected':''}>${App.ui.t('FCU (fan coil có gió hồi)')}</option>
+                <option value="FCU_OA" ${g.equipType==='FCU_OA'?'selected':''}>${App.ui.t('FCU+OA (fan coil + gió tươi)')}</option>
+                <option value="VENT" ${g.equipType==='VENT'?'selected':''}>${App.ui.t('VENT (thông gió thuần — chỉ chọn quạt, Q_coil=0)')}</option>
               </select>
-              <input data-gf="description" value="${g.description||''}" placeholder="Mô tả" type="text"
+              <input data-gf="description" value="${g.description||''}" placeholder="${App.ui.t('Mô tả')}" type="text"
                 class="bg-base-900 border border-slate-700 rounded px-2 py-1.5 text-xs col-span-1">
               <div class="text-[11px] font-mono-data text-slate-400 flex items-center gap-2">
-                ${roomsInGroup.length} phòng
+                ${App.ui.t('group_room_count',{n:roomsInGroup.length})}
                 ${qTotal>0?`<span class="text-emerald-400">${qTotal.toFixed(0)} m³/h</span>`:''}
               </div>
             </div>
@@ -1621,15 +1638,15 @@
           </div>
           ${nameTypeMismatch?`<p class="text-[10px] text-amber-400 mt-1.5 flex items-center gap-1">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Tên nhóm nhắc tới "${mentionedType}" nhưng đang thực sự thuộc loại "${g.equipType}" — phòng ${mentionedType} sẽ KHÔNG tìm thấy nhóm này. Kiểm tra lại ô loại hệ thống bên trên nếu đây là nhầm lẫn.
+            ${App.ui.t('group_type_mismatch_warning',{type:mentionedType, actual:g.equipType})}
           </p>`:''}
         </div>`;
       }).join('');
       return `${rows}
         <button id="hl-add-group" class="mt-1.5 text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>Thêm nhóm thiết bị
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>${App.ui.t('Thêm nhóm thiết bị')}
         </button>
-        <p class="text-[11px] text-slate-500 mt-1">Mỗi nhóm = 1 thiết bị (AHU/PAU/FCU/FCU+OA) phục vụ nhiều phòng — <b>nhớ chọn đúng loại hệ thống ở ô dropdown</b> (không chỉ đổi tên), vì phòng chỉ tìm được nhóm khớp CHÍNH XÁC loại hệ thống của nó. Nhóm mới tạo mặc định là AHU, đổi lại nếu cần. Gán phòng vào nhóm trong form từng phòng.</p>`;
+        <p class="text-[11px] text-slate-500 mt-1">${App.ui.t('group_help_text')}</p>`;
     },
 
     // Helper: defer re-render drawer về next tick (fix WKWebView DOM mutation in handler)
@@ -1641,7 +1658,7 @@
 
     _roomsHtml(){
       const rows = this.R();
-      if(!rows.length) return `<div class="text-xs text-slate-500 text-center py-4">Chưa có phòng. Bấm "Thêm phòng".</div>`;
+      if(!rows.length) return `<div class="text-xs text-slate-500 text-center py-4">${App.ui.t('Chưa có phòng. Bấm "Thêm phòng".')}</div>`;
 
       const equipColor = {AHU:'border-cyan-600 text-cyan-400',PAU:'border-violet-600 text-violet-400',FCU:'border-emerald-600 text-emerald-400',FCU_OA:'border-teal-600 text-teal-400',VENT:'border-slate-600 text-slate-400'};
       const laborOpts = App.data.peopleHeat.map(p=>({v:p.level,n:p.level}));
@@ -1668,19 +1685,19 @@
         // Air breakdown badge
         const airBadge = qPreview ? `
           <div class="grid grid-cols-2 md:grid-cols-4 gap-1.5 mt-2 p-2 bg-base-900/40 rounded-lg text-[10px] font-mono-data">
-            <div class="text-slate-400">Q_cấp <span class="text-emerald-400 font-medium">${qPreview.Q_supply.toFixed(0)} m³/h</span></div>
-            <div class="text-slate-400">Q_tươi <span class="text-cyan-400 font-medium">${qPreview.Q_fresh.toFixed(0)} m³/h (${qPreview.freshPct.toFixed(0)}%)</span></div>
-            <div class="text-slate-400">Q_tuần hoàn <span class="text-violet-400 font-medium">${qPreview.Q_recirculation.toFixed(0)} m³/h</span></div>
-            <div class="text-slate-400">Q_bù áp <span class="text-amber-400 font-medium">${qPreview.Q_pressurization.toFixed(0)} m³/h</span></div>
-            <div class="text-slate-400">ACH thực <span class="text-slate-300">${qPreview.ACH_actual?.toFixed(0)||'—'}</span></div>
+            <div class="text-slate-400">${App.ui.t('Q_cấp')} <span class="text-emerald-400 font-medium">${qPreview.Q_supply.toFixed(0)} m³/h</span></div>
+            <div class="text-slate-400">${App.ui.t('Q_tươi')} <span class="text-cyan-400 font-medium">${qPreview.Q_fresh.toFixed(0)} m³/h (${qPreview.freshPct.toFixed(0)}%)</span></div>
+            <div class="text-slate-400">${App.ui.t('Q_tuần hoàn')} <span class="text-violet-400 font-medium">${qPreview.Q_recirculation.toFixed(0)} m³/h</span></div>
+            <div class="text-slate-400">${App.ui.t('Q_bù áp')} <span class="text-amber-400 font-medium">${qPreview.Q_pressurization.toFixed(0)} m³/h</span></div>
+            <div class="text-slate-400">${App.ui.t('ACH thực')} <span class="text-slate-300">${qPreview.ACH_actual?.toFixed(0)||'—'}</span></div>
             <div class="text-slate-400 col-span-3">${qPreview.modeNote||''}</div>
           </div>` : '';
 
         // Std info badge
         const stdBadge = std ? `<div class="text-[10px] text-slate-500 mt-1 flex flex-wrap gap-2">
-          <span>ACH: ${std.achMin??'—'}–${std.achMax??'—'} (default: ${std.achDefault??'đơn hướng'})</span>
+          <span>ACH: ${std.achMin??'—'}–${std.achMax??'—'} (default: ${std.achDefault??App.ui.t('đơn hướng')})</span>
           <span>ΔP_min: ${std.deltaPMinPa} Pa</span>
-          <span>Gió tươi: ${std.freshAirPctMin}–${std.freshAirPctMax}%</span>
+          <span>${App.ui.t('Gió tươi:')} ${std.freshAirPctMin}–${std.freshAirPctMax}%</span>
           <span class="text-slate-600">${std.note?.slice(0,60)}...</span>
         </div>` : '';
 
@@ -1688,7 +1705,7 @@
         <div class="border border-slate-700/60 rounded-xl overflow-hidden mb-2" data-ri="${i}">
           <div class="flex items-center gap-2 px-3 py-2.5 bg-panel-800/40 cursor-pointer room-hd">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-            <span class="text-sm font-medium flex-1 text-slate-200">${r.name||'(Phòng '+(i+1)+')'}</span>
+            <span class="text-sm font-medium flex-1 text-slate-200">${r.name||App.ui.t('(Phòng {n})',{n:i+1})}</span>
             ${r._airflow?`<span class="text-[10px] font-mono-data text-emerald-400">${r._airflow.Q_supply.toFixed(0)} m³/h</span>`:''}
             ${r._coil?`<span class="text-[10px] font-mono-data text-amber-400">${(r._coil.qCoilKW||0).toFixed(1)} kW</span>`:''}
             <span class="text-[11px] border px-1.5 py-0.5 rounded ${equipColor[r.equipType]||'border-slate-600 text-slate-400'}">${r.equipType||'—'}</span>
@@ -1703,11 +1720,11 @@
               <div class="p-2.5 bg-slate-900/80 border border-slate-600/60 rounded-lg space-y-2">
                 <div class="text-[10px] text-slate-300 font-semibold flex items-center gap-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg>
-                  Chọn loại công trình/phòng — tự động điền preset ACH, ΔP, gió tươi, thiết bị
+                  ${App.ui.t('Chọn loại công trình/phòng — tự động điền preset ACH, ΔP, gió tươi, thiết bị')}
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div class="md:col-span-2">
-                    <label class="text-[10px] text-slate-400">Loại công trình / Loại phòng *</label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Loại công trình / Loại phòng *')}</label>
                     ${(()=>{
                       // Ẩn khỏi dropdown các loại phòng built-in mà người dùng đã "ẩn" trong
                       // tab Database → Danh mục loại phòng (không xóa dữ liệu gốc)
@@ -1715,29 +1732,29 @@
                       const activeTypes = (App.data.BUILDING_TYPES||[]).filter(b=>!hidden.includes(b.id));
                       return `
                       <select data-rf-bt="buildingType" class="bg-base-900 border border-cyan-700 rounded-lg px-2 py-1.5 text-xs w-full font-medium">
-                        <option value="">── Chọn loại công trình ──</option>
-                        <optgroup label="━━ NHÓM A — Phòng kỹ thuật đặc thù ━━">
+                        <option value="">── ${App.ui.t('Chọn loại công trình')} ──</option>
+                        <optgroup label="━━ ${App.ui.t('NHÓM A — Phòng kỹ thuật đặc thù')} ━━">
                           ${activeTypes.filter(b=>b.category==='cleanroom'||b.category==='technical')
                             .map(b=>`<option value="${b.id}" ${r.buildingType===b.id?'selected':''}>${b.name}</option>`).join('')}
                         </optgroup>
-                        <optgroup label="━━ NHÓM B — Dân dụng / Thương mại ━━">
+                        <optgroup label="━━ ${App.ui.t('NHÓM B — Dân dụng / Thương mại')} ━━">
                           ${activeTypes.filter(b=>['residential','commercial','food_service'].includes(b.category))
                             .map(b=>`<option value="${b.id}" ${r.buildingType===b.id?'selected':''}>${b.name}</option>`).join('')}
                         </optgroup>
-                        <optgroup label="━━ Y tế / Bệnh viện ━━">
+                        <optgroup label="━━ ${App.ui.t('Y tế / Bệnh viện')} ━━">
                           ${activeTypes.filter(b=>b.category==='healthcare')
                             .map(b=>`<option value="${b.id}" ${r.buildingType===b.id?'selected':''}>${b.name}</option>`).join('')}
                         </optgroup>
-                        <optgroup label="━━ Công nghiệp / Sản xuất ━━">
+                        <optgroup label="━━ ${App.ui.t('Công nghiệp / Sản xuất')} ━━">
                           ${activeTypes.filter(b=>['industrial','food_industrial'].includes(b.category))
                             .map(b=>`<option value="${b.id}" ${r.buildingType===b.id?'selected':''}>${b.name}</option>`).join('')}
                         </optgroup>
-                        <optgroup label="━━ Phụ trợ / Vệ sinh / Logistics ━━">
+                        <optgroup label="━━ ${App.ui.t('Phụ trợ / Vệ sinh / Logistics')} ━━">
                           ${activeTypes.filter(b=>['sanitary','logistics','auxiliary'].includes(b.category))
                             .map(b=>`<option value="${b.id}" ${r.buildingType===b.id?'selected':''}>${b.name}</option>`).join('')}
                         </optgroup>
                         ${activeTypes.some(b=>b.category==='custom')?`
-                        <optgroup label="━━ Phòng tự thêm (Database) ━━">
+                        <optgroup label="━━ ${App.ui.t('Phòng tự thêm (Database)')} ━━">
                           ${activeTypes.filter(b=>b.category==='custom')
                             .map(b=>`<option value="${b.id}" ${r.buildingType===b.id?'selected':''}>${b.name}</option>`).join('')}
                         </optgroup>`:''}
@@ -1745,31 +1762,31 @@
                     })()}
                   </div>
                   <div>
-                    <label class="text-[10px] text-slate-400">Loại hệ thống ĐHKK</label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Loại hệ thống ĐHKK')}</label>
                     <select data-rf="equipType" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
                       ${App.data.equipTypes.map(e=>`<option value="${e.code}" ${r.equipType===e.code?'selected':''}>${e.name}</option>`).join('')}
                     </select>
                   </div>
                 </div>
                 ${(()=>{
-                  if(!bt) return '<p class="text-[10px] text-slate-600 italic">Chưa chọn loại công trình. Chọn để auto-fill ACH, ΔP, gió tươi, thiết bị gợi ý.</p>';
+                  if(!bt) return `<p class="text-[10px] text-slate-600 italic">${App.ui.t('Chưa chọn loại công trình. Chọn để auto-fill ACH, ΔP, gió tươi, thiết bị gợi ý.')}</p>`;
                   const catColor={cleanroom:'text-violet-400',technical:'text-cyan-400',healthcare:'text-red-400',food_industrial:'text-amber-400'};
                   const col=catColor[bt.category]||'text-emerald-400';
                   const pgBadge={
-                    positive:'<span class="text-emerald-400">▲ Nhóm áp dương</span>',
-                    neutral:'<span class="text-slate-400">■ Nhóm áp trung hòa</span>',
-                    negative:'<span class="text-orange-400">▼ Nhóm áp âm</span>',
+                    positive:`<span class="text-emerald-400">▲ ${App.ui.t('Nhóm áp dương')}</span>`,
+                    neutral:`<span class="text-slate-400">■ ${App.ui.t('Nhóm áp trung hòa')}</span>`,
+                    negative:`<span class="text-orange-400">▼ ${App.ui.t('Nhóm áp âm')}</span>`,
                   }[bt.pressureGroup]||'';
                   return `<div class="bg-slate-950/60 rounded-lg p-2 space-y-0.5 text-[10px]">
                     <div class="${col} font-medium flex items-center gap-2">${bt.name} ${pgBadge}</div>
                     <div class="text-slate-400 flex flex-wrap gap-x-4 gap-y-0.5">
                       ${bt.achMin?`<span>ACH: ${bt.achMin}–${bt.achMax} (default ${bt.achDefault})</span>`:''}
                       ${bt.deltaPPa?`<span>ΔP: ${bt.deltaPPa>0?'+':''}${bt.deltaPPa} Pa</span>`:''}
-                      ${bt.freshAirLsP?`<span>Gió tươi: ${bt.freshAirLsP} L/s/người</span>`:''}
-                      ${bt.lightingWM2?`<span>Chiếu sáng: ${bt.lightingWM2} W/m²</span>`:''}
+                      ${bt.freshAirLsP?`<span>${App.ui.t('Gió tươi:')} ${bt.freshAirLsP} L/s/${App.ui.t('người')}</span>`:''}
+                      ${bt.lightingWM2?`<span>${App.ui.t('Chiếu sáng:')} ${bt.lightingWM2} W/m²</span>`:''}
                     </div>
-                    ${bt.systemRec?`<div class="text-slate-500 italic">⚙ Hệ thống đề xuất: ${bt.systemRec}</div>`:''}
-                    ${bt.hasLocalExhaust?`<div class="text-amber-400 flex items-start gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-top:1px;flex-shrink:0"><path d="M12 2v6M12 22v-6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M22 12h-6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg><span>Gió thải cục bộ: ${bt.localExhaustNote||'cần bổ sung tại thiết bị phát sinh'} — nhập lưu lượng thực tế ở mục Gió thải cục bộ</span></div>`:''}
+                    ${bt.systemRec?`<div class="text-slate-500 italic">⚙ ${App.ui.t('Hệ thống đề xuất:')} ${bt.systemRec}</div>`:''}
+                    ${bt.hasLocalExhaust?`<div class="text-amber-400 flex items-start gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-top:1px;flex-shrink:0"><path d="M12 2v6M12 22v-6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M22 12h-6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg><span>${App.ui.t('Gió thải cục bộ:')} ${bt.localExhaustNote||App.ui.t('cần bổ sung tại thiết bị phát sinh')} — ${App.ui.t('nhập lưu lượng thực tế ở mục Gió thải cục bộ')}</span></div>`:''}
                     <div class="text-slate-600">${bt.stdRef||''}</div>
                   </div>`;
                 })()}
@@ -1777,8 +1794,8 @@
 
               <!-- A2. Thông tin cơ bản -->
               <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <div class="col-span-2"><label class="text-[10px] text-slate-400">Tên phòng / Mã phòng</label>${this.rfInp('name',r.name,'Tên phòng','text')}</div>
-                <div><label class="text-[10px] text-slate-400">Thuộc nhóm thiết bị</label>
+                <div class="col-span-2"><label class="text-[10px] text-slate-400">${App.ui.t('Tên phòng / Mã phòng')}</label>${this.rfInp('name',r.name,App.ui.t('Tên phòng'),'text')}</div>
+                <div><label class="text-[10px] text-slate-400">${App.ui.t('Thuộc nhóm thiết bị')}</label>
                   ${(()=>{
                     // Lọc nhóm thiết bị theo đúng loại hệ thống ĐHKK của phòng (r.equipType) —
                     // nhóm AHU chỉ gán cho phòng AHU, PAU chỉ cho phòng PAU, v.v. Trước đây
@@ -1791,7 +1808,7 @@
                     // tế người dùng VẪN có thể tự tạo nhóm FCU/VENT (dropdown nhóm thiết bị đã
                     // hỗ trợ đủ mọi loại equipType), gây hiểu lầm là tính năng không áp dụng
                     // được cho các loại này. Đổi thành câu trung lập, đúng cho mọi loại.
-                    const fallbackLabel = `Chưa gán nhóm ${r.equipType||''}${compatibleGroups.length?' (có '+compatibleGroups.length+' nhóm khả dụng bên dưới)':''}`;
+                    const fallbackLabel = App.ui.t('Chưa gán nhóm {equip}{count}',{equip:r.equipType||'', count:compatibleGroups.length?' ('+App.ui.t('có {n} nhóm khả dụng bên dưới',{n:compatibleGroups.length})+')':''});
                     const groupOpts=[{v:'',n:fallbackLabel},...compatibleGroups.map(g=>({v:g.id,n:`${g.equipType}: ${g.name||g.id}`}))];
                     return this.rfSel('groupId',groupOpts,r.groupId||'');
                   })()}
@@ -1804,35 +1821,35 @@
               <div class="p-2.5 bg-emerald-950/30 border border-emerald-800/40 rounded-lg space-y-2">
                 <div class="text-[10px] text-emerald-400 font-medium flex items-center gap-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                  ${stdModule ? stdModule.panelLabel : 'Thông số ACH / Chênh áp — lấy mặc định theo loại phòng, có thể ghi đè'}
+                  ${stdModule ? stdModule.panelLabel : App.ui.t('Thông số ACH / Chênh áp — lấy mặc định theo loại phòng, có thể ghi đè')}
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                   ${stdModule?`
-                  <div><label class="text-[10px] text-slate-400">Hệ thống tiêu chuẩn</label>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('Hệ thống tiêu chuẩn')}</label>
                     <select data-rf="classSystem" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
                       ${stdModule.systemOptions.map(o=>`<option value="${o.v}" ${r.classSystem===o.v?'selected':''}>${o.n}</option>`).join('')}
                     </select>
                   </div>
                   ${r.classSystem!=='GENERAL'?`
-                  <div><label class="text-[10px] text-slate-400">Cấp độ sạch</label>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('Cấp độ sạch')}</label>
                     <select data-rf="classCode" data-rf-autofill="classCode" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
                       ${classOpts.map(o=>`<option value="${o.v}" ${r.classCode===o.v?'selected':''}>${o.n}</option>`).join('')}
                     </select>
                     ${stdBadge}
                   </div>` : ''}` : ''}
-                  <div><label class="text-[10px] text-slate-400 ${std?'text-emerald-400':''}">ACH áp dụng (h⁻¹)</label>
+                  <div><label class="text-[10px] text-slate-400 ${std?'text-emerald-400':''}">${App.ui.t('ACH áp dụng (h⁻¹)')}</label>
                     ${this.rfInp('achApplied',r.achApplied,std?.achDefault??bt?.achDefault??'20')}
-                    ${std?.flowMode==='unidirectional'?`<p class="text-[9px] text-amber-400 mt-0.5">Dòng đơn hướng: nhập diện tích mặt cấp bên dưới</p>`:''}
+                    ${std?.flowMode==='unidirectional'?`<p class="text-[9px] text-amber-400 mt-0.5">${App.ui.t('Dòng đơn hướng: nhập diện tích mặt cấp bên dưới')}</p>`:''}
                   </div>
-                  <div><label class="text-[10px] text-slate-400">ΔP thiết kế (Pa)</label>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('ΔP thiết kế (Pa)')}</label>
                     ${this.rfInp('deltaPPa',r.deltaPPa,std?.deltaPMinPa??bt?.deltaPPa??'0')}
-                    ${std?.deltaPMinPa?`<p class="text-[9px] text-slate-500">Min theo tiêu chuẩn: ${std.deltaPMinPa} Pa</p>`:''}
+                    ${std?.deltaPMinPa?`<p class="text-[9px] text-slate-500">${App.ui.t('Min theo tiêu chuẩn:')} ${std.deltaPMinPa} Pa</p>`:''}
                   </div>
                 </div>
                 ${std?.flowMode==='unidirectional'?`
                 <div class="grid grid-cols-2 gap-2 pt-1">
-                  <div><label class="text-[10px] text-amber-400">Diện tích mặt cấp gió (m²)</label>${this.rfInp('faceAreaM2',r.faceAreaM2,'20')}</div>
-                  <div><label class="text-[10px] text-amber-400">Vận tốc mặt cấp (m/s) [${std.velMin}–${std.velMax}]</label>${this.rfInp('uniVelocityMs',r.uniVelocityMs||std.velMin,'0.45')}</div>
+                  <div><label class="text-[10px] text-amber-400">${App.ui.t('Diện tích mặt cấp gió (m²)')}</label>${this.rfInp('faceAreaM2',r.faceAreaM2,'20')}</div>
+                  <div><label class="text-[10px] text-amber-400">${App.ui.t('Vận tốc mặt cấp (m/s)')} [${std.velMin}–${std.velMax}]</label>${this.rfInp('uniVelocityMs',r.uniVelocityMs||std.velMin,'0.45')}</div>
                 </div>`:''}
               </div>
 
@@ -1840,24 +1857,24 @@
               <div class="p-2.5 bg-cyan-950/30 border border-cyan-800/40 rounded-lg space-y-2">
                 <div class="text-[10px] text-cyan-400 font-medium flex items-center gap-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>
-                  Bù áp suất dương — chọn phương pháp tính lưu lượng makeup
+                  ${App.ui.t('Bù áp suất dương — chọn phương pháp tính lưu lượng makeup')}
                 </div>
                 <div class="flex gap-3 text-xs">
                   <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="radio" name="pressMethod_${i}" data-rf="pressMethod" value="ach" ${(r.pressMethod||'ach')==='ach'?'checked':''}> Theo thể tích phòng (ACH)
+                    <input type="radio" name="pressMethod_${i}" data-rf="pressMethod" value="ach" ${(r.pressMethod||'ach')==='ach'?'checked':''}> ${App.ui.t('Theo thể tích phòng (ACH)')}
                   </label>
                   <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="radio" name="pressMethod_${i}" data-rf="pressMethod" value="door" ${r.pressMethod==='door'?'checked':''}> Theo rò rỉ qua khe cửa
+                    <input type="radio" name="pressMethod_${i}" data-rf="pressMethod" value="door" ${r.pressMethod==='door'?'checked':''}> ${App.ui.t('Theo rò rỉ qua khe cửa')}
                   </label>
                 </div>
                 ${(r.pressMethod||'ach')==='ach'?`
                 <div class="grid grid-cols-2 gap-2">
-                  <div><label class="text-[10px] text-slate-400">ACH bù áp (h⁻¹) [${std?.pressACHMin||0.5}–${std?.pressACHMax||5}]</label>${this.rfInp('pressACH',r.pressACH,std?.pressACHMin||1)}</div>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('ACH bù áp (h⁻¹)')} [${std?.pressACHMin||0.5}–${std?.pressACHMax||5}]</label>${this.rfInp('pressACH',r.pressACH,std?.pressACHMin||1)}</div>
                   <div class="text-[10px] text-slate-500 flex items-end pb-2">Q_bù áp = V × ACH_bù (ISO 14644-4:2022 Annex C)</div>
                 </div>`:`
                 <div class="space-y-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-[10px] text-slate-400">Khe hở cửa (mm)</label>${this.rfInp('gapWidthMm',r.gapWidthMm,3)}</div>
+                    <div><label class="text-[10px] text-slate-400">${App.ui.t('Khe hở cửa (mm)')}</label>${this.rfInp('gapWidthMm',r.gapWidthMm,3)}</div>
                     <div class="text-[10px] text-slate-500 flex items-end pb-1">Q = Cd×A_khe×√(2ΔP/ρ)×SF (ISO 14644-4 Annex C)</div>
                   </div>
                   <div class="space-y-1" id="door-rows-${i}">
@@ -1867,16 +1884,16 @@
                         ${App.data.doorCatalog.filter(dc=>!(App.state.hiddenMaterialIds?.doors||[]).includes(dc.code)).map(dc=>`<option value="${dc.code}" ${d.doorCode===dc.code?'selected':''}>${dc.name} (A_khe=${dc.aKheM2.toFixed(4)}m²)</option>`).join('')}
                       </select>
                       <div class="flex gap-2 items-center">
-                        <label class="text-[10px] text-slate-500 flex-shrink-0">Số lượng</label>
+                        <label class="text-[10px] text-slate-500 flex-shrink-0">${App.ui.t('Số lượng')}</label>
                         <input data-drow="qty" type="number" value="${d.qty||1}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-16 font-mono-data flex-shrink-0">
-                        <span class="text-[10px] text-slate-500">bộ</span>
-                        <button data-del-door="${di}" class="ml-auto flex-shrink-0" style="background:none;border:none;color:#f87171;cursor:pointer;padding:4px" title="Xóa cửa này">
+                        <span class="text-[10px] text-slate-500">${App.ui.t('bộ')}</span>
+                        <button data-del-door="${di}" class="ml-auto flex-shrink-0" style="background:none;border:none;color:#f87171;cursor:pointer;padding:4px" title="${App.ui.t('Xóa cửa này')}">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                       </div>
                     </div>`).join('')}
                     <button data-add-door="${i}" class="text-[10px] text-emerald-400 flex items-center gap-1">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm cửa
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm cửa')}
                     </button>
                   </div>
                 </div>`}
@@ -1886,27 +1903,27 @@
               <div class="space-y-2">
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
                   <div>
-                    <label class="text-[10px] text-slate-400">Hình dạng phòng</label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Hình dạng phòng')}</label>
                     <select data-rf="roomShape" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
-                      <option value="rect"   ${(r.roomShape||'rect')==='rect'?'selected':''}>⬜ Chữ nhật (L×W)</option>
-                      <option value="hex"    ${r.roomShape==='hex'?'selected':''}>⬡ Lục giác (6 cạnh, ×0.866)</option>
-                      <option value="oct"    ${r.roomShape==='oct'?'selected':''}>⬠ Bát giác (8 cạnh, ×0.828)</option>
-                      <option value="custom" ${r.roomShape==='custom'?'selected':''}>✏ Nhập trực tiếp S sàn</option>
+                      <option value="rect"   ${(r.roomShape||'rect')==='rect'?'selected':''}>⬜ ${App.ui.t('Chữ nhật (L×W)')}</option>
+                      <option value="hex"    ${r.roomShape==='hex'?'selected':''}>⬡ ${App.ui.t('Lục giác (6 cạnh, ×0.866)')}</option>
+                      <option value="oct"    ${r.roomShape==='oct'?'selected':''}>⬠ ${App.ui.t('Bát giác (8 cạnh, ×0.828)')}</option>
+                      <option value="custom" ${r.roomShape==='custom'?'selected':''}>✏ ${App.ui.t('Nhập trực tiếp S sàn')}</option>
                     </select>
                   </div>
                   ${r.roomShape==='custom'?`
-                    <div><label class="text-[10px] text-slate-400">Diện tích sàn (m²)</label>
+                    <div><label class="text-[10px] text-slate-400">${App.ui.t('Diện tích sàn (m²)')}</label>
                       <input data-rf="customAreaM2" type="number" step="0.1" value="${r.customAreaM2||0}"
                         class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full"></div>
                   `:`
-                    <div><label class="text-[10px] text-slate-400">${r.roomShape==='hex'||r.roomShape==='oct'?'D₁ (m)':'Dài L (m)'}</label>
+                    <div><label class="text-[10px] text-slate-400">${r.roomShape==='hex'||r.roomShape==='oct'?'D₁ (m)':App.ui.t('Dài L (m)')}</label>
                       <input data-rf="L" type="number" step="0.1" value="${r.L||10}"
                         class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full"></div>
-                    <div><label class="text-[10px] text-slate-400">${r.roomShape==='hex'||r.roomShape==='oct'?'D₂ (m)':'Rộng W (m)'}</label>
+                    <div><label class="text-[10px] text-slate-400">${r.roomShape==='hex'||r.roomShape==='oct'?'D₂ (m)':App.ui.t('Rộng W (m)')}</label>
                       <input data-rf="W" type="number" step="0.1" value="${r.W||8}"
                         class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full"></div>
                   `}
-                  <div><label class="text-[10px] text-slate-400">Cao trần H (m)</label>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('Cao trần H (m)')}</label>
                     <input data-rf="H" type="number" step="0.1" value="${r.H||3}"
                       class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full"></div>
                   <div class="bg-base-900/50 rounded-lg p-2 text-[10px] font-mono-data leading-5">
@@ -1923,58 +1940,58 @@
                 <!-- D2a. Tường ngoài -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div class="col-span-2">
-                    <label class="text-[10px] text-slate-400">Loại tường ngoài (auto-fill U)</label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Loại tường ngoài (auto-fill U)')}</label>
                     <select data-rf="wallTypeId" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
-                      <option value="">-- Chọn hoặc tự nhập U bên dưới --</option>
+                      <option value="">-- ${App.ui.t('Chọn hoặc tự nhập U bên dưới')} --</option>
                       ${(App.data.WALL_TYPES||[]).filter(wt=>!(App.state.hiddenMaterialIds?.wallTypes||[]).includes(wt.id)).map(wt=>`<option value="${wt.id}" ${r.wallTypeId===wt.id?'selected':''}>${wt.name} (U=${wt.U})</option>`).join('')}
                     </select>
                   </div>
-                  <div><label class="text-[10px] text-slate-400">U vách (W/m²K)</label>${this.rfInp('uWall',r.uWall||0.45,'0.45')}</div>
-                  <div><label class="text-[10px] text-slate-400">S vách nóng (m²)</label>${this.rfInp('aWall',r.aWall||40,'40')}</div>
-                  <div><label class="text-[10px] text-slate-400">Vách tiếp xúc với</label>
-                    ${this.rfSel('dtFactor',[{v:1.0,n:'Ngoài trời (×1.0)'},{v:0.6,n:'Phòng KĐH (×0.6)'},{v:0.3,n:'Gian giữa (×0.3)'}],r.dtFactor)}
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('U vách (W/m²K)')}</label>${this.rfInp('uWall',r.uWall||0.45,'0.45')}</div>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('S vách nóng (m²)')}</label>${this.rfInp('aWall',r.aWall||40,'40')}</div>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('Vách tiếp xúc với')}</label>
+                    ${this.rfSel('dtFactor',[{v:1.0,n:App.ui.t('Ngoài trời (×1.0)')},{v:0.6,n:App.ui.t('Phòng KĐH (×0.6)')},{v:0.3,n:App.ui.t('Gian giữa (×0.3)')}],r.dtFactor)}
                   </div>
                 </div>
                 <!-- D2b. Kính & bức xạ mặt trời — Layout gọn 2 hàng -->
                 <details class="bg-amber-950/10 border border-amber-900/20 rounded-lg" ${(r.aGlass||0)>0?'open':''}>
                   <summary style="padding:8px 12px;font-size:11px;font-weight:600;color:#fbbf24;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;user-select:none">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                    Kính & Bức xạ mặt trời
+                    ${App.ui.t('Kính & Bức xạ mặt trời')}
                     <span style="font-size:10px;font-weight:400;color:#4a6680;margin-left:4px">ASHRAE 2001 Ch.29 — CLTD method</span>
-                    ${(r.aGlass||0)>0?`<span id="glass-preview-${i}" style="margin-left:auto;font-family:monospace;font-size:10px;color:#fbbf24">S=${r.aGlass}m² · SHGC=${r.shgc||0.6}</span>`:`<span id="glass-preview-${i}" style="margin-left:auto;font-size:10px;color:#3a5470">(nhấp để mở)</span>`}
+                    ${(r.aGlass||0)>0?`<span id="glass-preview-${i}" style="margin-left:auto;font-family:monospace;font-size:10px;color:#fbbf24">S=${r.aGlass}m² · SHGC=${r.shgc||0.6}</span>`:`<span id="glass-preview-${i}" style="margin-left:auto;font-size:10px;color:#3a5470">(${App.ui.t('nhấp để mở')})</span>`}
                   </summary>
                   <div style="padding:10px 12px 12px">
                     <!-- Hàng 1: Diện tích + loại kính + SHGC/U -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2" style="margin-bottom:8px">
                       <div>
-                        <label>S kính (m²)</label>
+                        <label>${App.ui.t('S kính (m²)')}</label>
                         ${this.rfInp('aGlass',r.aGlass||0,'0')}
                       </div>
                       <div class="col-span-2">
-                        <label>Loại kính — auto-fill SHGC+U</label>
+                        <label>${App.ui.t('Loại kính — auto-fill SHGC+U')}</label>
                         <select data-rf="glassTypeId" class="w-full">
-                          <option value="">-- Tự nhập SHGC/U bên dưới --</option>
+                          <option value="">-- ${App.ui.t('Tự nhập SHGC/U bên dưới')} --</option>
                           ${(App.data.GLASS_CATALOG||[]).filter(g=>!(App.state.hiddenMaterialIds?.glass||[]).includes(g.id)).map(g=>`<option value="${g.id}" ${r.glassTypeId===g.id?'selected':''}>${g.name} (SHGC=${g.SHGC}, U=${g.U})</option>`).join('')}
                         </select>
                       </div>
                       <div>
-                        <label>SHGC <span style="font-size:9px;color:#4a6680">(Solar Heat Gain Coef)</span></label>
+                        <label>SHGC <span style="font-size:9px;color:#4a6680">(${App.ui.t('Solar Heat Gain Coef')})</span></label>
                         ${this.rfInp('shgc',r.shgc||0.6,'0.60')}
                       </div>
                     </div>
                     <!-- Hàng 2: U kính + SC + CLF -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div>
-                        <label>U kính (W/m²K)</label>
+                        <label>${App.ui.t('U kính (W/m²K)')}</label>
                         ${this.rfInp('glassU',r.glassU||5.8,'5.8')}
                       </div>
                       <div>
-                        <label>SC — Hệ số che nắng</label>
-                        ${this.rfSel('sc',[{v:1.0,n:'Không che (1.0)'},{v:0.8,n:'Rèm ngoài (0.8)'},{v:0.6,n:'Lam ngang (0.6)'},{v:0.4,n:'Brise-soleil (0.4)'}],r.sc||1.0)}
+                        <label>${App.ui.t('SC — Hệ số che nắng')}</label>
+                        ${this.rfSel('sc',[{v:1.0,n:App.ui.t('Không che (1.0)')},{v:0.8,n:App.ui.t('Rèm ngoài (0.8)')},{v:0.6,n:App.ui.t('Lam ngang (0.6)')},{v:0.4,n:'Brise-soleil (0.4)'}],r.sc||1.0)}
                       </div>
                       <div>
-                        <label>CLF — Hệ số tải bức xạ</label>
-                        ${this.rfSel('clf',[{v:0.7,n:'Đỉnh trưa (0.7)'},{v:0.55,n:'TB ngày (0.55)'},{v:0.5,n:'Sáng/chiều (0.5)'}],r.clf||0.7)}
+                        <label>${App.ui.t('CLF — Hệ số tải bức xạ')}</label>
+                        ${this.rfSel('clf',[{v:0.7,n:App.ui.t('Đỉnh trưa (0.7)')},{v:0.55,n:App.ui.t('TB ngày (0.55)')},{v:0.5,n:App.ui.t('Sáng/chiều (0.5)')}],r.clf||0.7)}
                       </div>
                     </div>
                     ${r._ev?.Q_solar>0?`<p style="font-size:10px;font-family:monospace;color:#fbbf24;margin-top:6px">Q_bức_xạ = ${(r._ev.Q_solar/1000).toFixed(3)} kW</p>`:''}
@@ -1983,20 +2000,20 @@
                 <!-- D2c. Người & thiết bị -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div>
-                    <label class="text-[10px] text-slate-400">Số người <span class="text-emerald-400">*</span></label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Số người')} <span class="text-emerald-400">*</span></label>
                     <input data-rf="nPeople" type="number" step="1" min="0"
                       value="${r.nPeople!=null?r.nPeople:5}"
                       class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full">
                   </div>
-                  <div class="col-span-2"><label class="text-[10px] text-slate-400">Mức lao động</label>${this.rfSel('laborLevel',laborOpts,r.laborLevel)}</div>
+                  <div class="col-span-2"><label class="text-[10px] text-slate-400">${App.ui.t('Mức lao động')}</label>${this.rfSel('laborLevel',laborOpts,r.laborLevel)}</div>
                   <div>
-                    <label class="text-[10px] text-slate-400">Gió tươi (L/s/người)</label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Gió tươi (L/s/người)')}</label>
                     <input data-rf="freshAirPerPersonLs" type="number" step="0.5" min="0"
                       value="${r.freshAirPerPersonLs||8.5}"
                       class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full">
                     <p class="text-[9px] text-slate-500">ASHRAE 62.1-2022: VP=8.5, y/c=10</p>
                   </div>
-                  <div><label class="text-[10px] text-slate-400">LPD đèn (W/m²)</label>${this.rfInp('lpdApplied',r.lpdApplied||12,'12')}</div>
+                  <div><label class="text-[10px] text-slate-400">${App.ui.t('LPD đèn (W/m²)')}</label>${this.rfInp('lpdApplied',r.lpdApplied||12,'12')}</div>
                 </div>
               </div>
 
@@ -2006,58 +2023,58 @@
                 <div class="p-2.5 bg-amber-950/20 border border-amber-800/30 rounded-lg space-y-2">
                   <div class="text-[10px] text-amber-400 font-medium flex items-center gap-1.5">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>
-                    Mái (Roof Load — CLTD Method)
+                    ${App.ui.t('Mái (Roof Load — CLTD Method)')}
                   </div>
                   <label class="flex items-center gap-2 text-xs cursor-pointer">
                     <input data-rf="roofExposed" type="checkbox" ${r.roofExposed?'checked':''} class="rounded">
-                    <span class="${r.roofExposed?'text-amber-300':'text-slate-500'}">Phòng có mái tiếp xúc trực tiếp</span>
+                    <span class="${r.roofExposed?'text-amber-300':'text-slate-500'}">${App.ui.t('Phòng có mái tiếp xúc trực tiếp')}</span>
                   </label>
                   ${r.roofExposed?`
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div>
-                      <label class="text-[10px] text-slate-400">Loại mái</label>
+                      <label class="text-[10px] text-slate-400">${App.ui.t('Loại mái')}</label>
                       <select data-rf="roofType" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
                         ${Object.entries(App.data.CLTD_ROOFS||{}).map(([k,v])=>
                           `<option value="${k}" ${r.roofType===k?'selected':''}>${k}: ${v.name} (U=${v.U})</option>`).join('')}
                       </select>
                     </div>
                     <div>
-                      <label class="text-[10px] text-slate-400">Diện tích mái (m²) — 0=tự tính từ L×W</label>
+                      <label class="text-[10px] text-slate-400">${App.ui.t('Diện tích mái (m²) — 0=tự tính từ L×W')}</label>
                       <input data-rf="roofArea" type="number" step="0.5" value="${r.roofArea||0}"
                         class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full">
                     </div>
                   </div>
-                  ${r._ev?.Q_roof!=null?`<div class="text-[10px] font-mono-data text-amber-400">Q_mái = ${(r._ev.Q_roof/1000).toFixed(3)} kW</div>`:''}
-                  `:'<p class="text-[9px] text-slate-600">Phòng ở tầng trung, mái đã tính qua aWall.</p>'}
+                  ${r._ev?.Q_roof!=null?`<div class="text-[10px] font-mono-data text-amber-400">${App.ui.t('Q_mái')} = ${(r._ev.Q_roof/1000).toFixed(3)} kW</div>`:''}
+                  `:`<p class="text-[9px] text-slate-600">${App.ui.t('Phòng ở tầng trung, mái đã tính qua aWall.')}</p>`}
                 </div>
                 <!-- Sàn -->
                 <div class="p-2.5 bg-sky-950/20 border border-sky-800/30 rounded-lg space-y-2">
                   <div class="text-[10px] text-sky-400 font-medium flex items-center gap-1.5">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
-                    Sàn (Floor Load — tiếp đất hoặc tiếp không gian lạnh)
+                    ${App.ui.t('Sàn (Floor Load — tiếp đất hoặc tiếp không gian lạnh)')}
                   </div>
                   <label class="flex items-center gap-2 text-xs cursor-pointer">
                     <input data-rf="floorOnGround" type="checkbox" ${r.floorOnGround?'checked':''} class="rounded">
-                    <span class="${r.floorOnGround?'text-sky-300':'text-slate-500'}">Sàn tiếp đất / tiếp không gian lạnh bên dưới</span>
+                    <span class="${r.floorOnGround?'text-sky-300':'text-slate-500'}">${App.ui.t('Sàn tiếp đất / tiếp không gian lạnh bên dưới')}</span>
                   </label>
                   ${r.floorOnGround?`
                   <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                     <div>
-                      <label class="text-[10px] text-slate-400">T đất / T bên dưới (°C)</label>
+                      <label class="text-[10px] text-slate-400">${App.ui.t('T đất / T bên dưới (°C)')}</label>
                       <input data-rf="groundTempC" type="number" step="0.5" value="${r.groundTempC??28}"
                         class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full">
                     </div>
                     <div>
-                      <label class="text-[10px] text-slate-400">U sàn (W/m²K)</label>
+                      <label class="text-[10px] text-slate-400">${App.ui.t('U sàn (W/m²K)')}</label>
                       <input data-rf="floorU" type="number" step="0.05" value="${r.floorU||0.8}"
                         class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono-data w-full">
                     </div>
                     <div class="col-span-2 md:col-span-1 flex items-end pb-0.5">
-                      ${r._ev?.Q_floor!=null?`<div class="text-[10px] font-mono-data text-sky-400">Q_sàn = ${(r._ev.Q_floor/1000).toFixed(3)} kW</div>`:''}
+                      ${r._ev?.Q_floor!=null?`<div class="text-[10px] font-mono-data text-sky-400">${App.ui.t('Q_sàn')} = ${(r._ev.Q_floor/1000).toFixed(3)} kW</div>`:''}
                     </div>
                   </div>
-                  <p class="text-[9px] text-slate-500">VN: T_đất TB ~28°C (sâu). Sàn thường: U≈0.8 W/m²K (bê tông+ceramic). Kho mát: T_đất = T phòng kề.</p>
-                  `:'<p class="text-[9px] text-slate-600">Sàn lửng hoặc trên tầng khác — không tính tải sàn.</p>'}
+                  <p class="text-[9px] text-slate-500">${App.ui.t('VN: T_đất TB ~28°C (sâu). Sàn thường: U≈0.8 W/m²K (bê tông+ceramic). Kho mát: T_đất = T phòng kề.')}</p>
+                  `:`<p class="text-[9px] text-slate-600">${App.ui.t('Sàn lửng hoặc trên tầng khác — không tính tải sàn.')}</p>`}
                 </div>
               </div>
 
@@ -2071,53 +2088,53 @@
               <div class="p-2.5 bg-orange-950/20 border border-orange-800/30 rounded-lg space-y-2">
                 <div class="text-[10px] text-orange-400 font-medium flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M22 12h-6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>
-                  Gió thải cục bộ từ thiết bị
+                  ${App.ui.t('Gió thải cục bộ từ thiết bị')}
                 </div>
                 <label class="flex items-center gap-2 text-xs cursor-pointer">
                   <input data-rf="hasLocalExhaustEquip" type="checkbox" ${r.hasLocalExhaustEquip?'checked':''} class="rounded">
-                  <span class="${r.hasLocalExhaustEquip?'text-orange-300':'text-slate-500'}">Phòng có thiết bị hút thải cục bộ (chụp hút bếp, lò nướng, máy hấp, tủ hàn, hút khói gas...)</span>
+                  <span class="${r.hasLocalExhaustEquip?'text-orange-300':'text-slate-500'}">${App.ui.t('Phòng có thiết bị hút thải cục bộ (chụp hút bếp, lò nướng, máy hấp, tủ hàn, hút khói gas...)')}</span>
                 </label>
                 ${r.hasLocalExhaustEquip?`
                 <div class="space-y-1.5" id="local-exhaust-rows-${i}">
                   ${(r.localExhaustRows||[{name:'',qPerUnitM3h:0,qty:1}]).map((eq,ei)=>`
                   <div class="p-2 bg-base-900/40 rounded-lg space-y-1.5" data-leq-idx="${ei}">
-                    <input data-leq="name" type="text" value="${eq.name||''}" placeholder="Tên thiết bị (VD: Chụp hút lò nướng #1)"
+                    <input data-leq="name" type="text" value="${eq.name||''}" placeholder="${App.ui.t('Tên thiết bị (VD: Chụp hút lò nướng #1)')}"
                       class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] w-full">
                     <div class="flex gap-2 items-center">
-                      <div class="flex-1"><label class="text-[9px] text-slate-500">Lưu lượng hút (m³/h/thiết bị)</label>
+                      <div class="flex-1"><label class="text-[9px] text-slate-500">${App.ui.t('Lưu lượng hút (m³/h/thiết bị)')}</label>
                         <input data-leq="qPerUnitM3h" type="number" step="10" value="${eq.qPerUnitM3h||0}" placeholder="m³/h"
                           class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full"></div>
-                      <div style="width:70px"><label class="text-[9px] text-slate-500">SL</label>
+                      <div style="width:70px"><label class="text-[9px] text-slate-500">${App.ui.t('SL')}</label>
                         <input data-leq="qty" type="number" step="1" min="1" value="${eq.qty||1}"
                           class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[11px] font-mono-data w-full text-right"></div>
-                      <button data-leq-del="${ei}" class="mt-3 flex-shrink-0" style="background:none;border:none;color:#f87171;cursor:pointer;padding:4px" title="Xóa thiết bị này">
+                      <button data-leq-del="${ei}" class="mt-3 flex-shrink-0" style="background:none;border:none;color:#f87171;cursor:pointer;padding:4px" title="${App.ui.t('Xóa thiết bị này')}">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                       </button>
                     </div>
                   </div>`).join('')}
                   <button data-leq-add="${i}" class="text-[10px] text-emerald-400 flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm thiết bị
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm thiết bị')}
                   </button>
                 </div>
-                <div class="text-[10px] font-mono-data text-orange-300">Tổng gió thải cục bộ: ${((r.localExhaustRows||[]).reduce((s,eq)=>s+(eq.qPerUnitM3h||0)*(eq.qty||1),0)).toFixed(0)} m³/h</div>
+                <div class="text-[10px] font-mono-data text-orange-300">${App.ui.t('Tổng gió thải cục bộ:')} ${((r.localExhaustRows||[]).reduce((s,eq)=>s+(eq.qPerUnitM3h||0)*(eq.qty||1),0)).toFixed(0)} m³/h</div>
                 <div>
-                  <label class="text-[10px] text-slate-400">Gió tươi bù thay thế</label>
+                  <label class="text-[10px] text-slate-400">${App.ui.t('Gió tươi bù thay thế')}</label>
                   <select data-rf="localExhaustTreated" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
-                    <option value="ahu" ${(!r.localExhaustTreated||r.localExhaustTreated==='ahu')?'selected':''}>Xử lý nhiệt qua AHU/PAU chính — cộng vào gió tươi hệ thống, có tính tải lạnh</option>
-                    <option value="raw" ${r.localExhaustTreated==='raw'?'selected':''}>Bù thuần túy (quạt cấp bù riêng) — chỉ cân bằng áp suất, KHÔNG tính vào tải lạnh</option>
+                    <option value="ahu" ${(!r.localExhaustTreated||r.localExhaustTreated==='ahu')?'selected':''}>${App.ui.t('Xử lý nhiệt qua AHU/PAU chính — cộng vào gió tươi hệ thống, có tính tải lạnh')}</option>
+                    <option value="raw" ${r.localExhaustTreated==='raw'?'selected':''}>${App.ui.t('Bù thuần túy (quạt cấp bù riêng) — chỉ cân bằng áp suất, KHÔNG tính vào tải lạnh')}</option>
                   </select>
-                  <p class="text-[9px] text-slate-500 mt-1">${r.localExhaustTreated==='raw'?'Gió bù cấp thẳng gần điểm hút, không qua coil — tiết kiệm năng lượng nhưng không kiểm soát nhiệt độ/độ ẩm của luồng gió này.':'Gió bù được xử lý cùng hệ thống điều hòa chính — cộng vào Q_tươi và ảnh hưởng Q_coil.'}</p>
+                  <p class="text-[9px] text-slate-500 mt-1">${r.localExhaustTreated==='raw'?App.ui.t('Gió bù cấp thẳng gần điểm hút, không qua coil — tiết kiệm năng lượng nhưng không kiểm soát nhiệt độ/độ ẩm của luồng gió này.'):App.ui.t('Gió bù được xử lý cùng hệ thống điều hòa chính — cộng vào Q_tươi và ảnh hưởng Q_coil.')}</p>
                 </div>
-                `:'<p class="text-[9px] text-slate-600">Không tick nếu phòng không có thiết bị hút thải cục bộ.</p>'}
+                `:`<p class="text-[9px] text-slate-600">${App.ui.t('Không tick nếu phòng không có thiết bị hút thải cục bộ.')}</p>`}
               </div>
 
               <!-- E. AHU/PAU/FCU_OA thông số cấp — FCU_OA cũng cần vì thiết bị xử lý gió tươi
                    riêng của nó tính theo cùng công thức enthalpy AHU/PAU (xem calcCoil) -->
               ${(r.equipType==='AHU'||r.equipType==='PAU'||r.equipType==='FCU_OA')?`
               <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-slate-700/40">
-                <div><label class="text-[10px] text-cyan-400">T cấp thiết kế (°C)${r.equipType==='FCU_OA'?' — thiết bị OA riêng':''}</label>${this.rfInp('tSupplyDesign',r.tSupplyDesign,'14')}</div>
-                <div><label class="text-[10px] text-cyan-400">RH cấp (%)${r.equipType==='FCU_OA'?' — thiết bị OA riêng':''}</label>${this.rfInp('rhSupplyDesign',r.rhSupplyDesign,'90')}</div>
-                ${r.equipType!=='FCU_OA'?`<div><label class="text-[10px] text-cyan-400">ESP quạt (Pa)</label>${this.rfInp('espPa',r.espPa,'400')}</div>`:''}
+                <div><label class="text-[10px] text-cyan-400">${App.ui.t('T cấp thiết kế (°C)')}${r.equipType==='FCU_OA'?' — '+App.ui.t('thiết bị OA riêng'):''}</label>${this.rfInp('tSupplyDesign',r.tSupplyDesign,'14')}</div>
+                <div><label class="text-[10px] text-cyan-400">${App.ui.t('RH cấp (%)')}${r.equipType==='FCU_OA'?' — '+App.ui.t('thiết bị OA riêng'):''}</label>${this.rfInp('rhSupplyDesign',r.rhSupplyDesign,'90')}</div>
+                ${r.equipType!=='FCU_OA'?`<div><label class="text-[10px] text-cyan-400">${App.ui.t('ESP quạt (Pa)')}</label>${this.rfInp('espPa',r.espPa,'400')}</div>`:''}
               </div>`:''}
 
               <!-- E2. Tham số đặc thù theo loại phòng -->
@@ -2127,23 +2144,23 @@
                   <div class="p-2.5 bg-cyan-950/30 border border-cyan-800/40 rounded-lg space-y-2">
                     <div class="text-[10px] text-cyan-400 font-medium flex items-center gap-1.5">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
-                      Data Center — ASHRAE TC9.9 2021 (lưu lượng tính từ tải IT, không theo ACH)
+                      ${App.ui.t('Data Center — ASHRAE TC9.9 2021 (lưu lượng tính từ tải IT, không theo ACH)')}
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <div>
-                        <label class="text-[10px] text-slate-400">Profile DC (tham chiếu nhanh)</label>
+                        <label class="text-[10px] text-slate-400">${App.ui.t('Profile DC (tham chiếu nhanh)')}</label>
                         <select data-rf="dcProfile" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full mb-1">
-                          <option value="">-- Tự nhập --</option>
+                          <option value="">-- ${App.ui.t('Tự nhập')} --</option>
                           ${(App.data.DC_RACK_PROFILES||[]).map(p=>`<option value="${p.id}" ${r.dcProfile===p.id?'selected':''}>${p.name} (${p.itKWPerRack}kW/rack, PUE=${p.pue})</option>`).join('')}
                         </select>
-                    <label class="text-[10px] text-slate-400">Mật độ tải IT (kW/m²)</label>
+                    <label class="text-[10px] text-slate-400">${App.ui.t('Mật độ tải IT (kW/m²)')}</label>
                         ${this.rfInp('itLoadKWM2',r.itLoadKWM2||1.5,'1.5')}
-                        <p class="text-[9px] text-slate-500 mt-0.5">Typ: 1-3 kW/m² (ASHRAE Class A1). Edge DC: 3-10 kW/m²</p>
+                        <p class="text-[9px] text-slate-500 mt-0.5">${App.ui.t('Typ: 1-3 kW/m² (ASHRAE Class A1). Edge DC: 3-10 kW/m²')}</p>
                       </div>
                       <div>
                         <label class="text-[10px] text-slate-400">ΔT supply→return (°C)</label>
                         ${this.rfInp('deltaT',r.deltaT||12,'12')}
-                        <p class="text-[9px] text-slate-500 mt-0.5">Typ: 10-15°C. ASHRAE A1: supply 15-27°C</p>
+                        <p class="text-[9px] text-slate-500 mt-0.5">${App.ui.t('Typ: 10-15°C. ASHRAE A1: supply 15-27°C')}</p>
                       </div>
                     </div>
                     <div class="text-[10px] font-mono-data text-cyan-400">
@@ -2155,22 +2172,22 @@
                   <div class="p-2.5 bg-amber-950/20 border border-amber-800/40 rounded-lg space-y-3" id="elec-device-section-${i}">
                     <div class="text-[10px] text-amber-400 font-medium flex items-center gap-1.5">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
-                      Tải nhiệt nội bộ — Thiết bị điện / ${bt==='control_room'?'PLC/DCS/SCADA':'Tủ điện động lực'}
+                      ${App.ui.t('Tải nhiệt nội bộ — Thiết bị điện /')} ${bt==='control_room'?'PLC/DCS/SCADA':App.ui.t('Tủ điện động lực')}
                     </div>
                     <div class="text-[9px] text-amber-300/60">
-                      NFPA 70 / TCVN 9207:2012 / IEC 62271 — Tổng nhiệt tản vào phòng từ VFD, tủ MCC, biến áp, UPS, PLC...
-                      Nhiệt kW = P_định_mức × Hệ_số_tải × (1 − η)
+                      NFPA 70 / TCVN 9207:2012 / IEC 62271 — ${App.ui.t('Tổng nhiệt tản vào phòng từ VFD, tủ MCC, biến áp, UPS, PLC...')}
+                      ${App.ui.t('Nhiệt kW = P_định_mức × Hệ_số_tải × (1 − η)')}
                     </div>
                     <!-- Bảng thiết bị -->
                     <div class="overflow-x-auto" style="-webkit-overflow-scrolling:touch">
                       <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:600px">
                         <thead><tr style="background:#071325">
-                          <th style="padding:6px 8px;text-align:left;color:#8eaac2;border-bottom:1px solid #1e3450">Tên thiết bị</th>
-                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">Loại</th>
-                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">P định mức (kW)</th>
-                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">Số lượng</th>
-                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">H/s tải (0-1)</th>
-                          <th style="padding:6px 8px;color:#fbbf24;border-bottom:1px solid #1e3450">Q tản (kW)</th>
+                          <th style="padding:6px 8px;text-align:left;color:#8eaac2;border-bottom:1px solid #1e3450">${App.ui.t('Tên thiết bị')}</th>
+                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">${App.ui.t('Loại')}</th>
+                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">${App.ui.t('P định mức (kW)')}</th>
+                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">${App.ui.t('Số lượng')}</th>
+                          <th style="padding:6px 8px;color:#8eaac2;border-bottom:1px solid #1e3450">${App.ui.t('H/s tải (0-1)')}</th>
+                          <th style="padding:6px 8px;color:#fbbf24;border-bottom:1px solid #1e3450">${App.ui.t('Q tản (kW)')}</th>
                           <th style="width:28px;border-bottom:1px solid #1e3450"></th>
                         </tr></thead>
                         <tbody id="elec-rows-${i}">
@@ -2180,11 +2197,11 @@
                             const qLoss=((d.ratedKW||0)*(d.qty||1)*(d.loadFactor||0.8)*heatFactor);
                             return `<tr data-edi="${di}" style="border-bottom:1px solid rgba(26,48,80,.4)">
                               <td style="padding:5px 6px">
-                                <input data-elec="name" data-ri="${i}" data-di="${di}" value="${d.name||''}" placeholder="Tên thiết bị" style="width:100%;font-size:11px">
+                                <input data-elec="name" data-ri="${i}" data-di="${di}" value="${d.name||''}" placeholder="${App.ui.t('Tên thiết bị')}" style="width:100%;font-size:11px">
                               </td>
                               <td style="padding:5px 6px">
                                 <select data-elec="typeId" data-ri="${i}" data-di="${di}" style="width:120px;font-size:11px">
-                                  <option value="">-- Tự nhập --</option>
+                                  <option value="">-- ${App.ui.t('Tự nhập')} --</option>
                                   ${(App.data.ELEC_DEVICE_CATALOG||[]).map(p=>`<option value="${p.id}" ${d.typeId===p.id?'selected':''}>${p.name}</option>`).join('')}
                                 </select>
                               </td>
@@ -2214,17 +2231,17 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:6px">
                       <button data-add-elec="${i}" style="display:flex;align-items:center;gap:5px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);color:#fb923c;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Thêm thiết bị
+                        ${App.ui.t('Thêm thiết bị')}
                       </button>
                       <div style="font-family:monospace;font-size:12px;font-weight:700;color:#fbbf24;text-align:right">
-                        Q_điện_nội_bộ = 
+                        Q_điện_nội_bộ =
                         <span style="font-size:14px;color:#fb923c">
                           ${(r.elecDeviceRows||[]).reduce((s,d)=>{
                             const p=(App.data.ELEC_DEVICE_CATALOG||[]).find(x=>x.id===d.typeId)||{};
                             return s+((d.ratedKW||0)*(d.qty||1)*(d.loadFactor!=null?d.loadFactor:0.8)*(p.heatFactor||d.heatFactor||0.03));
                           },0).toFixed(3)}
                         </span> kW
-                        <span style="font-size:10px;color:#4a6680;font-weight:400;margin-left:4px">(thêm vào Q_room)</span>
+                        <span style="font-size:10px;color:#4a6680;font-weight:400;margin-left:4px">(${App.ui.t('thêm vào Q_room')})</span>
                       </div>
                     </div>
                   </div>`;
@@ -2233,31 +2250,31 @@
                   <div class="p-2.5 bg-slate-900/60 border border-slate-700/40 rounded-lg space-y-2">
                     <div class="text-[10px] text-slate-300 font-medium flex items-center gap-1.5">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/></svg>
-                      Nhà vệ sinh — ASHRAE 62.1-2022 §6.2.7 (exhaust theo số thiết bị)
+                      ${App.ui.t('Nhà vệ sinh — ASHRAE 62.1-2022 §6.2.7 (exhaust theo số thiết bị)')}
                     </div>
                     <div class="grid grid-cols-3 gap-2">
-                      <div><label class="text-[10px] text-slate-400">Số bệt xí (bộ)</label>${this.rfInp('nToilets',r.nToilets||2,'2')}<p class="text-[9px] text-slate-500">25 L/s/bộ</p></div>
-                      <div><label class="text-[10px] text-slate-400">Số bồn tiểu (bộ)</label>${this.rfInp('nUrinals',r.nUrinals||0,'0')}<p class="text-[9px] text-slate-500">17.5 L/s/bộ</p></div>
-                      <div><label class="text-[10px] text-slate-400">Số phòng tắm</label>${this.rfInp('nShowers',r.nShowers||0,'0')}<p class="text-[9px] text-slate-500">35 L/s/phòng</p></div>
+                      <div><label class="text-[10px] text-slate-400">${App.ui.t('Số bệt xí (bộ)')}</label>${this.rfInp('nToilets',r.nToilets||2,'2')}<p class="text-[9px] text-slate-500">25 L/s/${App.ui.t('bộ')}</p></div>
+                      <div><label class="text-[10px] text-slate-400">${App.ui.t('Số bồn tiểu (bộ)')}</label>${this.rfInp('nUrinals',r.nUrinals||0,'0')}<p class="text-[9px] text-slate-500">17.5 L/s/${App.ui.t('bộ')}</p></div>
+                      <div><label class="text-[10px] text-slate-400">${App.ui.t('Số phòng tắm')}</label>${this.rfInp('nShowers',r.nShowers||0,'0')}<p class="text-[9px] text-slate-500">35 L/s/${App.ui.t('phòng')}</p></div>
                     </div>
-                    <p class="text-[9px] text-slate-500">Hệ thống exhaust-only. Makeup từ hành lang qua cửa khe hở. Không cần AHU riêng.</p>
+                    <p class="text-[9px] text-slate-500">${App.ui.t('Hệ thống exhaust-only. Makeup từ hành lang qua cửa khe hở. Không cần AHU riêng.')}</p>
                   </div>`;
                 if(bt==='commercial_kitchen') return `
                   <div class="p-2.5 bg-orange-950/30 border border-orange-800/40 rounded-lg space-y-2">
                     <div class="text-[10px] text-orange-400 font-medium flex items-center gap-1.5">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
-                      Bếp công nghiệp — Capture velocity method (ASHRAE App Ch.31 + NFPA 96)
+                      ${App.ui.t('Bếp công nghiệp — Capture velocity method (ASHRAE App Ch.31 + NFPA 96)')}
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <div><label class="text-[10px] text-slate-400">Chiều rộng chụp (m)</label>${this.rfInp('hoodWidthM',r.hoodWidthM||3,'3')}</div>
-                      <div><label class="text-[10px] text-slate-400">Chiều sâu chụp (m)</label>${this.rfInp('hoodDepthM',r.hoodDepthM||1.2,'1.2')}</div>
+                      <div><label class="text-[10px] text-slate-400">${App.ui.t('Chiều rộng chụp (m)')}</label>${this.rfInp('hoodWidthM',r.hoodWidthM||3,'3')}</div>
+                      <div><label class="text-[10px] text-slate-400">${App.ui.t('Chiều sâu chụp (m)')}</label>${this.rfInp('hoodDepthM',r.hoodDepthM||1.2,'1.2')}</div>
                       <div>
-                        <label class="text-[10px] text-slate-400">Loại thiết bị bếp</label>
+                        <label class="text-[10px] text-slate-400">${App.ui.t('Loại thiết bị bếp')}</label>
                         <select data-rf="kitchenType" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-full">
-                          <option value="light"  ${r.kitchenType==='light'  ?'selected':''}>Nhẹ (steamer, oven) — 0.3 m/s</option>
-                          <option value="medium" ${r.kitchenType==='medium' ?'selected':''}>Trung bình (gas range) — 0.45 m/s</option>
-                          <option value="heavy"  ${r.kitchenType==='heavy'  ?'selected':''}>Nặng (broiler, fryer) — 0.55 m/s</option>
-                          <option value="xheavy" ${r.kitchenType==='xheavy' ?'selected':''}>Rất nặng (solid fuel) — 0.65 m/s</option>
+                          <option value="light"  ${r.kitchenType==='light'  ?'selected':''}>${App.ui.t('Nhẹ (steamer, oven) — 0.3 m/s')}</option>
+                          <option value="medium" ${r.kitchenType==='medium' ?'selected':''}>${App.ui.t('Trung bình (gas range) — 0.45 m/s')}</option>
+                          <option value="heavy"  ${r.kitchenType==='heavy'  ?'selected':''}>${App.ui.t('Nặng (broiler, fryer) — 0.55 m/s')}</option>
+                          <option value="xheavy" ${r.kitchenType==='xheavy' ?'selected':''}>${App.ui.t('Rất nặng (solid fuel) — 0.65 m/s')}</option>
                         </select>
                       </div>
                     </div>
@@ -2270,12 +2287,12 @@
                   <div class="p-2.5 bg-red-950/30 border border-red-800/40 rounded-lg space-y-2">
                     <div class="text-[10px] text-red-400 font-medium flex items-center gap-1.5">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l1.5-3 2 6 1.5-3H21"/></svg>
-                      ${bt==='hospital_or'?'Phòng mổ OR — ASHRAE 170:2021 (áp dương ≥+15 Pa)':'Phòng cách ly — ASHRAE 170:2021 (áp âm ≤-8 Pa)'}
+                      ${bt==='hospital_or'?App.ui.t('Phòng mổ OR — ASHRAE 170:2021 (áp dương ≥+15 Pa)'):App.ui.t('Phòng cách ly — ASHRAE 170:2021 (áp âm ≤-8 Pa)')}
                     </div>
                     <div class="text-[10px] text-slate-400 space-y-0.5">
-                      <div>ACH tối thiểu: <span class="text-red-300 font-mono-data">${bt==='hospital_or'?'20':'12'} ACH tổng, ${bt==='hospital_or'?'4':'2'} ACH gió tươi</span> (ASHRAE 170:2021 Table 7.1)</div>
-                      <div>Áp suất: <span class="font-mono-data ${bt==='hospital_or'?'text-emerald-400':'text-amber-400'}">${bt==='hospital_or'?'≥+15 Pa vs hành lang':'≤-8 Pa vs hành lang'}</span></div>
-                      <div>Lọc: <span class="text-slate-300">HEPA H14 (99.995%) tại cấp gió vào phòng</span></div>
+                      <div>${App.ui.t('ACH tối thiểu:')} <span class="text-red-300 font-mono-data">${App.ui.t('{a} ACH tổng, {b} ACH gió tươi',{a:bt==='hospital_or'?'20':'12',b:bt==='hospital_or'?'4':'2'})}</span> (ASHRAE 170:2021 Table 7.1)</div>
+                      <div>${App.ui.t('Áp suất:')} <span class="font-mono-data ${bt==='hospital_or'?'text-emerald-400':'text-amber-400'}">${bt==='hospital_or'?App.ui.t('≥+15 Pa vs hành lang'):App.ui.t('≤-8 Pa vs hành lang')}</span></div>
+                      <div>${App.ui.t('Lọc:')} <span class="text-slate-300">${App.ui.t('HEPA H14 (99.995%) tại cấp gió vào phòng')}</span></div>
                     </div>
                   </div>`;
                 return '';
@@ -2286,16 +2303,16 @@
                 <div class="flex items-center justify-between">
                   <div class="text-[10px] text-violet-400 font-medium flex items-center gap-1.5">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
-                    Vách ngăn nội bộ — Q kề phòng nhiệt độ khác
-                    <span class="text-slate-500 font-normal">(quan trọng với nhà máy đa zone)</span>
+                    ${App.ui.t('Vách ngăn nội bộ — Q kề phòng nhiệt độ khác')}
+                    <span class="text-slate-500 font-normal">(${App.ui.t('quan trọng với nhà máy đa zone')})</span>
                   </div>
                   <button data-add-partition="${i}"
                     class="text-[10px] text-violet-400 hover:text-violet-300 flex items-center gap-1">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm vách ngăn
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm vách ngăn')}
                   </button>
                 </div>
                 ${(r.partitionRows||[]).length===0
-                  ? `<p class="text-[10px] text-slate-600 italic">Chưa có vách ngăn nội bộ. Thêm nếu phòng này kề phòng/khu vực có nhiệt độ khác.</p>`
+                  ? `<p class="text-[10px] text-slate-600 italic">${App.ui.t('Chưa có vách ngăn nội bộ. Thêm nếu phòng này kề phòng/khu vực có nhiệt độ khác.')}</p>`
                   : `<div class="space-y-1.5">
                   ${(r.partitionRows||[]).map((p,pi)=>{
                     const Q_par = p._qW;
@@ -2303,38 +2320,38 @@
                     const wallTypeOpts=(App.data.WALL_TYPES||[]).map(w=>
                       `<option value="${w.id}" ${p.wallTypeId===w.id?'selected':''}>${w.name}(U=${w.U})</option>`).join('');
                     const roomOpts2=(App.state._fullRooms||this.R()).filter(r2=>r2.id!==r.id).map(r2=>
-                      `<option value="${r2.id}" ${p.adjRoomId===r2.id?'selected':''}>${r2.name||'Phòng?'}</option>`).join('');
+                      `<option value="${r2.id}" ${p.adjRoomId===r2.id?'selected':''}>${r2.name||App.ui.t('Phòng?')}</option>`).join('');
                     return `<div class="border border-slate-700/40 rounded-lg p-2 grid grid-cols-1 md:grid-cols-5 gap-1.5 items-center" data-partition-idx="${pi}" data-room-idx="${i}">
-                      <div><label class="text-[9px] text-slate-500">Vật liệu vách</label>
+                      <div><label class="text-[9px] text-slate-500">${App.ui.t('Vật liệu vách')}</label>
                         <select data-part-f="wallTypeId" data-part-room="${i}" data-part-idx="${pi}"
                           class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] w-full">
-                          <option value="">-- Tự nhập U --</option>${wallTypeOpts}
+                          <option value="">-- ${App.ui.t('Tự nhập U')} --</option>${wallTypeOpts}
                         </select>
                       </div>
-                      <div><label class="text-[9px] text-slate-500">U vách (W/m²K)</label>
+                      <div><label class="text-[9px] text-slate-500">${App.ui.t('U vách (W/m²K)')}</label>
                         <input data-part-f="uWall" data-part-room="${i}" data-part-idx="${pi}"
                           type="number" step="0.01" value="${p.uWall||0.45}"
                           class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] font-mono-data w-full">
                       </div>
-                      <div><label class="text-[9px] text-slate-500">S vách ngăn (m²)</label>
+                      <div><label class="text-[9px] text-slate-500">${App.ui.t('S vách ngăn (m²)')}</label>
                         <input data-part-f="areaM2" data-part-room="${i}" data-part-idx="${pi}"
                           type="number" step="0.1" value="${p.areaM2||20}"
                           class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] font-mono-data w-full">
                       </div>
                       <div>
-                        <label class="text-[9px] text-slate-500">Phía kề</label>
+                        <label class="text-[9px] text-slate-500">${App.ui.t('Phía kề')}</label>
                         <select data-part-f="adjSource" data-part-room="${i}" data-part-idx="${pi}"
                           class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] w-full">
-                          <option value="temp" ${p.adjSource==='temp'?'selected':''}>Nhập T (°C)</option>
-                          <option value="room" ${p.adjSource==='room'?'selected':''}>Chọn phòng</option>
+                          <option value="temp" ${p.adjSource==='temp'?'selected':''}>${App.ui.t('Nhập T (°C)')}</option>
+                          <option value="room" ${p.adjSource==='room'?'selected':''}>${App.ui.t('Chọn phòng')}</option>
                         </select>
                         ${p.adjSource==='room'
                           ? `<select data-part-f="adjRoomId" data-part-room="${i}" data-part-idx="${pi}"
                               class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] w-full mt-1">
-                              <option value="">-- Chọn phòng kề --</option>${roomOpts2}
+                              <option value="">-- ${App.ui.t('Chọn phòng kề')} --</option>${roomOpts2}
                              </select>`
                           : `<input data-part-f="adjTempC" data-part-room="${i}" data-part-idx="${pi}"
-                              type="number" step="0.5" value="${p.adjTempC??35}" placeholder="T kề (°C)"
+                              type="number" step="0.5" value="${p.adjTempC??35}" placeholder="${App.ui.t('T kề (°C)')}"
                               class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] font-mono-data w-full mt-1">`
                         }
                       </div>
@@ -2351,31 +2368,31 @@
                     </div>`;
                   }).join('')}
                 </div>`}
-                <p class="text-[9px] text-slate-600">Q âm = tải lạnh (phòng kề lạnh hơn). Q dương = tải nhiệt (phòng kề nóng hơn). Nguồn: ASHRAE HOF 2021 Ch.18 §18.3</p>
+                <p class="text-[9px] text-slate-600">${App.ui.t('Q âm = tải lạnh (phòng kề lạnh hơn). Q dương = tải nhiệt (phòng kề nóng hơn). Nguồn: ASHRAE HOF 2021 Ch.18 §18.3')}</p>
               </div>
 
               <!-- E3. Tính U từ cấu tạo lớp thực tế (Inline tool) -->
               <details class="border border-dashed border-emerald-800/50 rounded-lg overflow-hidden">
                 <summary class="px-3 py-2 bg-emerald-950/20 text-[10px] text-emerald-400 cursor-pointer flex items-center gap-1.5 hover:bg-emerald-950/40 select-none">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16.02 12 5.48 3.13a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74L8 12"/><path d="M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74Z"/></svg>
-                  Công cụ tính U từ cấu tạo lớp thực tế (δ/λ) — Nguồn: ASHRAE HOF 2021 / ISO 6946:2017
+                  ${App.ui.t('Công cụ tính U từ cấu tạo lớp thực tế (δ/λ) — Nguồn: ASHRAE HOF 2021 / ISO 6946:2017')}
                 </summary>
                 <div class="p-3 space-y-2" id="ucalc-${i}">
-                  <p class="text-[10px] text-slate-500">R_total = 1/h_o + Σ(δ/λ) + 1/h_i → U = 1/R_total &nbsp;|&nbsp; h_o=23.3 W/m²K (gió), h_i=11.6 W/m²K (tĩnh)</p>
+                  <p class="text-[10px] text-slate-500">R_total = 1/h_o + Σ(δ/λ) + 1/h_i → U = 1/R_total &nbsp;|&nbsp; ${App.ui.t('h_o=23.3 W/m²K (gió), h_i=11.6 W/m²K (tĩnh)')}</p>
                   <div class="space-y-1" id="ucalc-layers-${i}">
                     ${(r.wallLayers||[{materialId:'brick_solid',thicknessMm:200},{materialId:'mortar_cement',thicknessMm:15}]).map((lyr,li)=>{
                       const matCats=[
-                        {label:'── Gạch, bê tông ──',disabled:true},
+                        {label:`── ${App.ui.t('Gạch, bê tông')} ──`,disabled:true},
                         ...(App.data.CONSTRUCTION_MATERIALS||[]).filter(m=>['masonry','concrete'].includes(m.cat)),
-                        {label:'── Vữa ──',disabled:true},
+                        {label:`── ${App.ui.t('Vữa')} ──`,disabled:true},
                         ...(App.data.CONSTRUCTION_MATERIALS||[]).filter(m=>m.cat==='mortar'),
-                        {label:'── Cách nhiệt ──',disabled:true},
+                        {label:`── ${App.ui.t('Cách nhiệt')} ──`,disabled:true},
                         ...(App.data.CONSTRUCTION_MATERIALS||[]).filter(m=>m.cat==='insul'),
-                        {label:'── Hoàn thiện ──',disabled:true},
+                        {label:`── ${App.ui.t('Hoàn thiện')} ──`,disabled:true},
                         ...(App.data.CONSTRUCTION_MATERIALS||[]).filter(m=>m.cat==='finish'),
-                        {label:'── Kim loại, kính ──',disabled:true},
+                        {label:`── ${App.ui.t('Kim loại, kính')} ──`,disabled:true},
                         ...(App.data.CONSTRUCTION_MATERIALS||[]).filter(m=>['metal','glass'].includes(m.cat)),
-                        {label:'── Khe không khí ──',disabled:true},
+                        {label:`── ${App.ui.t('Khe không khí')} ──`,disabled:true},
                         ...(App.data.CONSTRUCTION_MATERIALS||[]).filter(m=>m.cat==='airgap'),
                       ];
                       const matOpts=matCats.map(m=>m.disabled
@@ -2394,7 +2411,7 @@
                       return `<div class="p-2 bg-base-900/40 rounded-lg space-y-1.5" data-ucalc-li="${li}" data-ucalc-room="${i}">
                         <select data-ucalc-f="materialId" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1.5 text-[10px] w-full">${matOpts}</select>
                         <div class="flex gap-2 items-center">
-                          <label class="text-[10px] text-slate-500 flex-shrink-0">Độ dày</label>
+                          <label class="text-[10px] text-slate-500 flex-shrink-0">${App.ui.t('Độ dày')}</label>
                           <input data-ucalc-f="thicknessMm" type="number" step="1" min="0" value="${lyr.thicknessMm||0}"
                             placeholder="mm" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-[10px] w-16 font-mono-data text-right flex-shrink-0">
                           <span class="text-[10px] text-slate-500 flex-shrink-0">mm</span>
@@ -2406,12 +2423,12 @@
                   </div>
                   <div class="flex items-center gap-2 flex-wrap">
                     <button data-ucalc-add="${i}" class="text-[10px] text-emerald-400 flex items-center gap-1">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm lớp
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm lớp')}
                     </button>
                     <span id="ucalc-result-${i}" class="font-mono-data text-[11px] text-amber-400 font-medium ml-2">U = —</span>
                     <button data-ucalc-apply="${i}"
                       class="ml-auto bg-emerald-700 hover:bg-emerald-600 text-white rounded px-2 py-1 text-[10px] flex items-center gap-1">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Áp dụng U này
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${App.ui.t('Áp dụng U này')}
                     </button>
                   </div>
                   <!-- FIX (Bước 3): calcULayered() vốn đã tính ra warnings (lớp thiếu λ, độ
@@ -2427,7 +2444,7 @@
             </div>
           </div>
         </div>`;
-      }).join('') + `<p class="text-[11px] text-slate-500 mt-1">AHU/PAU: Q_tươi xử lý qua mixing point. FCU: Q_tươi cộng thẳng Q_phòng. VENT: Q_coil=0.</p>`;
+      }).join('') + `<p class="text-[11px] text-slate-500 mt-1">${App.ui.t('AHU/PAU: Q_tươi xử lý qua mixing point. FCU: Q_tươi cộng thẳng Q_phòng. VENT: Q_coil=0.')}</p>`;
     },
 
     // ── Motor + Para HTML (giữ nguyên logic cũ) ───────────────────────────────
@@ -2438,20 +2455,20 @@
     // không tham gia tính toán trực tiếp, chỉ là tiện ích nhập liệu.
     _motorTemplatesHtml(){
       const templates = this.MT();
-      const roomOpts = `<option value="">-- Chọn phòng --</option>`+
-        this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
+      const roomOpts = `<option value="">-- ${App.ui.t('Chọn phòng')} --</option>`+
+        this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const rows = templates.map((t,i)=>`
         <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-mti="${i}">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <input data-mtf="name" value="${t.name||''}" placeholder="Tên mẫu (VD: Quạt cấp AHU)" type="text"
+            <input data-mtf="name" value="${t.name||''}" placeholder="${App.ui.t('Tên mẫu (VD: Quạt cấp AHU)')}" type="text"
               class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs flex-1 min-w-[140px]">
             <input data-mtf="pKw" type="number" step="0.1" value="${t.pKw??''}" placeholder="P(kW)"
               class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-16 font-mono-data text-right">
-            <input data-mtf="qty" type="number" value="${t.qty||1}" title="Số lượng mặc định"
+            <input data-mtf="qty" type="number" value="${t.qty||1}" title="${App.ui.t('Số lượng mặc định')}"
               class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-12 font-mono-data text-right">
             <select data-mtf="method" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs">
               <option value="A" ${t.method==='A'?'selected':''}>A (FL×FU)</option>
-              <option value="B" ${t.method==='B'?'selected':''}>B (đơn giản)</option>
+              <option value="B" ${t.method==='B'?'selected':''}>${App.ui.t('B (đơn giản)')}</option>
               <option value="C" ${t.method==='C'?'selected':''}>C (TCVN)</option>
             </select>
             <select data-mtf="position" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs">
@@ -2465,31 +2482,31 @@
           </div>
           <div class="flex items-center gap-1.5 mt-1.5">
             <select data-mt-room="${i}" class="bg-base-900 border border-violet-700 rounded px-1.5 py-1 text-xs flex-1">${roomOpts}</select>
-            <button data-mt-add="${i}" class="bg-violet-600 hover:bg-violet-500 text-white rounded px-2 py-1 text-[11px] font-medium whitespace-nowrap">+ Thêm vào phòng</button>
+            <button data-mt-add="${i}" class="bg-violet-600 hover:bg-violet-500 text-white rounded px-2 py-1 text-[11px] font-medium whitespace-nowrap">+ ${App.ui.t('Thêm vào phòng')}</button>
           </div>
         </div>`).join('');
       return `<div class="mb-3 p-2.5 bg-violet-950/10 border border-violet-800/30 rounded-lg">
-        <p class="text-[11px] text-violet-300 font-medium mb-2">📋 Mẫu Motor — khai báo spec 1 lần, gán nhanh vào nhiều phòng</p>
-        ${rows || '<p class="text-[11px] text-slate-500 mb-1.5">Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 motor sẵn có bên dưới.</p>'}
+        <p class="text-[11px] text-violet-300 font-medium mb-2">📋 ${App.ui.t('Mẫu Motor — khai báo spec 1 lần, gán nhanh vào nhiều phòng')}</p>
+        ${rows || `<p class="text-[11px] text-slate-500 mb-1.5">${App.ui.t('Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 motor sẵn có bên dưới.')}</p>`}
         <button id="hl-add-motor-template" class="text-[11px] text-violet-400 hover:text-violet-300 flex items-center gap-1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm mẫu motor
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm mẫu motor')}
         </button>
       </div>`;
     },
 
     _motorsHtml(){
       const rows = this.M();
-      const roomOpts = `<option value="">⚠ Chưa gán phòng</option>`+
-        this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
+      const roomOpts = `<option value="">⚠ ${App.ui.t('Chưa gán phòng')}</option>`+
+        this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const tbody = rows.map((m,i)=>{
         const {eta,flag}=App.calc.calcMotorEta(m.pKw||5.5);
         const assigned=!!(m.roomId&&this.R().find(r=>r.id===m.roomId));
         return `<tr data-mi="${i}" class="${assigned?'':'bg-amber-950/20'}">
-          <td class="px-2 py-1"><input data-mf="name" value="${m.name||''}" type="text" placeholder="Tên motor"
+          <td class="px-2 py-1"><input data-mf="name" value="${m.name||''}" type="text" placeholder="${App.ui.t('Tên motor')}"
             class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-24"></td>
           <td class="px-2 py-1">
             <select data-mf="roomId" class="bg-base-900 border ${assigned?'border-emerald-700':'border-amber-500'} rounded px-1.5 py-1 text-xs w-36"
-              title="Gán motor vào phòng cụ thể để tính nhiệt tải đúng">
+              title="${App.ui.t('Gán motor vào phòng cụ thể để tính nhiệt tải đúng')}">
               ${roomOpts.replace(`value="${m.roomId||''}"`,`value="${m.roomId||''}" selected`)}
             </select>
           </td>
@@ -2499,13 +2516,13 @@
             class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs font-mono-data w-12 text-right"></td>
           <td class="px-2 py-1"><select data-mf="method" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs">
             <option value="A" ${m.method==='A'?'selected':''}>A (FL×FU)</option>
-            <option value="B" ${m.method==='B'?'selected':''}>B (đơn giản)</option>
+            <option value="B" ${m.method==='B'?'selected':''}>${App.ui.t('B (đơn giản)')}</option>
             <option value="C" ${m.method==='C'?'selected':''}>C (TCVN)</option>
           </select></td>
           <td class="px-2 py-1"><select data-mf="position" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs">
-            <option value="TH1" ${m.position==='TH1'?'selected':''}>TH1 (motor+tải trong)</option>
-            <option value="TH2" ${m.position==='TH2'?'selected':''}>TH2 (motor trong/tải ngoài)</option>
-            <option value="TH3" ${m.position==='TH3'?'selected':''}>TH3 (tải trong/motor ngoài)</option>
+            <option value="TH1" ${m.position==='TH1'?'selected':''}>${App.ui.t('TH1 (motor+tải trong)')}</option>
+            <option value="TH2" ${m.position==='TH2'?'selected':''}>${App.ui.t('TH2 (motor trong/tải ngoài)')}</option>
+            <option value="TH3" ${m.position==='TH3'?'selected':''}>${App.ui.t('TH3 (tải trong/motor ngoài)')}</option>
           </select></td>
           <td class="px-2 py-1"><input data-mf="FL" type="number" step="0.01" value="${m.FL??1}"
             class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-14 text-right"></td>
@@ -2516,7 +2533,7 @@
           <td class="px-2 py-1 text-[10px] font-mono-data text-slate-400">${(eta*100).toFixed(1)}%${flag.startsWith('⚙')?` <span class="text-amber-400">${flag}</span>`:''}</td>
           <td class="px-2 py-1 text-right font-mono-data text-amber-400 text-xs">${m._qKW!=null?m._qKW.toFixed(3)+' kW':'—'}</td>
           <td class="px-2 py-1 flex items-center gap-1">
-            <button data-msave-template="${i}" title="Lưu spec motor này thành mẫu để tái sử dụng cho phòng khác" class="text-slate-500 hover:text-violet-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+            <button data-msave-template="${i}" title="${App.ui.t('Lưu spec motor này thành mẫu để tái sử dụng cho phòng khác')}" class="text-slate-500 hover:text-violet-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
             <button data-mdel="${i}" class="text-slate-500 hover:text-red-400 p-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
           </td>
@@ -2526,23 +2543,23 @@
       return `${this._motorTemplatesHtml()}
       ${unassigned?`<div class="text-[11px] text-amber-400 mb-2 flex items-center gap-1.5">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-        ${unassigned} motor chưa gán phòng (nền cam) — nhiệt tỏa sẽ không được tính vào bất kỳ phòng nào!
+        ${App.ui.t('motor_unassigned_warning',{n:unassigned})}
       </div>`:''}
       <div class="overflow-x-auto"><table class="zebra w-full text-xs min-w-[1100px]">
         <thead class="text-slate-400 sticky top-0 bg-base-900"><tr>
-          <th class="text-left px-2 py-1.5">Tên motor</th>
-          <th class="px-2 text-amber-400">Gán vào phòng *</th>
-          <th class="px-2">P(kW)</th><th class="px-2">SL</th>
-          <th class="px-2">Phương pháp</th><th class="px-2">Vị trí TH</th>
+          <th class="text-left px-2 py-1.5">${App.ui.t('Tên motor')}</th>
+          <th class="px-2 text-amber-400">${App.ui.t('Gán vào phòng *')}</th>
+          <th class="px-2">P(kW)</th><th class="px-2">${App.ui.t('SL')}</th>
+          <th class="px-2">${App.ui.t('Phương pháp')}</th><th class="px-2">${App.ui.t('Vị trí TH')}</th>
           <th class="px-2">FL</th><th class="px-2">FU</th><th class="px-2">VFD</th>
-          <th class="px-2">η IE3</th><th class="px-2">Q tỏa</th><th></th>
+          <th class="px-2">η IE3</th><th class="px-2">${App.ui.t('Q tỏa')}</th><th></th>
         </tr></thead>
-        <tbody>${tbody||'<tr><td colspan="12" class="text-center text-slate-500 py-3 text-xs">Chưa có motor. Thêm motor rồi gán vào phòng tương ứng.</td></tr>'}</tbody>
+        <tbody>${tbody||`<tr><td colspan="12" class="text-center text-slate-500 py-3 text-xs">${App.ui.t('Chưa có motor. Thêm motor rồi gán vào phòng tương ứng.')}</td></tr>`}</tbody>
       </table></div>
       <button id="hl-add-motor" class="mt-2 text-xs text-emerald-400 flex items-center gap-1">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm motor
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm motor')}
       </button>
-      <p class="text-[11px] text-slate-500 mt-1">η nội suy tuyến tính giữa các mức IEC 60034-30-1 IE3. Gán từng motor vào đúng phòng để tính nhiệt tỏa per-room.</p>`;
+      <p class="text-[11px] text-slate-500 mt-1">${App.ui.t('η nội suy tuyến tính giữa các mức IEC 60034-30-1 IE3. Gán từng motor vào đúng phòng để tính nhiệt tỏa per-room.')}</p>`;
     },
 
 
@@ -2553,29 +2570,29 @@
     _paraTypeFieldsHtml(p, attr){
       const doorOpts = (App.data.doorCatalog||[]).filter(d=>!(App.state.hiddenMaterialIds?.doors||[]).includes(d.code)).map(d=>({v:d.code,n:d.name}));
       if(p.type==='IQF') return `<div class="grid grid-cols-3 md:grid-cols-6 gap-2">
-            <div><label class="text-[10px] text-slate-400">L buồng(m)</label><input ${attr}="L" type="number" step="0.1" value="${p.L||5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('L buồng(m)')}</label><input ${attr}="L" type="number" step="0.1" value="${p.L||5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
             <div><label class="text-[10px] text-slate-400">W(m)</label><input ${attr}="W" type="number" step="0.1" value="${p.W||3}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
             <div><label class="text-[10px] text-slate-400">H(m)</label><input ${attr}="H" type="number" step="0.1" value="${p.H||2.5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">U vách(W/m²K)</label><input ${attr}="uPanel" type="number" step="0.01" value="${p.uPanel||0.22}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T buồng(°C)</label><input ${attr}="tChamber" type="number" value="${p.tChamber??-35}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">Loại cửa</label><select ${attr}="doorCode" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full">${doorOpts.map(o=>`<option value="${o.v}" ${p.doorCode===o.v?'selected':''}>${o.n}</option>`).join('')}</select></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('U vách(W/m²K)')}</label><input ${attr}="uPanel" type="number" step="0.01" value="${p.uPanel||0.22}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('T buồng(°C)')}</label><input ${attr}="tChamber" type="number" value="${p.tChamber??-35}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('Loại cửa')}</label><select ${attr}="doorCode" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full">${doorOpts.map(o=>`<option value="${o.v}" ${p.doorCode===o.v?'selected':''}>${o.n}</option>`).join('')}</select></div>
           </div>
-          <p class="text-[9px] text-slate-500 mt-1">Q âm = thiết bị hút nhiệt khỏi phòng ĐHKK → giảm tải (Peak Design: không trừ vào Q_coil để an toàn)</p>`;
+          <p class="text-[9px] text-slate-500 mt-1">${App.ui.t('Q âm = thiết bị hút nhiệt khỏi phòng ĐHKK → giảm tải (Peak Design: không trừ vào Q_coil để an toàn)')}</p>`;
       if(p.type==='GLAZE') return `<div class="grid grid-cols-3 gap-2">
-            <div><label class="text-[10px] text-slate-400">S bể mạ băng(m²)</label><input ${attr}="aBasin" type="number" step="0.1" value="${p.aBasin||10}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T nước mạ(°C)</label><input ${attr}="tWater" type="number" value="${p.tWater??0}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">K trao đổi nhiệt</label><input ${attr}="kWater" type="number" value="${p.kWater||20}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('S bể mạ băng(m²)')}</label><input ${attr}="aBasin" type="number" step="0.1" value="${p.aBasin||10}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('T nước mạ(°C)')}</label><input ${attr}="tWater" type="number" value="${p.tWater??0}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('K trao đổi nhiệt')}</label><input ${attr}="kWater" type="number" value="${p.kWater||20}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
           </div>`;
       if(p.type==='ICE') return `<div class="grid grid-cols-2 gap-2">
-            <div><label class="text-[10px] text-slate-400">Sản lượng đá(kg/h)</label><input ${attr}="mIceKgH" type="number" value="${p.mIceKgH||500}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T nước đầu ra(°C)</label><input ${attr}="tWaterOut" type="number" value="${p.tWaterOut??5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('Sản lượng đá(kg/h)')}</label><input ${attr}="mIceKgH" type="number" value="${p.mIceKgH||500}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('T nước đầu ra(°C)')}</label><input ${attr}="tWaterOut" type="number" value="${p.tWaterOut??5}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
           </div>`;
       if(p.type==='ROTOR') return `<div class="grid grid-cols-3 gap-2">
-            <div><label class="text-[10px] text-slate-400">G_gió(m³/h)</label><input ${attr}="gAirM3h" type="number" value="${p.gAirM3h||2000}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T vào Rotor(°C)</label><input ${attr}="tInRotor" type="number" value="${p.tInRotor||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
-            <div><label class="text-[10px] text-slate-400">T ra Rotor(°C)</label><input ${attr}="tOutRotor" type="number" value="${p.tOutRotor||40}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('G_gió(m³/h)')}</label><input ${attr}="gAirM3h" type="number" value="${p.gAirM3h||2000}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('T vào Rotor(°C)')}</label><input ${attr}="tInRotor" type="number" value="${p.tInRotor||25}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
+            <div><label class="text-[10px] text-slate-400">${App.ui.t('T ra Rotor(°C)')}</label><input ${attr}="tOutRotor" type="number" value="${p.tOutRotor||40}" class="bg-base-900 border border-slate-700 rounded px-1.5 py-1 text-xs w-full font-mono-data"></div>
           </div>
-          <p class="text-[9px] text-slate-500 mt-1">Rotor tỏa nhiệt vào phòng → tải dương, cộng vào Q_sensible phòng được gán.</p>`;
+          <p class="text-[9px] text-slate-500 mt-1">${App.ui.t('Rotor tỏa nhiệt vào phòng → tải dương, cộng vào Q_sensible phòng được gán.')}</p>`;
       return '';
     },
 
@@ -2583,36 +2600,36 @@
     // (loại + toàn bộ thông số kỹ thuật), gán nhanh vào nhiều phòng khác nhau.
     _paraTemplatesHtml(){
       const templates = this.PT();
-      const roomOpts = `<option value="">-- Chọn phòng --</option>`+
-        this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
+      const roomOpts = `<option value="">-- ${App.ui.t('Chọn phòng')} --</option>`+
+        this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const rows = templates.map((t,i)=>`
         <div class="border border-violet-800/40 rounded-lg p-2 mb-1.5" data-pti="${i}">
           <div class="flex items-center gap-2 mb-1.5 flex-wrap">
             <select data-ptf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
               ${(App.data.parasiticTypes||[]).map(pt=>`<option value="${pt.code}" ${t.type===pt.code?'selected':''}>${pt.name}</option>`).join('')}
             </select>
-            <input data-ptf="name" value="${t.name||''}" placeholder="Tên mẫu" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs flex-1 min-w-[120px]">
+            <input data-ptf="name" value="${t.name||''}" placeholder="${App.ui.t('Tên mẫu')}" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs flex-1 min-w-[120px]">
             <button data-ptdel="${i}" class="text-slate-500 hover:text-red-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
           </div>
           ${this._paraTypeFieldsHtml(t,'data-ptf')}
           <div class="flex items-center gap-1.5 mt-1.5">
             <select data-pt-room="${i}" class="bg-base-900 border border-violet-700 rounded px-1.5 py-1 text-xs flex-1">${roomOpts}</select>
-            <button data-pt-add="${i}" class="bg-violet-600 hover:bg-violet-500 text-white rounded px-2 py-1 text-[11px] font-medium whitespace-nowrap">+ Thêm vào phòng</button>
+            <button data-pt-add="${i}" class="bg-violet-600 hover:bg-violet-500 text-white rounded px-2 py-1 text-[11px] font-medium whitespace-nowrap">+ ${App.ui.t('Thêm vào phòng')}</button>
           </div>
         </div>`).join('');
       return `<div class="mb-3 p-2.5 bg-violet-950/10 border border-violet-800/30 rounded-lg">
-        <p class="text-[11px] text-violet-300 font-medium mb-2">📋 Mẫu tải ký sinh — khai báo 1 lần, gán nhanh vào nhiều phòng</p>
-        ${rows || '<p class="text-[11px] text-slate-500 mb-1.5">Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 tải ký sinh sẵn có bên dưới.</p>'}
+        <p class="text-[11px] text-violet-300 font-medium mb-2">📋 ${App.ui.t('Mẫu tải ký sinh — khai báo 1 lần, gán nhanh vào nhiều phòng')}</p>
+        ${rows || `<p class="text-[11px] text-slate-500 mb-1.5">${App.ui.t('Chưa có mẫu nào. Tạo mẫu mới, hoặc bấm "💾 Lưu mẫu" trên 1 tải ký sinh sẵn có bên dưới.')}</p>`}
         <button id="hl-add-para-template" class="text-[11px] text-violet-400 hover:text-violet-300 flex items-center gap-1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm mẫu tải ký sinh
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm mẫu tải ký sinh')}
         </button>
       </div>`;
     },
 
     _paraHtml(){
       const rows = this.P();
-      const roomOpts = `<option value="">⚠ Chưa gán phòng</option>`+
-        this.R().map(r=>`<option value="${r.id}">${r.name||('Phòng '+(this.R().indexOf(r)+1))}</option>`).join('');
+      const roomOpts = `<option value="">⚠ ${App.ui.t('Chưa gán phòng')}</option>`+
+        this.R().map(r=>`<option value="${r.id}">${r.name||App.ui.t('room_n',{n:this.R().indexOf(r)+1})}</option>`).join('');
       const html = rows.map((p,i)=>{
         const qKW = p._qW!=null ? (p._qW/1000).toFixed(3) : '';
         const neg = p._qW!=null && p._qW<0;
@@ -2622,13 +2639,13 @@
             <select data-pf="type" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
               ${(App.data.parasiticTypes||[]).map(t=>`<option value="${t.code}" ${p.type===t.code?'selected':''}>${t.name}</option>`).join('')}
             </select>
-            <input data-pf="name" value="${p.name||''}" placeholder="Tên thiết bị" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-36">
-            <select data-pf="roomId" title="Gán vào phòng"
+            <input data-pf="name" value="${p.name||''}" placeholder="${App.ui.t('Tên thiết bị')}" type="text" class="bg-base-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs w-36">
+            <select data-pf="roomId" title="${App.ui.t('Gán vào phòng')}"
               class="bg-base-900 border ${assigned?'border-emerald-700':'border-amber-500'} rounded-lg px-2 py-1.5 text-xs w-40">
               ${roomOpts.replace(`value="${p.roomId||''}"`,`value="${p.roomId||''}" selected`)}
             </select>
-            ${qKW?`<span class="font-mono-data text-xs ${neg?'text-emerald-400':'text-amber-400'}">${qKW} kW${neg?' (lạnh ký sinh)':' (nhiệt tỏa)'}</span>`:''}
-            <button data-psave-template="${i}" title="Lưu tải ký sinh này thành mẫu để tái sử dụng cho phòng khác" class="text-slate-500 hover:text-violet-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+            ${qKW?`<span class="font-mono-data text-xs ${neg?'text-emerald-400':'text-amber-400'}">${qKW} kW${neg?` (${App.ui.t('lạnh ký sinh')})`:` (${App.ui.t('nhiệt tỏa')})`}</span>`:''}
+            <button data-psave-template="${i}" title="${App.ui.t('Lưu tải ký sinh này thành mẫu để tái sử dụng cho phòng khác')}" class="text-slate-500 hover:text-violet-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
             <button data-pdel="${i}" class="text-slate-500 hover:text-red-400 p-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
           </div>
           ${this._paraTypeFieldsHtml(p,'data-pf')}
@@ -2636,12 +2653,10 @@
       }).join('');
       const unassigned=rows.filter(p=>!p.roomId).length;
       return `${this._paraTemplatesHtml()}
-        ${unassigned?`<p class="text-[11px] text-amber-400 mb-2">⚠ ${unassigned} tải ký sinh chưa gán phòng (viền cam)</p>`:''}
+        ${unassigned?`<p class="text-[11px] text-amber-400 mb-2">⚠ ${App.ui.t('para_unassigned_warning',{n:unassigned})}</p>`:''}
         ${html}<button id="hl-add-para" class="mt-1 text-xs text-emerald-400 flex items-center gap-1">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Thêm tải ký sinh</button>
-      <p class="text-[11px] text-slate-500 mt-1">
-        Tải ký sinh trong phòng ĐHKK nhà máy chế biến: IQF/mạ băng/đá vảy hút nhiệt (âm) → giảm tải ĐHKK.
-        Rotor tỏa nhiệt (dương). Peak Design: không trừ tải âm (conservative).
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${App.ui.t('Thêm tải ký sinh')}</button>
+      <p class="text-[11px] text-slate-500 mt-1">${App.ui.t('Tải ký sinh trong phòng ĐHKK nhà máy chế biến: IQF/mạ băng/đá vảy hút nhiệt (âm) → giảm tải ĐHKK. Rotor tỏa nhiệt (dương). Peak Design: không trừ tải âm (conservative).')}
       </p>`;
     },
 
@@ -2654,7 +2669,7 @@
       root.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-pdel'));
         const p=this.P()[i]; if(!p) return;
-        App.ui.showConfirm('Xoá tải ký sinh "'+(p.name||'này')+'"?','Không thể hoàn tác.','Xoá tải ký sinh',()=>{
+        App.ui.showConfirm(App.ui.t('confirm_del_parasitic_title',{name:p.name||App.ui.t('này')}),App.ui.t('Không thể hoàn tác.'),App.ui.t('Xoá tải ký sinh'),()=>{
           this.P().splice(i,1); this.save(); this.render();
         });
       }));
@@ -2668,7 +2683,7 @@
       });
       // ── Mẫu tải ký sinh (catalog) ──
       root.querySelector('#hl-add-para-template')?.addEventListener('click',()=>{
-        this.PT().push({id:this.uid(),type:'IQF',name:'Mẫu tải ký sinh '+(this.PT().length+1),
+        this.PT().push({id:this.uid(),type:'IQF',name:App.ui.t('Mẫu tải ký sinh {n}',{n:this.PT().length+1}),
           tChamber:-35,L:5,W:3,H:2.5,uPanel:0.22,doorCode:'D1200x2200-STD'});
         this.save(); this.render();
       });
@@ -2688,19 +2703,19 @@
         const t=this.PT()[i]; if(!t) return;
         const roomSel=root.querySelector(`[data-pt-room="${i}"]`);
         const roomId=roomSel?.value||null;
-        if(!roomId){ App.ui.toast('warn','Chọn phòng trước khi thêm từ mẫu.'); return; }
+        if(!roomId){ App.ui.toast('warn',App.ui.t('Chọn phòng trước khi thêm từ mẫu.')); return; }
         const {id,...spec}=t;
         this.P().push({...spec, id:this.uid(), roomId});
         this.save(); this.render();
-        App.ui.toast('ok',`Đã thêm tải ký sinh "${t.name||''}" vào phòng đã chọn.`);
+        App.ui.toast('ok',App.ui.t('Đã thêm tải ký sinh "{name}" vào phòng đã chọn.',{name:t.name||''}));
       }));
       root.querySelectorAll('[data-psave-template]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-psave-template'));
         const p=this.P()[i]; if(!p) return;
         const {id,roomId,_qW,...spec}=p;
-        this.PT().push({...spec, id:this.uid(), name:p.name||'Mẫu tải ký sinh '+(this.PT().length+1)});
+        this.PT().push({...spec, id:this.uid(), name:p.name||App.ui.t('Mẫu tải ký sinh {n}',{n:this.PT().length+1})});
         this.save(); this.render();
-        App.ui.toast('ok','Đã lưu thành mẫu — xem ở khối "Mẫu tải ký sinh" phía trên.');
+        App.ui.toast('ok',App.ui.t('Đã lưu thành mẫu — xem ở khối "Mẫu tải ký sinh" phía trên.'));
       }));
     },
 
@@ -2708,7 +2723,7 @@
     _drawerRoomIdx: -1,
     openDrawer(roomIdx){
       try{ return this._openDrawer_impl(roomIdx); }
-      catch(e){ console.warn('[MultiHVAC] openDrawer error:',e.message); App.ui.toast('err','Không mở được form phòng: '+e.message.slice(0,60)); }
+      catch(e){ console.warn('[MultiHVAC] openDrawer error:',e.message); App.ui.toast('err',App.ui.t('Không mở được form phòng:')+' '+e.message.slice(0,60)); }
     },
     _openDrawer_impl(roomIdx){
       const r=this.R()[roomIdx]; if(!r) return;
@@ -2723,7 +2738,7 @@
 
       // Header: tên phòng + subtitle (tầng · loại phòng)
       const fl=this.FL().find(f=>f.id===r.floorId)||(this.FL()[0]);
-      if(title) title.textContent=r.name||'Phòng chưa đặt tên';
+      if(title) title.textContent=r.name||App.ui.t('Phòng chưa đặt tên');
       if(sub)   sub.textContent=(fl?.name||'')+(r.buildingType
         ?' · '+((App.data.BUILDING_TYPES||[]).find(b=>b.id===r.buildingType)?.name||''):'');
 
@@ -2751,7 +2766,7 @@
           } else { body.innerHTML=rawHtml; }
         }
       }catch(e){
-        body.innerHTML='<p style="padding:16px;color:#f87171">Lỗi render form: '+e.message+'</p>';
+        body.innerHTML='<p style="padding:16px;color:#f87171">'+App.ui.t('Lỗi render form:')+' '+e.message+'</p>';
         console.warn('[Drawer render]',e);
       }
       App.state.hlRooms=saved;
@@ -2798,7 +2813,7 @@
     },
     saveAndCloseDrawer(){
       this.save();
-      App.ui.toast('ok','Đã lưu phòng');
+      App.ui.toast('ok',App.ui.t('Đã lưu phòng'));
       this.closeDrawer();
       this.render(); // Refresh room row để hiển thị kết quả mới
     },
@@ -2916,10 +2931,10 @@
         this._updateDrawerKPI(r);
         const partWarnCount=(r._partitionWarnings||[]).length;
         App.ui.toast(worstSev!=='pass'?'warn':'ok',
-          'Tính xong · Q_coil='+(coil.qCoilKW?.toFixed(2)||'?')+' kW'
-          +(worstSev==='red'?` · ❌ ${allFlags.filter(f=>f.severity==='error'||f.level==='red').length} lỗi cần xử lý`:'')
-          +(worstSev==='yellow'?` · ⚠ ${allFlags.filter(f=>f.severity==='warn'||f.level==='yellow').length} cảnh báo`:'')
-          +(partWarnCount?` · ⚠ ${partWarnCount} cảnh báo vách ngăn (xem chi tiết trong panel Vách ngăn)`:''));
+          App.ui.t('Tính xong · Q_coil={q} kW',{q:coil.qCoilKW?.toFixed(2)||'?'})
+          +(worstSev==='red'?' · '+App.ui.t('❌ {n} lỗi cần xử lý',{n:allFlags.filter(f=>f.severity==='error'||f.level==='red').length}):'')
+          +(worstSev==='yellow'?' · '+App.ui.t('⚠ {n} cảnh báo',{n:allFlags.filter(f=>f.severity==='warn'||f.level==='yellow').length}):'')
+          +(partWarnCount?' · '+App.ui.t('⚠ {n} cảnh báo vách ngăn (xem chi tiết trong panel Vách ngăn)',{n:partWarnCount}):''));
         this.save(); this.render();
         // FIX: đồng bộ khối preview Q_cấp/Q_tươi/Q_tuần hoàn/ACH thực ở CUỐI form —
         // khối đó đọc r._airflow tại thời điểm HTML được vẽ, không tự cập nhật khi
@@ -2929,7 +2944,7 @@
         // — khiến 2 nơi hiện 2 con số khác nhau dù cùng 1 phòng. Vẽ lại toàn bộ drawer
         // ngay sau khi tính để cả 2 khối luôn khớp nhau tức thì.
         this._reRenderDrawer();
-      }catch(e){ App.ui.toast('err','Lỗi tính: '+e.message.slice(0,50)); }
+      }catch(e){ App.ui.toast('err',App.ui.t('Lỗi tính:')+' '+e.message.slice(0,50)); }
     },
     _updateDrawerKPI(r){
       const kpi=document.getElementById('room-drawer-kpi');
@@ -2943,7 +2958,7 @@
       document.getElementById('rd-kpi-ach').textContent=(r._airflow?.ACH_actual?.toFixed(0)||'—')+' ACH';
       const statusEl=document.getElementById('rd-kpi-status');
       statusEl.style.cssText=sc[status]||sc.ok;
-      statusEl.textContent=status==='red'?'❌ LỖI':status==='yellow'?'⚠ CẢNH BÁO':'✓ ĐẠT';
+      statusEl.textContent=status==='red'?'❌ '+App.ui.t('LỖI'):status==='yellow'?'⚠ '+App.ui.t('CẢNH BÁO'):'✓ '+App.ui.t('ĐẠT');
       this._updateStaleBanner(r);
     },
     // Hiện/ẩn cảnh báo "số liệu cũ, chưa tính lại" — gọi mỗi khi mở drawer, mỗi khi
@@ -3017,7 +3032,7 @@
           const res=App.calc.calcULayered({layers:r.wallLayers, includeFilms:true});
           const el=body.querySelector('#ucalc-result-0');
           if(el&&res.U) el.textContent='U = '+res.U.toFixed(4)+' W/m²K  |  R = '+res.Rtotal.toFixed(4)+' m²K/W';
-          if(el&&!res.U) el.textContent='U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)';
+          if(el&&!res.U) el.textContent=App.ui.t('U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)');
           // FIX (Bước 3): hiện warnings tính sẵn trong calcULayered() — trước đây bị bỏ phí
           const warnEl=body.querySelector('#ucalc-warnings-0');
           if(warnEl){
@@ -3069,7 +3084,7 @@
       // Áp dụng U vào phòng
       body.querySelectorAll('[data-ucalc-apply]').forEach(btn=>{
         btn.addEventListener('click', e=>{ e.stopPropagation();
-          if(!r.wallLayers?.length){ App.ui.toast('warn','Thêm ít nhất 1 lớp vật liệu'); return; }
+          if(!r.wallLayers?.length){ App.ui.toast('warn',App.ui.t('Thêm ít nhất 1 lớp vật liệu')); return; }
           try{
             const res=App.calc.calcULayered({layers:r.wallLayers, includeFilms:true});
             if(res.U){
@@ -3082,14 +3097,14 @@
               // thì báo rõ trong toast luôn — trước đây áp dụng U vẫn "thành công" dù 1 lớp
               // đã bị âm thầm loại khỏi phép tính, người dùng không biết để sửa lại.
               if(res.warnings?.length){
-                App.ui.toast('warn','Đã áp U = '+res.U.toFixed(4)+' W/m²K — NHƯNG có '+res.warnings.length+' cảnh báo, xem chi tiết trong bảng lớp vật liệu');
+                App.ui.toast('warn',App.ui.t('Đã áp U = {u} W/m²K — NHƯNG có {n} cảnh báo, xem chi tiết trong bảng lớp vật liệu',{u:res.U.toFixed(4),n:res.warnings.length}));
               } else {
-                App.ui.toast('ok','Đã áp U = '+res.U.toFixed(4)+' W/m²K');
+                App.ui.toast('ok',App.ui.t('Đã áp U = {u} W/m²K',{u:res.U.toFixed(4)}));
               }
             } else {
-              App.ui.toast('err','Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)');
+              App.ui.toast('err',App.ui.t('Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)'));
             }
-          }catch(err){ App.ui.toast('err','Lỗi tính U: '+err.message); }
+          }catch(err){ App.ui.toast('err',App.ui.t('Lỗi tính U:')+' '+err.message); }
         });
       });
       refreshU(); // Initial display
@@ -3129,7 +3144,7 @@
         btn.addEventListener('click', e=>{ e.stopPropagation();
           if(!r.elecDeviceRows) r.elecDeviceRows=[];
           r.elecDeviceRows.push({
-            name:'Thiết bị mới', typeId:'vfd_low',
+            name:App.ui.t('Thiết bị mới'), typeId:'vfd_low',
             ratedKW:15, qty:1, loadFactor:0.8, heatFactor:0.04
           });
           r._calcStale=true; hl.save(); hl._reRenderDrawer();
@@ -3156,13 +3171,13 @@
             if(preset){
               dev.typeId=el.value;
               dev.heatFactor=preset.heatFactor;
-              dev.name=dev.name==='Thiết bị mới'?preset.name:dev.name;
+              dev.name=dev.name===App.ui.t('Thiết bị mới')?preset.name:dev.name;
               if(!dev.ratedKW||dev.ratedKW===15) dev.ratedKW=preset.ratedKWDefault||dev.ratedKW;
               // Cập nhật DOM
               const row=body.querySelector('[data-edi="'+di+'"]')||el.closest('tr');
               const nameEl=row?.querySelector('[data-elec="name"]');
               const kWEl=row?.querySelector('[data-elec="ratedKW"]');
-              if(nameEl&&dev.name==='Thiết bị mới') nameEl.value=preset.name;
+              if(nameEl&&dev.name===App.ui.t('Thiết bị mới')) nameEl.value=preset.name;
               if(kWEl&&preset.ratedKWDefault) kWEl.value=preset.ratedKWDefault;
             }
           } else {
@@ -3212,7 +3227,7 @@
             const dpEl=body.querySelector('[data-rf="deltaPPa"]');
             if(achEl) achEl.value=r.achApplied;
             if(dpEl)  dpEl.value=r.deltaPPa;
-            App.ui.toast('ok','ACH='+r.achApplied+' · ΔP='+r.deltaPPa+'Pa từ '+r.classSystem+' '+r.classCode);
+            App.ui.toast('ok',App.ui.t('ACH={ach} · ΔP={dp}Pa từ {system} {code}',{ach:r.achApplied,dp:r.deltaPPa,system:r.classSystem,code:r.classCode}));
           }
           r._calcStale=true; hl.save(); hl._updateStaleBanner(r);
         });
@@ -3383,7 +3398,7 @@
             if(r.groupId){
               const curGroup=this.G().find(g=>g.id===r.groupId);
               const stillOk = curGroup && curGroup.equipType===val;
-              if(!stillOk){ r.groupId=''; App.ui.toast('warn','Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "'+val+'"'); }
+              if(!stillOk){ r.groupId=''; App.ui.toast('warn',App.ui.t('Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "{val}"',{val})); }
             }
             this.save();
             this._reRenderDrawer();
@@ -3392,7 +3407,7 @@
           // name: cập nhật drawer header title ngay
           if(f==='name'){
             const titleEl=document.getElementById('room-drawer-title');
-            if(titleEl) titleEl.textContent=val||'Phòng chưa đặt tên';
+            if(titleEl) titleEl.textContent=val||App.ui.t('Phòng chưa đặt tên');
           }
         });
       });
@@ -3423,7 +3438,7 @@
         btn.addEventListener('click', e=>{ e.stopPropagation();
           const idx=parseInt(btn.getAttribute('data-del-room'));
           const r=this.R()[idx]; if(!r) return;
-          App.ui.showConfirm('Xóa phòng "'+( r.name||'này')+'"?','Không thể hoàn tác.','Xóa phòng',()=>{
+          App.ui.showConfirm(App.ui.t('confirm_del_room_title',{name:r.name||App.ui.t('này')}),App.ui.t('Không thể hoàn tác.'),App.ui.t('Xóa phòng'),()=>{
             this.R().splice(idx,1); this.save(); this.render();
           });
         });
@@ -3434,11 +3449,11 @@
           const idx=parseInt(btn.getAttribute('data-copy-room'));
           const src=this.R()[idx]; if(!src) return;
           const copy=JSON.parse(JSON.stringify(src));
-          copy.id=this.uid(); copy.name=(src.name||'Phòng')+' (copy)';
+          copy.id=this.uid(); copy.name=(src.name||App.ui.t('Phòng'))+' (copy)';
           delete copy._coil; delete copy._ev; delete copy._airflow;
           delete copy._af; delete copy._valid; delete copy._flags;
           this.R().splice(idx+1,0,copy); this.save(); this.render();
-          App.ui.toast('ok','Đã copy: '+copy.name);
+          App.ui.toast('ok',App.ui.t('Đã copy: {name}',{name:copy.name}));
         });
       });
       // Mở room drawer khi click vào room row (event delegation thay inline onclick)
@@ -3449,7 +3464,7 @@
             this.openDrawer(idx);
           }catch(e){
             console.warn('[MultiHVAC] openDrawer error:',e.message);
-            App.ui.toast('err','Lỗi mở form phòng: '+e.message.slice(0,50));
+            App.ui.toast('err',App.ui.t('Lỗi mở form phòng:')+' '+e.message.slice(0,50));
           }
         });
       });
@@ -3470,7 +3485,7 @@
             this.R().push(copy);
           });
           this.save(); this.render();
-          App.ui.toast('ok','Đã copy '+srcFloor.name+' ('+srcRooms.length+' phòng)');
+          App.ui.toast('ok',App.ui.t('Đã copy {name} ({n} phòng)',{name:srcFloor.name,n:srcRooms.length}));
         });
       });
       // Thêm phòng vào tầng cụ thể
@@ -3485,8 +3500,8 @@
         btn.addEventListener('click',e=>{
           e.stopPropagation();
           const fid=btn.getAttribute('data-del-floor');
-          const fname=this.FL().find(f=>f.id===fid)?.name||'tầng này';
-          App.ui.showConfirm('Xóa '+fname+'?','Toàn bộ phòng thuộc tầng này cũng bị xóa.','Xóa tầng & phòng',()=>this.deleteFloor(fid));
+          const fname=this.FL().find(f=>f.id===fid)?.name||App.ui.t('tầng này');
+          App.ui.showConfirm(App.ui.t('confirm_del_floor_title',{name:fname}),App.ui.t('Toàn bộ phòng thuộc tầng này cũng bị xóa.'),App.ui.t('Xóa tầng & phòng'),()=>this.deleteFloor(fid));
         });
       });
       // Thêm tầng mới
@@ -3542,9 +3557,11 @@
         const roomsInGroup=this.R().filter(r=>r.groupId===g.id).length;
         const branchesInGroup=(App.state.branches||[]).filter(x=>x.equipGroupId===g.id).length;
         App.ui.showConfirm(
-          'Xoá nhóm thiết bị "'+(g.name||g.id)+'"?',
-          `Không thể hoàn tác.${roomsInGroup>0?` ${roomsInGroup} phòng đang gán nhóm này sẽ mất liên kết (không bị xoá, chỉ gỡ nhóm).`:''}${branchesInGroup>0?` ${branchesInGroup} nhánh ống đang thuộc nhóm này sẽ không còn nằm trong cụm thiết bị nào ở Tab Tính Toán.`:''}`,
-          'Xoá nhóm',
+          App.ui.t('confirm_del_group_title',{name:g.name||g.id}),
+          App.ui.t('Không thể hoàn tác.')
+            +(roomsInGroup>0?' '+App.ui.t('confirm_del_group_rooms',{n:roomsInGroup}):'')
+            +(branchesInGroup>0?' '+App.ui.t('confirm_del_group_branches',{n:branchesInGroup}):''),
+          App.ui.t('Xoá nhóm'),
           ()=>{
             this.G().splice(i,1);
             this.R().forEach(r=>{ if(r.groupId===g.id) r.groupId=null; });
@@ -3607,7 +3624,7 @@
           e.stopPropagation();
           const i=parseInt(b.getAttribute('data-ri-dup'));
           const copy=JSON.parse(JSON.stringify(this.R()[i]));
-          copy.id=this.uid(); copy.name=(copy.name||'Phòng')+' (copy)';
+          copy.id=this.uid(); copy.name=(copy.name||App.ui.t('Phòng'))+' (copy)';
           delete copy._af; delete copy._ev; delete copy._coil; delete copy._airflow;
           this.R().splice(i+1,0,copy); this.save(); this.render();
         });
@@ -3706,7 +3723,7 @@
             if(f==='equipType'&&this.R()[i].groupId){
               const curGroup=this.G().find(g=>g.id===this.R()[i].groupId);
               const stillOk = curGroup && curGroup.equipType===val;
-              if(!stillOk){ this.R()[i].groupId=''; App.ui.toast('warn','Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "'+val+'"'); }
+              if(!stillOk){ this.R()[i].groupId=''; App.ui.toast('warn',App.ui.t('Đã gỡ khỏi nhóm thiết bị cũ vì không còn khớp loại hệ thống "{val}"',{val})); }
             }
             this.save();
             if(RERENDER_FIELDS.includes(f)) this.render();
@@ -3786,7 +3803,7 @@
           gEl.textContent=`S=${r.aGlass}m² · SHGC=${r.shgc||0.6}`;
           gEl.style.color='#fbbf24'; gEl.style.fontFamily='monospace';
         } else {
-          gEl.textContent='(nhấp để mở)';
+          gEl.textContent='('+App.ui.t('nhấp để mở')+')';
           gEl.style.color='#3a5470'; gEl.style.fontFamily='';
         }
       }
@@ -3862,7 +3879,7 @@
             el.textContent=`U = ${result.U.toFixed(4)} W/m²K  |  R_total = ${result.Rtotal.toFixed(4)} m²K/W`;
           }
           if(el && !result.U){
-            el.textContent='U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)';
+            el.textContent=App.ui.t('U = — (chưa đủ dữ liệu, xem cảnh báo bên dưới)');
           }
           // FIX (Bước 3): hiện warnings tính sẵn trong calcULayered() — trước đây bị bỏ phí
           const warnEl=root.querySelector(`#ucalc-warnings-${ri}`);
@@ -3935,14 +3952,14 @@
               r.wallTypeId=''; // clear wall type to use custom U
               this.save(); this.render();
               if(result.warnings?.length){
-                App.ui.toast('warn',`Đã áp U = ${result.U.toFixed(4)} W/m²K vào phòng "${r.name||'?'}" — NHƯNG có ${result.warnings.length} cảnh báo, xem chi tiết trong bảng lớp vật liệu`);
+                App.ui.toast('warn',App.ui.t('Đã áp U = {u} W/m²K vào phòng "{name}" — NHƯNG có {n} cảnh báo, xem chi tiết trong bảng lớp vật liệu',{u:result.U.toFixed(4),name:r.name||'?',n:result.warnings.length}));
               } else {
-                App.ui.toast('ok',`Đã áp U = ${result.U.toFixed(4)} W/m²K vào phòng "${r.name||'?'}"`);
+                App.ui.toast('ok',App.ui.t('Đã áp U = {u} W/m²K vào phòng "{name}"',{u:result.U.toFixed(4),name:r.name||'?'}));
               }
             } else {
-              App.ui.toast('err','Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)');
+              App.ui.toast('err',App.ui.t('Không tính được U — kiểm tra cảnh báo trong bảng lớp vật liệu (thiếu vật liệu hoặc độ dày)'));
             }
-          }catch(err){ App.ui.toast('err','Lỗi tính U: '+err.message); }
+          }catch(err){ App.ui.toast('err',App.ui.t('Lỗi tính U:')+' '+err.message); }
         });
       });
 
@@ -3959,13 +3976,13 @@
       root.querySelectorAll('[data-mdel]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-mdel'));
         const m=this.M()[i]; if(!m) return;
-        App.ui.showConfirm('Xoá motor "'+(m.name||'này')+'"?','Không thể hoàn tác. Nhiệt tỏa của motor này sẽ không còn được tính vào phòng nào.','Xoá motor',()=>{
+        App.ui.showConfirm(App.ui.t('confirm_del_motor_title',{name:m.name||App.ui.t('này')}),App.ui.t('Không thể hoàn tác. Nhiệt tỏa của motor này sẽ không còn được tính vào phòng nào.'),App.ui.t('Xoá motor'),()=>{
           this.M().splice(i,1); this.save(); this.render();
         });
       }));
       // ── Mẫu Motor (catalog) ──
       root.querySelector('#hl-add-motor-template')?.addEventListener('click',()=>{
-        this.MT().push({id:this.uid(),name:'Mẫu motor '+(this.MT().length+1),pKw:5.5,qty:1,
+        this.MT().push({id:this.uid(),name:App.ui.t('Mẫu motor {n}',{n:this.MT().length+1}),pKw:5.5,qty:1,
           method:'A',position:'TH1',hasVFD:false});
         this.save(); this.render();
       });
@@ -3988,19 +4005,19 @@
         const t=this.MT()[i]; if(!t) return;
         const roomSel=root.querySelector(`[data-mt-room="${i}"]`);
         const roomId=roomSel?.value||null;
-        if(!roomId){ App.ui.toast('warn','Chọn phòng trước khi thêm từ mẫu.'); return; }
+        if(!roomId){ App.ui.toast('warn',App.ui.t('Chọn phòng trước khi thêm từ mẫu.')); return; }
         this.M().push({id:this.uid(),name:t.name||'',pKw:t.pKw||5.5,qty:t.qty||1,
           method:t.method||'A',position:t.position||'TH1',FL:1,FU:1,hasVFD:!!t.hasVFD,roomId});
         this.save(); this.render();
-        App.ui.toast('ok',`Đã thêm motor "${t.name||''}" vào phòng đã chọn.`);
+        App.ui.toast('ok',App.ui.t('Đã thêm motor "{name}" vào phòng đã chọn.',{name:t.name||''}));
       }));
       root.querySelectorAll('[data-msave-template]').forEach(b=>b.addEventListener('click',()=>{
         const i=parseInt(b.getAttribute('data-msave-template'));
         const m=this.M()[i]; if(!m) return;
-        this.MT().push({id:this.uid(),name:m.name||'Mẫu motor '+(this.MT().length+1),
+        this.MT().push({id:this.uid(),name:m.name||App.ui.t('Mẫu motor {n}',{n:this.MT().length+1}),
           pKw:m.pKw||5.5,qty:m.qty||1,method:m.method||'A',position:m.position||'TH1',hasVFD:!!m.hasVFD});
         this.save(); this.render();
-        App.ui.toast('ok','Đã lưu thành mẫu — xem ở khối "Mẫu Motor" phía trên.');
+        App.ui.toast('ok',App.ui.t('Đã lưu thành mẫu — xem ở khối "Mẫu Motor" phía trên.'));
       }));
       root.querySelectorAll('tr[data-mi]').forEach(tr=>{
         const i=parseInt(tr.getAttribute('data-mi'));
@@ -4026,7 +4043,7 @@
 
     // ── recalc() — tính toán đầy đủ tất cả phòng ────────────────────────────
     recalc(){
-      App.ui.setStatus('Đang tính phụ tải nhiệt...');
+      App.ui.setStatus(App.ui.t('Đang tính phụ tải nhiệt...'));
       try{
         const C=App.calc; const cl=this.CL();
         const psyOut=C.calcPsychro(cl.tOut,cl.rhOut,cl.elevationM||0);
@@ -4093,8 +4110,8 @@
             const Q_sup=volM3*ach;
             airflow={Q_supply:Q_sup,Q_fresh:Q_sup*0.2,Q_recirculation:Q_sup*0.8,
                      Q_return:Q_sup*0.8,Q_pressurization:0,Q_people_min:0,
-                     ACH_actual:ach,freshPct:20,modeNote:'Fallback generic',
-                     stdRef:'',warnings:[{level:'yellow',msg:'calcBuildingTypeAirflow error: '+e.message}]};
+                     ACH_actual:ach,freshPct:20,modeNote:App.ui.t('Fallback generic'),
+                     stdRef:'',warnings:[{level:'yellow',msg:App.ui.t('calcBuildingTypeAirflow error:')+' '+e.message}]};
           }
           r._airflow=airflow;
 
@@ -4216,11 +4233,11 @@
         this._renderResults(Q_motor_total/1000, paraList_all, valid, groupResults, fcuRooms);
         this._updateValidBadge(valid);
         this.save();
-        App.ui.setStatus(`Tính xong ${this.R().length} phòng · ${groups.length} nhóm.`);
-        App.ui.toast('ok',`${this.R().length} phòng · ESP tổng xem kết quả · ${valid.flags.length} cờ validation.`);
+        App.ui.setStatus(App.ui.t('Tính xong {n} phòng · {g} nhóm.',{n:this.R().length,g:groups.length}));
+        App.ui.toast('ok',App.ui.t('{n} phòng · ESP tổng xem kết quả · {f} cờ validation.',{n:this.R().length,f:valid.flags.length}));
       }catch(err){
-        App.ui.toast('err','Lỗi: '+err.message);
-        App.ui.setStatus('Lỗi'); console.error(err);
+        App.ui.toast('err',App.ui.t('Lỗi:')+' '+err.message);
+        App.ui.setStatus(App.ui.t('Lỗi')); console.error(err);
       }
     },
 
@@ -4237,18 +4254,18 @@
       const qParaTotal=(paraList||[]).reduce((a,b)=>a+b,0)/1000;
 
       const vcBadge=valid.status==='pass'?'bg-emerald-700 text-emerald-100':valid.status==='yellow'?'bg-amber-700 text-amber-100':'bg-red-700 text-red-100';
-      const vcText =valid.status==='pass'?'✅ PASS':valid.status==='yellow'?`⚠ ${valid.flags.filter(f=>f.level==='yellow').length} cảnh báo`:`❌ ${valid.flags.filter(f=>f.level==='red').length} lỗi`;
+      const vcText =valid.status==='pass'?'✅ PASS':valid.status==='yellow'?App.ui.t('⚠ {n} cảnh báo',{n:valid.flags.filter(f=>f.level==='yellow').length}):App.ui.t('❌ {n} lỗi',{n:valid.flags.filter(f=>f.level==='red').length});
 
       // Per-group summary
       const groupHtml=groupResults.length?`
         <h3 class="font-medium text-xs text-slate-300 mt-4 mb-2 flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>Lưu lượng theo nhóm thiết bị
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>${App.ui.t('Lưu lượng theo nhóm thiết bị')}
         </h3>
         <div class="overflow-x-auto">
           <table class="zebra w-full text-xs">
             <thead class="text-slate-400"><tr>
-              <th class="text-left px-2 py-1.5">Nhóm</th><th class="px-2">Loại</th><th class="px-2">Phòng</th>
-              <th class="px-2">Q_cấp tổng (m³/h)</th><th class="px-2">Q_tươi (m³/h)</th><th class="px-2">Q_hồi (m³/h)</th><th class="px-2">Q_coil (kW)</th>
+              <th class="text-left px-2 py-1.5">${App.ui.t('Nhóm')}</th><th class="px-2">${App.ui.t('Loại')}</th><th class="px-2">${App.ui.t('Phòng')}</th>
+              <th class="px-2">${App.ui.t('Q_cấp tổng (m³/h)')}</th><th class="px-2">Q_tươi (m³/h)</th><th class="px-2">${App.ui.t('Q_hồi (m³/h)')}</th><th class="px-2">Q_coil (kW)</th>
             </tr></thead>
             <tbody>${groupResults.map(g=>`
               <tr>
@@ -4270,7 +4287,7 @@
               </tr>`).join('')}
             `).join('')}
             ${fcuRooms.filter(r=>r.equipType==='FCU'||r.equipType==='FCU_OA').length?`<tr class="border-t border-slate-700/50">
-              <td class="px-2 py-1 text-emerald-400 font-medium" colspan="3">FCU riêng lẻ (gồm FCU_OA — Q_coil là tổng cả 2 phần, xem chi tiết từng phòng ở tab Tính toán)</td>
+              <td class="px-2 py-1 text-emerald-400 font-medium" colspan="3">${App.ui.t('FCU riêng lẻ (gồm FCU_OA — Q_coil là tổng cả 2 phần, xem chi tiết từng phòng ở tab Tính toán)')}</td>
               <td class="px-2 text-right font-mono-data text-emerald-400">${fcuRooms.reduce((s,r)=>s+(r._airflow?.Q_supply||0),0).toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${fcuRooms.reduce((s,r)=>s+(r._airflow?.Q_fresh||0),0).toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${fcuRooms.reduce((s,r)=>s+(r._airflow?.Q_recirculation||0),0).toFixed(0)}</td>
@@ -4300,31 +4317,31 @@
         <div class="flex items-center justify-between mb-3">
           <span class="font-medium text-sm flex items-center gap-2">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-            Kết quả — ${rooms.length} phòng · ${groupResults.length} nhóm AHU/PAU
+            ${App.ui.t('Kết quả')} — ${App.ui.t('{n} phòng',{n:rooms.length})} · ${App.ui.t('{n} nhóm AHU/PAU',{n:groupResults.length})}
           </span>
           <span class="px-2 py-1 rounded text-[11px] font-medium ${vcBadge}">${vcText}</span>
         </div>
         <!-- KPI -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Tổng lạnh coil</div><div class="font-mono-data text-lg text-amber-400 font-bold">${totalCoilKW.toFixed(1)} <span class="text-xs text-slate-500">kW = ${(totalCoilKW/3.517).toFixed(1)} TR</span></div></div>
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Tổng gió cấp</div><div class="font-mono-data text-lg text-cyan-400 font-bold">${totalSupply.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div></div>
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Gió tươi / Tuần hoàn</div><div class="font-mono-data text-sm text-emerald-400">${totalFresh.toFixed(0)} / ${totalRecirc.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div><div class="text-[10px] text-slate-500">${totalSupply>0?((totalFresh/totalSupply)*100).toFixed(0):0}% tươi/cấp</div></div>
-          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">Motor + Tải ký sinh</div><div class="font-mono-data text-sm text-violet-400">${(qMotorKW+qParaTotal).toFixed(2)} <span class="text-xs text-slate-500">kW</span></div><div class="text-[10px] text-slate-500">Motor ${qMotorKW.toFixed(2)} | Ký sinh ${qParaTotal>=0?'+':''}${qParaTotal.toFixed(2)}</div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Tổng lạnh coil')}</div><div class="font-mono-data text-lg text-amber-400 font-bold">${totalCoilKW.toFixed(1)} <span class="text-xs text-slate-500">kW = ${(totalCoilKW/3.517).toFixed(1)} TR</span></div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Tổng gió cấp')}</div><div class="font-mono-data text-lg text-cyan-400 font-bold">${totalSupply.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Gió tươi / Tuần hoàn')}</div><div class="font-mono-data text-sm text-emerald-400">${totalFresh.toFixed(0)} / ${totalRecirc.toFixed(0)} <span class="text-xs text-slate-500">m³/h</span></div><div class="text-[10px] text-slate-500">${App.ui.t('{pct}% tươi/cấp',{pct:totalSupply>0?((totalFresh/totalSupply)*100).toFixed(0):0})}</div></div>
+          <div class="bg-base-900/60 border border-slate-800 rounded-lg p-2.5"><div class="text-[10px] text-slate-400">${App.ui.t('Motor + Tải ký sinh')}</div><div class="font-mono-data text-sm text-violet-400">${(qMotorKW+qParaTotal).toFixed(2)} <span class="text-xs text-slate-500">kW</span></div><div class="text-[10px] text-slate-500">${App.ui.t('Motor {m} | Ký sinh {p}',{m:qMotorKW.toFixed(2),p:(qParaTotal>=0?'+':'')+qParaTotal.toFixed(2)})}</div></div>
         </div>
         ${groupHtml}
         <!-- Per-room table -->
-        <h3 class="font-medium text-xs text-slate-300 mt-4 mb-2">Chi tiết từng phòng</h3>
+        <h3 class="font-medium text-xs text-slate-300 mt-4 mb-2">${App.ui.t('Chi tiết từng phòng')}</h3>
         <div class="overflow-x-auto">
           <table class="zebra w-full text-xs min-w-[1000px]">
             <thead class="text-slate-400 sticky top-0 bg-base-900"><tr>
-              <th class="text-left px-2 py-1.5">Phòng</th><th class="px-2">Loại TB</th><th class="px-2">Cấp sạch</th>
-              <th class="px-2">ACH thực</th><th class="px-2">Q_cấp(m³/h)</th><th class="px-2">Q_tuần hoàn</th>
-              <th class="px-2">Q_tươi</th><th class="px-2">% tươi</th>
-              <th class="px-2">Q_hiện(kW)</th><th class="px-2">Q_coil(kW)</th><th class="px-2">Ghi chú</th>
+              <th class="text-left px-2 py-1.5">${App.ui.t('Phòng')}</th><th class="px-2">${App.ui.t('Loại TB')}</th><th class="px-2">${App.ui.t('Cấp sạch')}</th>
+              <th class="px-2">${App.ui.t('ACH thực')}</th><th class="px-2">${App.ui.t('Q_cấp(m³/h)')}</th><th class="px-2">${App.ui.t('Q_tuần hoàn')}</th>
+              <th class="px-2">Q_tươi</th><th class="px-2">${App.ui.t('% tươi')}</th>
+              <th class="px-2">${App.ui.t('Q_hiện(kW)')}</th><th class="px-2">Q_coil(kW)</th><th class="px-2">${App.ui.t('Ghi chú')}</th>
             </tr></thead>
-            <tbody>${roomRows||'<tr><td colspan="11" class="text-center py-4 text-slate-500">Chưa có phòng</td></tr>'}</tbody>
+            <tbody>${roomRows||`<tr><td colspan="11" class="text-center py-4 text-slate-500">${App.ui.t('Chưa có phòng')}</td></tr>`}</tbody>
             <tfoot class="border-t border-slate-700 font-medium"><tr>
-              <td class="px-2 py-1.5" colspan="4">Tổng cộng</td>
+              <td class="px-2 py-1.5" colspan="4">${App.ui.t('Tổng cộng')}</td>
               <td class="px-2 text-right font-mono-data">${totalSupply.toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${totalRecirc.toFixed(0)}</td>
               <td class="px-2 text-right font-mono-data">${totalFresh.toFixed(0)}</td>
@@ -4338,27 +4355,27 @@
         ${valid.flags.length?`<div class="mt-3 border border-slate-700/50 rounded-lg p-3 text-xs space-y-1">
           ${valid.flags.map(f=>`<div class="flex items-center gap-1.5 ${f.level==='red'?'text-red-400':'text-amber-400'}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${f.msg}</div>`).join('')}
-        </div>`:'<div class="mt-2 text-xs text-emerald-400 flex items-center gap-1.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Không phát hiện lỗi validation.</div>'}
+        </div>`:`<div class="mt-2 text-xs text-emerald-400 flex items-center gap-1.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${App.ui.t('Không phát hiện lỗi validation.')}</div>`}
 
         <!-- ── EQUIPMENT SCHEDULE — Tự động chọn FCU/AHU ── -->
         ${rooms.filter(r=>r._coil?.qCoilKW>0).length>0?`
         <div class="mt-4 border-t border-slate-700/60 pt-4">
           <h3 class="font-medium text-xs text-slate-300 mb-2 flex items-center gap-1.5">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>
-            Bảng thiết bị tự chọn (Equipment Schedule) — dựa vào Q_coil từng phòng
+            ${App.ui.t('Bảng thiết bị tự chọn (Equipment Schedule) — dựa vào Q_coil từng phòng')}
           </h3>
           <div class="overflow-x-auto">
             <table class="zebra w-full text-xs min-w-[800px]">
               <thead class="text-slate-400 sticky top-0 bg-base-900"><tr>
-                <th class="text-left px-2 py-1.5">Phòng</th>
-                <th class="px-2">Loại hệ thống</th>
+                <th class="text-left px-2 py-1.5">${App.ui.t('Phòng')}</th>
+                <th class="px-2">${App.ui.t('Loại hệ thống')}</th>
                 <th class="px-2">Q_coil (kW)</th>
-                <th class="px-2">Model đề xuất</th>
-                <th class="px-2">SL</th>
-                <th class="px-2">Tổng CS (kW)</th>
-                <th class="px-2">Hiệu suất sử dụng</th>
-                <th class="px-2">Lưu lượng (m³/h)</th>
-                <th class="px-2">Ghi chú</th>
+                <th class="px-2">${App.ui.t('Model đề xuất')}</th>
+                <th class="px-2">${App.ui.t('SL')}</th>
+                <th class="px-2">${App.ui.t('Tổng CS (kW)')}</th>
+                <th class="px-2">${App.ui.t('Hiệu suất sử dụng')}</th>
+                <th class="px-2">${App.ui.t('Lưu lượng (m³/h)')}</th>
+                <th class="px-2">${App.ui.t('Ghi chú')}</th>
               </tr></thead>
               <tbody>
               ${rooms.filter(r=>r._coil?.qCoilKW>0).map(r=>{
@@ -4370,7 +4387,7 @@
                   qCoilKW:q, equipType:r.equipType||'FCU',
                   designMarginPct:10, preferType:'cassette'
                 });
-                if(!eqSel) return `<tr><td class="px-2 py-1.5">${r.name}</td><td colspan="8" class="px-2 text-slate-500">VENT — không cần coil</td></tr>`;
+                if(!eqSel) return `<tr><td class="px-2 py-1.5">${r.name}</td><td colspan="8" class="px-2 text-slate-500">${App.ui.t('VENT — không cần coil')}</td></tr>`;
                 const util=parseInt(eqSel.utilization);
                 const utilColor=util<70?'text-slate-400':util<90?'text-emerald-400':'text-amber-400';
                 return `<tr class="${eqSel.isOversized?'bg-amber-950/20':''}">
@@ -4387,15 +4404,15 @@
               }).join('')}
               </tbody>
               <tfoot class="border-t border-slate-700/50 font-medium"><tr>
-                <td class="px-2 py-1.5" colspan="2">Tổng thiết bị</td>
+                <td class="px-2 py-1.5" colspan="2">${App.ui.t('Tổng thiết bị')}</td>
                 <td class="px-2 text-right font-mono-data text-amber-400">${totalCoilKW.toFixed(2)} kW</td>
                 <td colspan="6" class="px-2 text-[10px] text-slate-500">
-                  ⚠ Đây là gợi ý tham chiếu. Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn thiết bị.
+                  ⚠ ${App.ui.t('Đây là gợi ý tham chiếu. Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn thiết bị.')}
                 </td>
               </tr></tfoot>
             </table>
           </div>
-          <p class="text-[10px] text-slate-500 mt-2">Hiệu suất sử dụng xanh &lt;70% (oversized), vàng 70-90% (tối ưu), đỏ &gt;90% (cần kiểm tra). Design margin: +10%. Catalog tham chiếu thị trường VN 2024.</p>
+          <p class="text-[10px] text-slate-500 mt-2">${App.ui.t('Hiệu suất sử dụng xanh &lt;70% (oversized), vàng 70-90% (tối ưu), đỏ &gt;90% (cần kiểm tra). Design margin: +10%. Catalog tham chiếu thị trường VN 2024.')}</p>
         </div>`:''}
 `;
       if(window.lucide) lucide.createIcons();
@@ -4411,10 +4428,10 @@
         badge.addEventListener('click',()=>{ App.ui.showTab('heatload'); document.getElementById('hl-results')?.scrollIntoView({behavior:'smooth'}); });
       }
       const cfg=valid.status==='pass'
-        ?{cls:'bg-emerald-700 text-emerald-100 border-emerald-600',txt:`✅ 0 lỗi (${this.R().length} phòng)`}
+        ?{cls:'bg-emerald-700 text-emerald-100 border-emerald-600',txt:App.ui.t('✅ 0 lỗi ({n} phòng)',{n:this.R().length})}
         :valid.status==='yellow'
-        ?{cls:'bg-amber-700 text-amber-100 border-amber-600',txt:`⚠ ${valid.flags.filter(f=>f.level==='yellow').length} cảnh báo`}
-        :{cls:'bg-red-700 text-red-100 border-red-600',txt:`❌ ${valid.flags.filter(f=>f.level==='red').length} lỗi`};
+        ?{cls:'bg-amber-700 text-amber-100 border-amber-600',txt:App.ui.t('⚠ {n} cảnh báo',{n:valid.flags.filter(f=>f.level==='yellow').length})}
+        :{cls:'bg-red-700 text-red-100 border-red-600',txt:App.ui.t('❌ {n} lỗi',{n:valid.flags.filter(f=>f.level==='red').length})};
       badge.className='fixed bottom-10 right-4 z-40 px-3 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer shadow-lg border '+cfg.cls;
       badge.textContent=cfg.txt;
     }
@@ -4430,42 +4447,42 @@
         </div>`;
       root.innerHTML = `
         <div class="space-y-3">
-          ${section('Luồng làm việc — 2 tab chính', `
+          ${section(App.ui.t('Luồng làm việc — 2 tab chính'), `
             <div class="bg-base-900/60 rounded-lg p-3 font-mono-data text-[11px] space-y-2">
-              <div class="text-emerald-400 font-medium">Bước 1 → Tab "Phụ Tải Nhiệt"</div>
-              <div class="text-slate-300 pl-3">Nhập N phòng (AHU/PAU/FCU/VENT) → khai báo tải nhiệt, motor, ký sinh → bấm "Tính tải" → nhận Q_coil (kW, TR) và L_supply (m³/h) từng phòng.</div>
-              <div class="text-cyan-400 font-medium mt-2">Bước 2 → Tab "Thiết Kế Ống Gió"</div>
-              <div class="text-slate-300 pl-3">Bấm "Import từ Tab Phụ Tải Nhiệt" để đưa L_supply vào bảng nhánh ống → chọn vật liệu, cách nhiệt, vận tốc → bấm "Tính ống" → nhận kích thước, ΔP ma sát, ESP quạt.</div>
-              <div class="text-slate-500 text-[10px] mt-2 pl-3">Hai tab dùng chung dữ liệu dự án (IndexedDB), auto-save liên tục.</div>
+              <div class="text-emerald-400 font-medium">${App.ui.t('Bước 1 → Tab "Phụ Tải Nhiệt"')}</div>
+              <div class="text-slate-300 pl-3">${App.ui.t('Nhập N phòng (AHU/PAU/FCU/VENT) → khai báo tải nhiệt, motor, ký sinh → bấm "Tính tải" → nhận Q_coil (kW, TR) và L_supply (m³/h) từng phòng.')}</div>
+              <div class="text-cyan-400 font-medium mt-2">${App.ui.t('Bước 2 → Tab "Thiết Kế Ống Gió"')}</div>
+              <div class="text-slate-300 pl-3">${App.ui.t('Bấm "Import từ Tab Phụ Tải Nhiệt" để đưa L_supply vào bảng nhánh ống → chọn vật liệu, cách nhiệt, vận tốc → bấm "Tính ống" → nhận kích thước, ΔP ma sát, ESP quạt.')}</div>
+              <div class="text-slate-500 text-[10px] mt-2 pl-3">${App.ui.t('Hai tab dùng chung dữ liệu dự án (IndexedDB), auto-save liên tục.')}</div>
             </div>`)}
 
-          ${section('Tab 1 — Thiết Kế Ống Gió (chỉ duct)', `
-            <p><b>Phạm vi:</b> Sizing ống gió (chữ nhật W×H hoặc tròn Ø), vật liệu, cách nhiệt, tổn thất ma sát Darcy-Weisbach, kiểm tra đọng sương, NC tiếng ồn, ESP quạt tổng.</p>
-            <p><b>Lưu lượng đầu vào:</b> Nhập tay Q (m³/h) cho từng nhánh — hoặc bấm "Import từ Tab Phụ Tải Nhiệt" để kéo tự động L_supply từng phòng đã tính.</p>
-            <p><b>Chọn tỉnh/TP:</b> Áp Tv_max và RH_trung_bình vào tất cả nhánh để kiểm tra điểm đọng sương bề mặt ống lạnh.</p>
-            <p><b>KHÔNG có trong tab này:</b> tính tải nhiệt phòng, chọn AHU/FCU, motor, tải ký sinh (những thứ đó ở Tab Phụ Tải Nhiệt).</p>`)}
+          ${section(App.ui.t('Tab 1 — Thiết Kế Ống Gió (chỉ duct)'), `
+            <p><b>${App.ui.t('Phạm vi:')}</b> ${App.ui.t('Sizing ống gió (chữ nhật W×H hoặc tròn Ø), vật liệu, cách nhiệt, tổn thất ma sát Darcy-Weisbach, kiểm tra đọng sương, NC tiếng ồn, ESP quạt tổng.')}</p>
+            <p><b>${App.ui.t('Lưu lượng đầu vào:')}</b> ${App.ui.t('Nhập tay Q (m³/h) cho từng nhánh — hoặc bấm "Import từ Tab Phụ Tải Nhiệt" để kéo tự động L_supply từng phòng đã tính.')}</p>
+            <p><b>${App.ui.t('Chọn tỉnh/TP:')}</b> ${App.ui.t('Áp Tv_max và RH_trung_bình vào tất cả nhánh để kiểm tra điểm đọng sương bề mặt ống lạnh.')}</p>
+            <p><b>${App.ui.t('KHÔNG có trong tab này:')}</b> ${App.ui.t('tính tải nhiệt phòng, chọn AHU/FCU, motor, tải ký sinh (những thứ đó ở Tab Phụ Tải Nhiệt).')}</p>`)}
 
-          ${section('Tab 2 — Phụ Tải Nhiệt (multi-room)', `
-            <p><b>Điều kiện khí hậu:</b> T_ngoài, RH, cao độ → tự tính enthalpy h, dung ẩm d, điểm sương Td, P_atm hiệu chỉnh (hiển thị live).</p>
-            <p><b>Danh sách phòng:</b> Thêm N phòng, mỗi phòng chọn loại: AHU (mixing point), PAU (100% tươi), FCU (tải tươi cộng thẳng vào Q_phòng), VENT (Q_coil=0). Click vào phòng để mở form chi tiết. Nút "copy" để nhân đôi phòng.</p>
-            <p><b>Motor IE3:</b> 3 phương pháp A (FL×FU) / B (đơn giản) / C (TCVN K1×K2×K3), 3 vị trí TH1/TH2/TH3. η nội suy tuyến tính giữa các mức IEC 60034-30-1.</p>
-            <p><b>Tải ký sinh:</b> IQF/Kho lạnh (vách+khe cửa), Mạ băng, Đá vảy, Rotor tách ẩm. Tải lạnh mang dấu âm, Peak Design không trừ vào Q_coil.</p>
-            <p><b>Kết quả:</b> 9 KPI (kW, TR, W/m², %tươi, SHR...) + bảng per-room đầy đủ + validation 6 hạng mục + badge nổi góc màn hình.</p>`)}
+          ${section(App.ui.t('Tab 2 — Phụ Tải Nhiệt (multi-room)'), `
+            <p><b>${App.ui.t('Điều kiện khí hậu:')}</b> ${App.ui.t('T_ngoài, RH, cao độ → tự tính enthalpy h, dung ẩm d, điểm sương Td, P_atm hiệu chỉnh (hiển thị live).')}</p>
+            <p><b>${App.ui.t('Danh sách phòng:')}</b> ${App.ui.t('Thêm N phòng, mỗi phòng chọn loại: AHU (mixing point), PAU (100% tươi), FCU (tải tươi cộng thẳng vào Q_phòng), VENT (Q_coil=0). Click vào phòng để mở form chi tiết. Nút "copy" để nhân đôi phòng.')}</p>
+            <p><b>${App.ui.t('Motor IE3:')}</b> ${App.ui.t('3 phương pháp A (FL×FU) / B (đơn giản) / C (TCVN K1×K2×K3), 3 vị trí TH1/TH2/TH3. η nội suy tuyến tính giữa các mức IEC 60034-30-1.')}</p>
+            <p><b>${App.ui.t('Tải ký sinh:')}</b> ${App.ui.t('IQF/Kho lạnh (vách+khe cửa), Mạ băng, Đá vảy, Rotor tách ẩm. Tải lạnh mang dấu âm, Peak Design không trừ vào Q_coil.')}</p>
+            <p><b>${App.ui.t('Kết quả:')}</b> ${App.ui.t('9 KPI (kW, TR, W/m², %tươi, SHR...) + bảng per-room đầy đủ + validation 6 hạng mục + badge nổi góc màn hình.')}</p>`)}
 
-          ${section('Xuất báo cáo', `
-            <p>Tab <b>Xuất Báo Cáo</b>: PDF đa trang (kèm mộc PASS, bảng per-room) + Excel 5 sheet (Tổng quan · Chi tiết phòng · Motor · Ký sinh · Ống gió). Tên file kèm ngày tháng tự động.</p>`)}
+          ${section(App.ui.t('Xuất báo cáo'), `
+            <p>${App.ui.t('Tab')} <b>${App.ui.t('tab_report')}</b>: ${App.ui.t('PDF đa trang (kèm mộc PASS, bảng per-room) + Excel 5 sheet (Tổng quan · Chi tiết phòng · Motor · Ký sinh · Ống gió). Tên file kèm ngày tháng tự động.')}</p>`)}
 
-          ${section('Quản lý dữ liệu & sao lưu', `
-            <p>Tab <b>Quản Lý Dự Án</b>: tạo/nạp/xoá dự án (IndexedDB, không đồng bộ qua internet). Cột "Phòng" cho biết số phòng nhiệt tải đã khai báo. Export .json để sao lưu toàn bộ (bao gồm cả ống gió + phụ tải), Import .json để khôi phục.</p>`)}
+          ${section(App.ui.t('Quản lý dữ liệu & sao lưu'), `
+            <p>${App.ui.t('Tab')} <b>${App.ui.t('Quản Lý Dự Án')}</b>: ${App.ui.t('tạo/nạp/xoá dự án (IndexedDB, không đồng bộ qua internet). Cột "Phòng" cho biết số phòng nhiệt tải đã khai báo. Export .json để sao lưu toàn bộ (bao gồm cả ống gió + phụ tải), Import .json để khôi phục.')}</p>`)}
 
-          ${section('Phím tắt', `
-            <p><kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+K</kbd> tìm nhanh ·
-            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+Enter</kbd> tính toán ·
-            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+S</kbd> lưu ngay ·
-            phím số <kbd class="font-mono-data bg-slate-800 px-1 rounded">1–8</kbd> chuyển tab.</p>`)}
+          ${section(App.ui.t('Phím tắt'), `
+            <p><kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+K</kbd> ${App.ui.t('tìm nhanh')} ·
+            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+Enter</kbd> ${App.ui.t('tính toán')} ·
+            <kbd class="font-mono-data bg-slate-800 px-1 rounded">Ctrl/Cmd+S</kbd> ${App.ui.t('lưu ngay')} ·
+            ${App.ui.t('phím số')} <kbd class="font-mono-data bg-slate-800 px-1 rounded">1–8</kbd> ${App.ui.t('chuyển tab.')}</p>`)}
 
-          ${section('Giới hạn & lưu ý', `
-            <p>Dữ liệu khí hậu từ QCVN 02:2022/BXD; 7 tỉnh không có trạm riêng dùng số liệu lân cận (đánh dấu trong tab Quản Lý). Hệ số tổn thất cục bộ phụ kiện là giá trị sơ bộ (SMACNA), cần hiệu chỉnh theo bản vẽ thực tế. Giá trị R/η motor là tham khảo — cập nhật theo datasheet thực tế trong tab Quản Lý &amp; Admin.</p>`)}
+          ${section(App.ui.t('Giới hạn & lưu ý'), `
+            <p>${App.ui.t('Dữ liệu khí hậu từ QCVN 02:2022/BXD; 7 tỉnh không có trạm riêng dùng số liệu lân cận (đánh dấu trong tab Quản Lý). Hệ số tổn thất cục bộ phụ kiện là giá trị sơ bộ (SMACNA), cần hiệu chỉnh theo bản vẽ thực tế. Giá trị R/η motor là tham khảo — cập nhật theo datasheet thực tế trong tab Quản Lý &amp; Admin.')}</p>`)}
         </div>`;
       if(window.lucide) lucide.createIcons();
     }
@@ -4631,17 +4648,17 @@
       const root = document.getElementById('panel-about');
       root.innerHTML = App.ui.panelShell('about','tab_about','info', `
         <div class="text-sm space-y-3 text-slate-300">
-          <p>MultiHVAC Calculator hỗ trợ tính chọn lưu lượng gió, ống gió và thiết bị AHU/FCU/CRAC cho 3 môi trường: Phòng sạch, Data Center, Phòng điện/Tủ điện.</p>
+          <p>${App.ui.t('MultiHVAC Calculator hỗ trợ tính chọn lưu lượng gió, ống gió và thiết bị AHU/FCU/CRAC cho 3 môi trường: Phòng sạch, Data Center, Phòng điện/Tủ điện.')}</p>
           <div>
-            <div class="text-xs text-slate-400 mb-1">Tiêu chuẩn áp dụng</div>
+            <div class="text-xs text-slate-400 mb-1">${App.ui.t('Tiêu chuẩn áp dụng')}</div>
             <ul class="list-disc list-inside text-xs space-y-0.5 text-slate-400">
-              <li>ISO 14644-1/4 — Phòng sạch</li>
+              <li>ISO 14644-1/4 — ${App.ui.t('Phòng sạch')}</li>
               <li>GMP EU Annex 1 / WHO TRS 961</li>
               <li>ASHRAE Fundamentals Ch.18, Ch.21</li>
               <li>ASHRAE TC9.9 (2021) — Data Center Thermal Guidelines</li>
               <li>SMACNA HVAC Duct Construction Standards</li>
-              <li>TCVN 5687:2010 — Thông gió, điều hoà không khí</li>
-              <li>QCVN 02:2022/BXD — Số liệu khí hậu xây dựng</li>
+              <li>TCVN 5687:2010 — ${App.ui.t('Thông gió, điều hoà không khí')}</li>
+              <li>QCVN 02:2022/BXD — ${App.ui.t('Số liệu khí hậu xây dựng')}</li>
             </ul>
           </div>
           <div class="text-[11px] text-slate-500 pt-2 border-t border-slate-800/70">Created by Quocde · Ver 2606.22.01</div>
@@ -4672,51 +4689,52 @@
         return {fl,fRooms,fKW,fCalc};
       });
 
+      const t = App.ui.t.bind(App.ui);
       root.innerHTML=`<div class="space-y-4 p-1">
         <!-- Project Info Card -->
         <div style="background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:12px;padding:16px">
           <div style="font-size:13px;font-weight:700;color:#c2d4e2;margin-bottom:12px;display:flex;align-items:center;gap:8px">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg>
-            Thông tin dự án
+            ${t('Thông tin dự án')}
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div style="grid-column:1/-1">
-              <label>Tên dự án</label>
-              <input id="proj-name" type="text" value="${inp.projectName||''}" placeholder="VD: Kho lạnh thủy sản Cần Thơ" style="width:100%">
+              <label>${t('Tên dự án')}</label>
+              <input id="proj-name" type="text" value="${inp.projectName||''}" placeholder="${t('VD: Kho lạnh thủy sản Cần Thơ')}" style="width:100%">
             </div>
             <div>
-              <label>Khách hàng</label>
-              <input id="proj-client" type="text" value="${inp.client||''}" placeholder="Tên khách hàng" style="width:100%">
+              <label>${t('Khách hàng')}</label>
+              <input id="proj-client" type="text" value="${inp.client||''}" placeholder="${t('Tên khách hàng')}" style="width:100%">
             </div>
             <div>
-              <label>Ngày lập</label>
+              <label>${t('Ngày lập')}</label>
               <input id="proj-date" type="date" value="${inp.date||new Date().toISOString().slice(0,10)}" style="width:100%">
             </div>
             <div style="grid-column:1/-1">
-              <label>Địa chỉ công trình</label>
-              <input id="proj-addr" type="text" value="${inp.address||''}" placeholder="Địa chỉ" style="width:100%">
+              <label>${t('Địa chỉ công trình')}</label>
+              <input id="proj-addr" type="text" value="${inp.address||''}" placeholder="${t('Địa chỉ')}" style="width:100%">
             </div>
             <div>
-              <label>Kỹ sư thiết kế</label>
-              <input id="proj-eng" type="text" value="${inp.engineer||''}" placeholder="Họ tên" style="width:100%">
+              <label>${t('Kỹ sư thiết kế')}</label>
+              <input id="proj-eng" type="text" value="${inp.engineer||''}" placeholder="${t('Họ tên')}" style="width:100%">
             </div>
             <div>
-              <label>Mã dự án</label>
+              <label>${t('Mã dự án')}</label>
               <input id="proj-code" type="text" value="${inp.projectCode||''}" placeholder="PRJ-2024-001" style="width:100%">
             </div>
           </div>
-          <button id="proj-save-btn" style="margin-top:12px;width:100%;background:#059669;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">💾 Lưu thông tin dự án</button>
+          <button id="proj-save-btn" style="margin-top:12px;width:100%;background:#059669;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">💾 ${t('Lưu thông tin dự án')}</button>
         </div>
 
         <!-- Summary KPI -->
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
           ${[
-            {label:'Số tầng', val:floors.length, color:'#38bdf8', unit:'tầng'},
-            {label:'Số phòng', val:rooms.length, color:'#34d399', unit:'phòng'},
-            {label:'Đã tính', val:calcRooms.length+'/'+rooms.length, color:'#a78bfa', unit:'phòng'},
-            {label:'Q_coil tổng', val:totalKW.toFixed(1), color:'#fb923c', unit:'kW'},
-            {label:'Lỗi / Cảnh báo', val:(errRooms.length?'⛔'+errRooms.length+' ':'')+( warnRooms.length?'⚠'+warnRooms.length:'✓'), color:errRooms.length?'#f87171':warnRooms.length?'#fbbf24':'#34d399', unit:''},
-            {label:'Trung bình / phòng', val:calcRooms.length?(totalKW/calcRooms.length).toFixed(1):'—', color:'#22d3ee', unit:'kW/phòng'},
+            {label:t('Số tầng'), val:floors.length, color:'#38bdf8', unit:t('tầng')},
+            {label:t('Số phòng'), val:rooms.length, color:'#34d399', unit:t('phòng')},
+            {label:t('Đã tính'), val:calcRooms.length+'/'+rooms.length, color:'#a78bfa', unit:t('phòng')},
+            {label:t('Q_coil tổng'), val:totalKW.toFixed(1), color:'#fb923c', unit:'kW'},
+            {label:t('Lỗi / Cảnh báo'), val:(errRooms.length?'⛔'+errRooms.length+' ':'')+( warnRooms.length?'⚠'+warnRooms.length:'✓'), color:errRooms.length?'#f87171':warnRooms.length?'#fbbf24':'#34d399', unit:''},
+            {label:t('Trung bình / phòng'), val:calcRooms.length?(totalKW/calcRooms.length).toFixed(1):'—', color:'#22d3ee', unit:t('kW/phòng')},
           ].map(k=>`
             <div style="background:var(--bg-raised);border:1px solid var(--border-dim);border-radius:10px;padding:12px">
               <div style="font-size:10px;color:var(--text-low);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${k.label}</div>
@@ -4728,21 +4746,21 @@
         <!-- Per-floor summary -->
         <div style="background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:12px;overflow:hidden">
           <div style="padding:12px 16px;background:linear-gradient(90deg,#0d2038,#091825);border-bottom:1px solid var(--border-dim);font-size:12px;font-weight:600;color:#c2d4e2">
-            Tổng hợp theo tầng
+            ${t('Tổng hợp theo tầng')}
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead><tr style="background:#071325">
-              <th style="padding:8px 12px;text-align:left;color:var(--text-mid);font-size:10px;text-transform:uppercase">Tầng</th>
-              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">Phòng</th>
-              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:right">Q tổng</th>
-              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:right">TB/phòng</th>
-              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">Trạng thái</th>
+              <th style="padding:8px 12px;text-align:left;color:var(--text-mid);font-size:10px;text-transform:uppercase">${t('Tầng')}</th>
+              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">${t('rooms_count_col')}</th>
+              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:right">${t('Q tổng')}</th>
+              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:right">${t('TB/phòng')}</th>
+              <th style="padding:8px;color:var(--text-mid);font-size:10px;text-transform:uppercase;text-align:center">${t('Trạng thái')}</th>
             </tr></thead>
             <tbody>
               ${floorStats.map((fs,idx)=>{
                 const hasErr=fs.fRooms.some(r=>r._valid?.status==='red');
                 const hasWarn=fs.fRooms.some(r=>r._valid?.status==='yellow');
-                const st=hasErr?'<span style="color:#f87171">⛔ Lỗi</span>':hasWarn?'<span style="color:#fbbf24">⚠ Cảnh báo</span>':fs.fCalc>0?'<span style="color:#34d399">✓ OK</span>':'<span style="color:#3a5470">—</span>';
+                const st=hasErr?`<span style="color:#f87171">⛔ ${t('Lỗi')}</span>`:hasWarn?`<span style="color:#fbbf24">⚠ ${t('Cảnh báo')}</span>`:fs.fCalc>0?'<span style="color:#34d399">✓ OK</span>':'<span style="color:#3a5470">—</span>';
                 return `<tr style="${idx%2?'background:rgba(7,19,37,.7)':''}">
                   <td style="padding:9px 12px;color:#c2d4e2;font-weight:500">${fs.fl.name}</td>
                   <td style="padding:9px 8px;text-align:center;color:var(--text-mid)">${fs.fRooms.length}</td>
@@ -4752,7 +4770,7 @@
                 </tr>`;
               }).join('')}
               ${floorStats.length>1?`<tr style="background:rgba(16,185,129,.06);border-top:1px solid rgba(16,185,129,.2)">
-                <td style="padding:9px 12px;color:#34d399;font-weight:700">TỔNG CỘNG</td>
+                <td style="padding:9px 12px;color:#34d399;font-weight:700">${t('TỔNG CỘNG')}</td>
                 <td style="padding:9px 8px;text-align:center;color:#34d399;font-weight:700">${rooms.length}</td>
                 <td style="padding:9px 8px;text-align:right;font-family:monospace;color:#34d399;font-weight:700">${totalKW.toFixed(1)} kW</td>
                 <td style="padding:9px 8px;text-align:right;font-family:monospace;color:var(--text-mid)">${calcRooms.length?( totalKW/calcRooms.length).toFixed(1)+' kW':'—'}</td>
@@ -4765,13 +4783,13 @@
         <!-- Quick actions -->
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button onclick_safe="heatload_recalc" style="flex:1;min-width:120px;background:#059669;border:none;color:white;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>Tính tất cả phòng
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>${t('Tính tất cả phòng')}
           </button>
           <button onclick_safe="switch_heatload" style="flex:1;min-width:120px;background:rgba(56,189,248,.1);border:1px solid #234168;color:#38bdf8;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
-            🏢 Tab Phụ Tải
+            🏢 ${t('Tab Phụ Tải')}
           </button>
           <button onclick_safe="switch_report" style="flex:1;min-width:120px;background:rgba(251,146,60,.1);border:1px solid #234168;color:#fb923c;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
-            📄 Xuất Báo Cáo
+            📄 ${t('Xuất Báo Cáo')}
           </button>
         </div>
       </div>`;
@@ -4786,7 +4804,7 @@
       });
       document.getElementById('proj-save-btn')?.addEventListener('click',()=>{
         App.admin.autoSave();
-        App.ui.toast('ok','Đã lưu thông tin dự án');
+        App.ui.toast('ok',App.ui.t('Đã lưu thông tin dự án'));
       });
       // Quick action buttons (dùng data thay inline onclick)
       root.querySelectorAll('[onclick_safe]').forEach(btn=>{
@@ -4812,21 +4830,21 @@
           <!-- Scope selector + buttons -->
           <div class="flex flex-wrap gap-2 items-center">
             <div>
-              <label style="font-size:11px;color:#4a6680;display:block;margin-bottom:3px">Phạm vi xuất báo cáo</label>
+              <label style="font-size:11px;color:#4a6680;display:block;margin-bottom:3px">${App.ui.t('Phạm vi xuất báo cáo')}</label>
               <select id="export-scope" style="background:#07111e;border:1.5px solid #234168;border-radius:8px;color:#c2d4e2;padding:7px 12px;font-size:12px;min-height:38px;min-width:200px">
-                <option value="all">📋 Toàn bộ dự án (${rooms.length} phòng)</option>
-                ${floors.map(f=>{const n=rooms.filter(r=>r.floorId===f.id||(f.id==='fl1'&&!r.floorId)).length;return `<option value="floor:${f.id}">🏢 ${f.name} (${n} phòng)</option>`;}).join('')}
-                ${rooms.map(r=>`<option value="room:${r.id}">📌 ${r.name||'Phòng'}</option>`).join('')}
+                <option value="all">📋 ${App.ui.t('Toàn bộ dự án')} (${App.ui.t('{n} phòng',{n:rooms.length})})</option>
+                ${floors.map(f=>{const n=rooms.filter(r=>r.floorId===f.id||(f.id==='fl1'&&!r.floorId)).length;return `<option value="floor:${f.id}">🏢 ${f.name} (${App.ui.t('{n} phòng',{n})})</option>`;}).join('')}
+                ${rooms.map(r=>`<option value="room:${r.id}">📌 ${r.name||App.ui.t('Phòng')}</option>`).join('')}
               </select>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
-              <label style="font-size:11px;color:#4a6680">Định dạng</label>
+              <label style="font-size:11px;color:#4a6680">${App.ui.t('Định dạng')}</label>
               <div style="display:flex;gap:6px">
                 <button id="btn-export-pdf" style="display:flex;align-items:center;gap:6px;background:#b91c1c;border:none;color:white;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>Xuất PDF
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>${App.ui.t('Xuất PDF')}
                 </button>
                 <button id="btn-export-xlsx" style="display:flex;align-items:center;gap:6px;background:#047857;border:none;color:white;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>Xuất Excel
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>${App.ui.t('Xuất Excel')}
                 </button>
               </div>
             </div>
@@ -4834,10 +4852,10 @@
           <!-- Flags summary -->
           ${rooms.some(r=>r._flags&&r._flags.length>0)?`
           <div style="background:#0d1e10;border:1px solid #1a4020;border-radius:8px;padding:12px;font-size:11px">
-            <div style="color:#4ade80;font-weight:600;margin-bottom:6px">⚠ Thông số cần kiểm tra (* Flags)</div>
+            <div style="color:#4ade80;font-weight:600;margin-bottom:6px">⚠ ${App.ui.t('Thông số cần kiểm tra (* Flags)')}</div>
             ${rooms.filter(r=>r._flags&&r._flags.length>0).map(r=>
               r._flags.map(f=>`<div style="display:flex;gap:8px;margin-bottom:3px">
-                <span style="color:${f.severity==='error'||f.level==='red'?'#f87171':'#fbbf24'};min-width:60px;font-weight:600">${f.severity==='error'||f.level==='red'?'⛔ LỖI':'⚠ CẢNH'}</span>
+                <span style="color:${f.severity==='error'||f.level==='red'?'#f87171':'#fbbf24'};min-width:60px;font-weight:600">${f.severity==='error'||f.level==='red'?'⛔ '+App.ui.t('LỖI'):'⚠ '+App.ui.t('CẢNH')}</span>
                 <span style="color:#8095ab">[${r.name||'?'}]</span>
                 <span style="color:#8eaac2">${f.msg||f.code||''}</span>
               </div>`).join('')
@@ -4873,13 +4891,13 @@
   App.cmd = {
     actions(){
       return [
-        ...App.ui.TABS.map(tb=>({label:'Tab: '+App.ui.t(tb.key), run:()=>App.ui.showTab(tb.id)})),
-        {label:'Tính toán lại (Recalculate)', run:()=> App.ui.calc.recalc()},
-        {label:'Dự án mới', run:()=> App.admin.openProjectModal()},
-        {label:'Export toàn bộ dữ liệu .json', run:()=> App.admin.exportJSON()},
-        {label:'Xuất báo cáo PDF', run:()=> App.report.exportPDF()},
-        {label:'Xuất báo cáo Excel', run:()=> App.report.exportXLSX()},
-        {label:'Đổi ngôn ngữ VI/EN', run:()=>{ App.state.lang = App.state.lang==='vi'?'en':'vi'; App.ui.applyI18n(); App.ui.renderNav(); App.ui.renderAllTabs(); App.admin.autoSave(); }}
+        ...App.ui.TABS.map(tb=>({label:App.ui.t('Tab:')+' '+App.ui.t(tb.key), run:()=>App.ui.showTab(tb.id)})),
+        {label:App.ui.t('Tính toán lại (Recalculate)'), run:()=> App.ui.calc.recalc()},
+        {label:App.ui.t('Dự án mới'), run:()=> App.admin.openProjectModal()},
+        {label:App.ui.t('Export toàn bộ dữ liệu .json'), run:()=> App.admin.exportJSON()},
+        {label:App.ui.t('Xuất báo cáo PDF'), run:()=> App.report.exportPDF()},
+        {label:App.ui.t('Xuất báo cáo Excel'), run:()=> App.report.exportXLSX()},
+        {label:App.ui.t('Đổi ngôn ngữ VI/EN'), run:()=>{ App.state.lang = App.state.lang==='vi'?'en':'vi'; App.ui.applyI18n(); App.ui.renderNav(); App.ui.renderAllTabs(); App.admin.autoSave(); }}
       ];
     },
     open(){
@@ -4905,7 +4923,7 @@
       const q = query.toLowerCase();
       const matched = this.actions().filter(a=> a.label.toLowerCase().includes(q));
       const root = document.getElementById('cmdk-results');
-      root.innerHTML = matched.map((a,i)=>`<button data-action="${i}" class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800 flex items-center gap-2"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${a.label}</button>`).join('') || `<div class="px-3 py-4 text-sm text-slate-500 text-center">Không tìm thấy</div>`;
+      root.innerHTML = matched.map((a,i)=>`<button data-action="${i}" class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800 flex items-center gap-2"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg>${a.label}</button>`).join('') || `<div class="px-3 py-4 text-sm text-slate-500 text-center">${App.ui.t('Không tìm thấy')}</div>`;
       root.querySelectorAll('[data-action]').forEach((b,i)=> b.addEventListener('click', ()=>{ matched[i].run(); this.close(); }));
       if(window.lucide) lucide.createIcons();
     },
@@ -4961,7 +4979,7 @@
           localExhaust: App.state.localExhaust, workshopDoors: App.state.workshopDoors,
           results: App.state.results,
           // ── Heat load data ──
-          floors:     App.state.floors || [{id:'fl1',name:'Tầng 1',order:1}],
+          floors:     App.state.floors || [{id:'fl1',name:App.ui.t('Tầng {n}',{n:1}),order:1}],
           hlRooms:    cleanRooms,
           hlMotors:   cleanMotors,
           hlParasitic:cleanPara,
@@ -5006,14 +5024,14 @@
 
     openProjectModal(){
       this.openModal(`
-        <h3 class="font-medium mb-3">Dự án mới</h3>
+        <h3 class="font-medium mb-3">${App.ui.t('Dự án mới')}</h3>
         <div class="space-y-2">
-          <input id="modal-pname" placeholder="Tên dự án" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
-          <input id="modal-cust" placeholder="Khách hàng" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
+          <input id="modal-pname" placeholder="${App.ui.t('Tên dự án')}" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
+          <input id="modal-cust" placeholder="${App.ui.t('Khách hàng')}" class="w-full bg-base-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm">
         </div>
         <div class="flex justify-end gap-2 mt-4">
-          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">Hủy</button>
-          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-emerald-600 rounded-lg">Tạo</button>
+          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">${App.ui.t('Hủy')}</button>
+          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-emerald-600 rounded-lg">${App.ui.t('Tạo')}</button>
         </div>
       `);
       document.getElementById('modal-cancel').addEventListener('click', ()=> this.closeModal());
@@ -5030,7 +5048,7 @@
         this.closeModal();
         App.ui.renderAllTabs();
         this.autoSave(true);
-        App.ui.toast('ok','Đã tạo dự án mới.');
+        App.ui.toast('ok',App.ui.t('Đã tạo dự án mới.'));
       });
     },
 
@@ -5046,7 +5064,7 @@
       App.state.branches    = p.branches || [];
       App.state.results     = p.results || {};
       // ── restore heat load data ──
-      App.state.floors     = p.floors     || [{id:'fl1',name:'Tầng 1',order:1}];
+      App.state.floors     = p.floors     || [{id:'fl1',name:App.ui.t('Tầng {n}',{n:1}),order:1}];
       App.state.hlRooms    = p.hlRooms    || [];
       App.state.hlMotors   = p.hlMotors   || [];
       App.state.hlParasitic= p.hlParasitic|| [];
@@ -5056,16 +5074,16 @@
       App.state.hlMotorTemplates = p.hlMotorTemplates || [];
       App.state.hlParaTemplates  = p.hlParaTemplates  || [];
       App.ui.renderAllTabs();
-      App.ui.toast('ok','Đã nạp dự án: '+(p.inputs?.projectName||p.id)+' · '+(p.roomCount||0)+' phòng nhiệt tải');
+      App.ui.toast('ok',App.ui.t('Đã nạp dự án: {name} · {n} phòng nhiệt tải',{name:p.inputs?.projectName||p.id,n:p.roomCount||0}));
     },
 
     confirmDeleteProject(id){
       this.openModal(`
-        <h3 class="font-medium mb-3 text-red-400">Xoá dự án?</h3>
-        <p class="text-sm text-slate-400 mb-4">Hành động này không thể hoàn tác.</p>
+        <h3 class="font-medium mb-3 text-red-400">${App.ui.t('Xoá dự án?')}</h3>
+        <p class="text-sm text-slate-400 mb-4">${App.ui.t('Hành động này không thể hoàn tác.')}</p>
         <div class="flex justify-end gap-2">
-          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">Hủy</button>
-          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-red-600 rounded-lg">Xoá</button>
+          <button id="modal-cancel" class="px-3 py-1.5 text-sm border border-slate-700 rounded-lg">${App.ui.t('Hủy')}</button>
+          <button id="modal-confirm" class="px-3 py-1.5 text-sm bg-red-600 rounded-lg">${App.ui.t('Xoá')}</button>
         </div>
       `);
       document.getElementById('modal-cancel').addEventListener('click', ()=> this.closeModal());
@@ -5073,7 +5091,7 @@
         await App.db.deleteProject(id);
         this.closeModal();
         App.ui.admin.render();
-        App.ui.toast('ok','Đã xoá dự án.');
+        App.ui.toast('ok',App.ui.t('Đã xoá dự án.'));
       });
     },
 
@@ -5084,16 +5102,16 @@
       const a = document.createElement('a');
       a.href = url; a.download = 'multihvac_backup_'+Date.now()+'.json'; a.click();
       URL.revokeObjectURL(url);
-      App.ui.toast('ok','Đã export dữ liệu .json');
+      App.ui.toast('ok',App.ui.t('Đã export dữ liệu .json'));
     },
     async importJSON(file){
       if(!file) return;
       try{
         const text = await file.text();
         const count = await App.db.importAllJSON(text);
-        App.ui.toast('ok', `Đã nhập ${count} dự án.`);
+        App.ui.toast('ok', App.ui.t('Đã nhập {n} dự án.',{n:count}));
         App.ui.admin.render();
-      }catch(err){ App.ui.toast('err','Lỗi import: '+err.message); }
+      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi import:')+' '+err.message); }
     },
     importClimateFile(file){
       if(!file) return;
@@ -5108,11 +5126,11 @@
             tv: parseFloat(r.tv||r['Tv']||0), tt: parseFloat(r.tt||r['Tt']||0),
             tn: parseFloat(r.tn||r['Tn']||0), rh: parseFloat(r.rh||r['RH']||0)
           })).filter(r=>r.province);
-          if(parsed.length===0) throw new Error('Không đọc được dòng dữ liệu hợp lệ.');
+          if(parsed.length===0) throw new Error(App.ui.t('Không đọc được dòng dữ liệu hợp lệ.'));
           App.data.climateSample = parsed;
-          App.ui.toast('ok', `Đã nhập ${parsed.length} dòng dữ liệu khí hậu.`);
+          App.ui.toast('ok', App.ui.t('Đã nhập {n} dòng dữ liệu khí hậu.',{n:parsed.length}));
           App.ui.admin.render();
-        }catch(err){ App.ui.toast('err','Lỗi đọc file: '+err.message); }
+        }catch(err){ App.ui.toast('err',App.ui.t('Lỗi đọc file:')+' '+err.message); }
       };
       reader.readAsBinaryString(file);
     }
@@ -5183,10 +5201,10 @@
         </div>
         <!-- Thông tin dự án -->
         <table style="width:100%;margin-bottom:12px;border-collapse:collapse;color:#111;">
-          <tr><td style="width:50%;padding:2px 0;color:#111;"><b>Khách hàng:</b> ${repClient}</td><td style="color:#111;"><b>Dự án:</b> ${I.projectName||'—'}</td></tr>
-          <tr><td style="color:#111;"><b>Địa chỉ:</b> ${I.address||'—'}</td><td style="color:#111;"><b>Kỹ sư thiết kế:</b> ${repEngineer}</td></tr>
-          <tr><td style="color:#111;"><b>Ngày:</b> ${repDate}</td><td style="color:#111;"><b>Mã dự án:</b> ${repCode}</td></tr>
-          ${cl.tOut?`<tr><td style="color:#111;"><b>Điều kiện thiết kế:</b> Ngoài ${cl.tOut}°C/${cl.rhOut}%RH</td><td style="color:#111;">Trong ${cl.tIn}°C/${cl.rhIn}%RH · Cao độ ${cl.elevationM||0}m</td></tr>`:''}
+          <tr><td style="width:50%;padding:2px 0;color:#111;"><b>${App.ui.t('Khách hàng:')}</b> ${repClient}</td><td style="color:#111;"><b>${App.ui.t('Dự án:')}</b> ${I.projectName||'—'}</td></tr>
+          <tr><td style="color:#111;"><b>${App.ui.t('Địa chỉ:')}</b> ${I.address||'—'}</td><td style="color:#111;"><b>${App.ui.t('Kỹ sư thiết kế:')}</b> ${repEngineer}</td></tr>
+          <tr><td style="color:#111;"><b>${App.ui.t('Ngày:')}</b> ${repDate}</td><td style="color:#111;"><b>${App.ui.t('Mã dự án:')}</b> ${repCode}</td></tr>
+          ${cl.tOut?`<tr><td style="color:#111;"><b>${App.ui.t('Điều kiện thiết kế:')}</b> ${App.ui.t('Ngoài')} ${cl.tOut}°C/${cl.rhOut}%RH</td><td style="color:#111;">${App.ui.t('Trong')} ${cl.tIn}°C/${cl.rhIn}%RH · ${App.ui.t('Cao độ')} ${cl.elevationM||0}m</td></tr>`:''}
         </table>
         <!-- Mức độ tin cậy thông số đầu vào — gộp từ các cảnh báo "dùng giá trị mặc định/
              tham khảo" đã có sẵn trong hệ thống (không cần thêm cơ chế theo dõi mới), theo
@@ -5196,30 +5214,31 @@
           const notes = [];
           const climateEntry = (App.data.climateSample||[]).find(c=>c.province===cl.provinceId);
           if(climateEntry?.borrowedFrom){
-            notes.push(`Dữ liệu khí hậu tỉnh <b>${climateEntry.province}</b> được MƯỢN từ trạm <b>${climateEntry.borrowedFrom}</b> do QCVN 02:2022/BXD không có trạm khí tượng riêng cho tỉnh này.`);
+            notes.push(App.ui.t('Dữ liệu khí hậu tỉnh <b>{province}</b> được MƯỢN từ trạm <b>{station}</b> do QCVN 02:2022/BXD không có trạm khí tượng riêng cho tỉnh này.',{province:climateEntry.province,station:climateEntry.borrowedFrom}));
           }
           const partitionDefaultCount = rooms.reduce((s,r)=>s+(r._partitionWarnings||[]).length,0);
           if(partitionDefaultCount>0){
-            notes.push(`${partitionDefaultCount} vách ngăn nội bộ đang dùng giá trị mặc định (U và/hoặc nhiệt độ phòng kề chưa nhập cụ thể) — xem chi tiết ở bảng Chẩn đoán &amp; Kiểm tra bên dưới.`);
+            notes.push(App.ui.t('{n} vách ngăn nội bộ đang dùng giá trị mặc định (U và/hoặc nhiệt độ phòng kề chưa nhập cụ thể) — xem chi tiết ở bảng Chẩn đoán &amp; Kiểm tra bên dưới.',{n:partitionDefaultCount}));
           }
           const exhaustEmptyCount = rooms.filter(r=>r._airflow?.warnings?.some(w=>w.code==='LOCAL_EXHAUST_EMPTY')).length;
           if(exhaustEmptyCount>0){
-            notes.push(`${exhaustEmptyCount} phòng đã khai báo có gió thải cục bộ nhưng chưa nhập đủ lưu lượng thiết bị.`);
+            notes.push(App.ui.t('{n} phòng đã khai báo có gió thải cục bộ nhưng chưa nhập đủ lưu lượng thiết bị.',{n:exhaustEmptyCount}));
           }
           const achDefaultCount = rooms.filter(r=>{
             const bt=(App.data.BUILDING_TYPES||[]).find(b=>b.id===r.buildingType);
             return bt && r.achApplied===bt.achDefault;
           }).length;
           if(achDefaultCount>0){
-            notes.push(`${achDefaultCount}/${rooms.length} phòng đang dùng ACH mặc định theo loại phòng (achDefault) — chưa được kỹ sư điều chỉnh riêng theo điều kiện thực tế dự án.`);
+            notes.push(App.ui.t('{n}/{total} phòng đang dùng ACH mặc định theo loại phòng (achDefault) — chưa được kỹ sư điều chỉnh riêng theo điều kiện thực tế dự án.',{n:achDefaultCount,total:rooms.length}));
           }
-          notes.push('Catalog thiết bị (FCU/AHU/PAU) trong app là dữ liệu tổng hợp tham khảo, không phải catalog thật của hãng nào — cần kỹ sư xác nhận với nhà sản xuất trước khi lên đơn hàng.');
+          notes.push(App.ui.t('Catalog thiết bị (FCU/AHU/PAU) trong app là dữ liệu tổng hợp tham khảo, không phải catalog thật của hãng nào — cần kỹ sư xác nhận với nhà sản xuất trước khi lên đơn hàng.'));
 
           const level = climateEntry?.borrowedFrom || partitionDefaultCount>2 ? 'CẦN THẬN TRỌNG' : (notes.length>1?'TRUNG BÌNH':'CAO');
           const levelColor = level==='CẦN THẬN TRỌNG'?'#dc2626':(level==='TRUNG BÌNH'?'#d97706':'#059669');
+          const levelLabel = App.ui.t(level==='CẦN THẬN TRỌNG'?'CẦN THẬN TRỌNG':(level==='TRUNG BÌNH'?'TRUNG BÌNH':'CAO'));
           return `<div style="background:#f8fafc;border:1px solid ${levelColor};border-left:4px solid ${levelColor};border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:10px;color:#111;">
-            <b style="color:${levelColor};">Mức độ tin cậy thông số đầu vào: ${level}</b>
-            ${level!=='CAO'?' — có dùng giá trị mặc định/tham khảo, khuyến nghị đối chiếu kỹ trước khi dùng cho hồ sơ chính thức.':' — phần lớn thông số đã được nhập cụ thể cho dự án này.'}
+            <b style="color:${levelColor};">${App.ui.t('Mức độ tin cậy thông số đầu vào:')} ${levelLabel}</b>
+            ${level!=='CAO'?' — '+App.ui.t('có dùng giá trị mặc định/tham khảo, khuyến nghị đối chiếu kỹ trước khi dùng cho hồ sơ chính thức.'):' — '+App.ui.t('phần lớn thông số đã được nhập cụ thể cho dự án này.')}
             <ul style="margin:4px 0 0;padding-left:16px;color:#111;">
               ${notes.map(n=>`<li style="margin:1px 0;color:#111;">${n}</li>`).join('')}
             </ul>
@@ -5239,25 +5258,25 @@
            'IEC 60034-30-1 IE3 (Hiệu suất động cơ)','ISO 6946:2017 (Tính U cấu tạo lớp)'
           ].forEach(s=>stdSet.add(s));
           if((App.state.branches||[]).length>0) stdSet.add('SMACNA HVAC Duct Construction Standards');
-          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Cơ sở thiết kế — Tiêu chuẩn áp dụng</h3>
+          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_design_basis')}</h3>
           <ul style="margin:0 0 10px;padding-left:16px;font-size:10px;columns:2;color:#111;">
             ${[...stdSet].sort().map(s=>`<li style="margin:1px 0;color:#111;">${s}</li>`).join('')}
           </ul>`;
         })()}
         ${hasHL?`
         <!-- KPI tổng hợp -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">KPI Tổng hợp Phụ Tải Nhiệt (${rooms.length} phòng)</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_kpi_title')} (${App.ui.t('{n} phòng',{n:rooms.length})})</h3>
         <table style="width:100%;border-collapse:collapse;margin-bottom:10px;color:#111;">
           <tr style="background:#f1f5f9;color:#111;">
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>Tổng lạnh coil</b></td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>${App.ui.t('Tổng lạnh coil')}</b></td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;"><b style="color:#b45309;">${totalCoilKW.toFixed(1)} kW = ${(totalCoilKW/3.517).toFixed(1)} TR</b></td>
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>Tổng gió cấp</b></td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;"><b>${App.ui.t('Tổng gió cấp')}</b></td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;"><b>${totalSupply.toFixed(0)} m³/h</b></td>
           </tr>
           <tr>
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Tổng gió tươi</td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Tổng gió tươi')}</td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;">${totalFresh.toFixed(0)} m³/h (${totalSupply>0?((totalFresh/totalSupply)*100).toFixed(0):0}%)</td>
-            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Kw/m² sàn</td>
+            <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Kw/m² sàn')}</td>
             <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;">${totalFloor>0?(totalCoilKW/totalFloor*1000).toFixed(0):'-'} W/m²</td>
           </tr>
           ${(()=>{
@@ -5265,31 +5284,31 @@
             const totalMakeupRaw = rooms.reduce((s,r)=>s+(r._airflow?.Q_makeupRaw||0),0);
             if(totalLocalExhaust<=0) return '';
             return `<tr>
-              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Tổng gió thải cục bộ (thiết bị)</td>
+              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Tổng gió thải cục bộ (thiết bị)')}</td>
               <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#ea580c;">${totalLocalExhaust.toFixed(0)} m³/h</td>
-              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">Trong đó gió bù thuần túy (không qua coil)</td>
+              <td style="border:1px solid #cbd5e1;padding:4px 8px;color:#111;">${App.ui.t('Trong đó gió bù thuần túy (không qua coil)')}</td>
               <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:right;color:#111;">${totalMakeupRaw.toFixed(0)} m³/h</td>
             </tr>`;
           })()}
         </table>
         <!-- Bảng per-room -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Chi tiết phụ tải từng phòng (${rooms.length} phòng)</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_room_detail')} (${App.ui.t('{n} phòng',{n:rooms.length})})</h3>
         <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px;color:#111;">
           <thead><tr style="background:#1e293b;color:#fff;">
-            <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">Tên phòng</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Loại TB</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">S.sàn(m²)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">L_cấp(m³/h)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">L_hồi</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">L_tươi</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_hiện(kW)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_ẩn(kW)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_coil(kW)</th>
-            <th style="border:1px solid #334155;padding:4px;color:#fff;">Reheat</th>
+            <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">${App.ui.t('Tên phòng')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Loại TB')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('S.sàn(m²)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('L_cấp(m³/h)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('L_hồi')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('L_tươi')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_hiện(kW)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_ẩn(kW)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_coil(kW)')}</th>
+            <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Reheat')}</th>
           </tr></thead>
-          <tbody>${roomTableRows||'<tr><td colspan="10" style="color:#111;">Chưa có dữ liệu</td></tr>'}</tbody>
+          <tbody>${roomTableRows||`<tr><td colspan="10" style="color:#111;">${App.ui.t('Chưa có dữ liệu')}</td></tr>`}</tbody>
           <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;">
-            <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">Tổng cộng</td>
+            <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">${App.ui.t('Tổng cộng')}</td>
             <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${totalFloor.toFixed(0)}</td>
             <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${totalSupply.toFixed(0)}</td>
             <td style="border:1px solid #ddd;padding:4px;color:#111;"></td>
@@ -5305,16 +5324,16 @@
              khảo. Dữ liệu lấy từ r._ev đã tính sẵn cho từng phòng (không cần tính lại) —
              chỉ cộng dồn theo từng thành phần: vách, mái, kính/bức xạ, người, đèn, gió
              tươi (chỉ FCU thường cộng thẳng), vách ngăn nội bộ. -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Phân tích tải nhiệt theo thành phần (toàn dự án)</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_load_breakdown')}</h3>
         ${(()=>{
           const sums = {
-            'Q1 Vách/tường':       rooms.reduce((s,r)=>s+(r._ev?.Q_wall||0),0),
-            'Q2 Mái':              rooms.reduce((s,r)=>s+(r._ev?.Q_roof||0),0),
-            'Q3 Kính/bức xạ':      rooms.reduce((s,r)=>s+(r._ev?.Q_solar||0),0),
-            'Q4 Người':            rooms.reduce((s,r)=>s+(r._ev?.Q_ps||0)+(r._ev?.Q_pl||0),0),
-            'Q5 Chiếu sáng':       rooms.reduce((s,r)=>s+(r._ev?.Q_light||0),0),
-            'Q6 Gió tươi (FCU thường)': rooms.reduce((s,r)=>s+(r._ev?.Q_fresh_s||0)+(r._ev?.Q_fresh_l||0),0),
-            'Q7 Vách ngăn nội bộ': rooms.reduce((s,r)=>s+(r._partitionDetails||[]).reduce((ps,d)=>ps+(d.Q_W||0),0),0),
+            [App.ui.t('Q1 Vách/tường')]:       rooms.reduce((s,r)=>s+(r._ev?.Q_wall||0),0),
+            [App.ui.t('Q2 Mái')]:              rooms.reduce((s,r)=>s+(r._ev?.Q_roof||0),0),
+            [App.ui.t('Q3 Kính/bức xạ')]:      rooms.reduce((s,r)=>s+(r._ev?.Q_solar||0),0),
+            [App.ui.t('Q4 Người')]:            rooms.reduce((s,r)=>s+(r._ev?.Q_ps||0)+(r._ev?.Q_pl||0),0),
+            [App.ui.t('Q5 Chiếu sáng')]:       rooms.reduce((s,r)=>s+(r._ev?.Q_light||0),0),
+            [App.ui.t('Q6 Gió tươi (FCU thường)')]: rooms.reduce((s,r)=>s+(r._ev?.Q_fresh_s||0)+(r._ev?.Q_fresh_l||0),0),
+            [App.ui.t('Q7 Vách ngăn nội bộ')]: rooms.reduce((s,r)=>s+(r._partitionDetails||[]).reduce((ps,d)=>ps+(d.Q_W||0),0),0),
           };
           const totalW = Object.values(sums).reduce((a,b)=>a+b,0);
           const rowsHtml = Object.entries(sums).map(([label,w])=>{
@@ -5322,11 +5341,11 @@
             return `<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${kw.toFixed(2)}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${pct.toFixed(1)}%</td></tr>`;
           }).join('');
           return `<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px;color:#111;">
-            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">Hạng mục</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">kW</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">%</th></tr></thead>
+            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">${App.ui.t('Hạng mục')}</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">kW</th><th style="border:1px solid #ddd;padding:4px 8px;color:#111;">%</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
-            <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;"><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">Tổng tải phòng (trước hệ số an toàn thiết bị)</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${(totalW/1000).toFixed(2)}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">100%</td></tr></tfoot>
+            <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;"><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${App.ui.t('Tổng tải phòng (trước hệ số an toàn thiết bị)')}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">${(totalW/1000).toFixed(2)}</td><td style="border:1px solid #ddd;padding:4px 8px;text-align:right;color:#111;">100%</td></tr></tfoot>
           </table>
-          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">* Bảng này là tổng tải nhiệt PHÒNG theo từng thành phần (ASHRAE Fundamentals Ch.18) — không nhất thiết bằng Tổng lạnh coil (Q_coil) ở trên, vì Q_coil của hệ AHU/PAU tính theo phương pháp enthalpy lưu lượng gió (không cộng thẳng tải phòng), và Q_coil còn gồm cả tải motor/thiết bị điện chưa tách theo phòng ở đây.</p>`;
+          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">${App.ui.t('* Bảng này là tổng tải nhiệt PHÒNG theo từng thành phần (ASHRAE Fundamentals Ch.18) — không nhất thiết bằng Tổng lạnh coil (Q_coil) ở trên, vì Q_coil của hệ AHU/PAU tính theo phương pháp enthalpy lưu lượng gió (không cộng thẳng tải phòng), và Q_coil còn gồm cả tải motor/thiết bị điện chưa tách theo phòng ở đây.')}</p>`;
         })()}
         `:''}
         ${(()=>{
@@ -5335,7 +5354,7 @@
           const eqRows=eqRooms.map(r=>{
             const q=r.equipType==='FCU_OA' ? (r._coil.qCoilFcuKW??r._coil.qCoilKW) : r._coil.qCoilKW;
             const eqSel=App.calc.selectEquipAuto({qCoilKW:q, equipType:r.equipType||'FCU', designMarginPct:10, preferType:'cassette'});
-            if(!eqSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${r.name||'—'}</td><td colspan="6" style="border:1px solid #ddd;padding:4px;color:#64748b;">VENT — không cần coil</td></tr>`;
+            if(!eqSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${r.name||'—'}</td><td colspan="6" style="border:1px solid #ddd;padding:4px;color:#64748b;">${App.ui.t('VENT — không cần coil')}</td></tr>`;
             return `<tr>
               <td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${r.name||'—'}</td>
               <td style="border:1px solid #ddd;padding:4px;text-align:center;color:#111;">${r.equipType}</td>
@@ -5347,25 +5366,25 @@
             </tr>`;
           }).join('');
           const totalCoil2=eqRooms.reduce((s,r)=>s+(r._coil?.qCoilKW||0),0);
-          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Bảng thiết bị lựa chọn (Equipment Schedule)</h3>
+          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_equipment_schedule')}</h3>
           <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:6px;color:#111;">
             <thead><tr style="background:#1e293b;color:#fff;">
-              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">Tên phòng</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Loại HT</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Q_coil(kW)</th>
-              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">Model đề xuất</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">SL</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Tổng CS(kW)</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">H.suất SD</th>
+              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">${App.ui.t('Tên phòng')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Loại HT')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Q_coil(kW)')}</th>
+              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">${App.ui.t('Model đề xuất')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('SL')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Tổng CS(kW)')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('H.suất SD')}</th>
             </tr></thead>
             <tbody>${eqRows}</tbody>
             <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;">
-              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="5">Tổng công suất thiết bị</td>
+              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="5">${App.ui.t('Tổng công suất thiết bị')}</td>
               <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#b45309;">${totalCoil2.toFixed(2)} kW</td>
               <td style="border:1px solid #ddd;padding:4px;color:#111;"></td>
             </tr></tfoot>
           </table>
-          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ Model đề xuất tham khảo catalog thị trường VN — kỹ sư cần xác nhận với nhà sản xuất trước khi chọn thiết bị chính thức.</p>`;
+          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ ${App.ui.t('Model đề xuất tham khảo catalog thị trường VN — kỹ sư cần xác nhận với nhà sản xuất trước khi chọn thiết bị chính thức.')}</p>`;
         })()}
         <!-- Bảng Quạt thông gió / Gió thải cục bộ — bổ sung theo đề xuất người dùng: bảng
              thiết bị lựa chọn ở trên chỉ lọc theo Q_coil>0 (thiết bị làm lạnh), nên MỌI phòng
@@ -5380,17 +5399,17 @@
             if(r.equipType==='VENT' && r._airflow?.Q_supply>0){
               const staticPa=r.espPa||150;
               const fanSel=App.calc.selectFanAuto({airflowM3h:r._airflow.Q_supply, staticPaRequired:staticPa, preferType:'axial'});
-              fanRows.push({room:r.name||'—', type:'VENT (thông gió chính)', flow:r._airflow.Q_supply, staticPa, fanSel});
+              fanRows.push({room:r.name||'—', type:App.ui.t('VENT (thông gió chính)'), flow:r._airflow.Q_supply, staticPa, fanSel});
             }
             if(r.hasLocalExhaustEquip && r._airflow?.Q_localExhaust>0){
               const staticPa=100;
               const fanSel=App.calc.selectFanAuto({airflowM3h:r._airflow.Q_localExhaust, staticPaRequired:staticPa, preferType:'wall_exhaust'});
-              fanRows.push({room:r.name||'—', type:'Gió thải cục bộ', flow:r._airflow.Q_localExhaust, staticPa, fanSel});
+              fanRows.push({room:r.name||'—', type:App.ui.t('Gió thải cục bộ'), flow:r._airflow.Q_localExhaust, staticPa, fanSel});
             }
           });
           if(!fanRows.length) return '';
           const rowsHtml=fanRows.map(fr=>{
-            if(!fr.fanSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${fr.room}</td><td style="border:1px solid #ddd;padding:4px;color:#111;">${fr.type}</td><td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${fr.flow.toFixed(0)}</td><td colspan="4" style="border:1px solid #ddd;padding:4px;color:#64748b;">Không tìm được quạt phù hợp trong catalog tham khảo — chọn thủ công</td></tr>`;
+            if(!fr.fanSel) return `<tr><td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${fr.room}</td><td style="border:1px solid #ddd;padding:4px;color:#111;">${fr.type}</td><td style="border:1px solid #ddd;padding:4px;text-align:right;color:#111;">${fr.flow.toFixed(0)}</td><td colspan="4" style="border:1px solid #ddd;padding:4px;color:#64748b;">${App.ui.t('Không tìm được quạt phù hợp trong catalog tham khảo — chọn thủ công')}</td></tr>`;
             return `<tr>
               <td style="border:1px solid #ddd;padding:4px 6px;color:#111;">${fr.room}</td>
               <td style="border:1px solid #ddd;padding:4px;color:#111;">${fr.type}</td>
@@ -5402,31 +5421,31 @@
             </tr>`;
           }).join('');
           const totalFlow=fanRows.reduce((s,fr)=>s+fr.flow,0);
-          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Bảng quạt thông gió / gió thải cục bộ</h3>
+          return `<h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('Bảng quạt thông gió / gió thải cục bộ')}</h3>
           <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:6px;color:#111;">
             <thead><tr style="background:#1e293b;color:#fff;">
-              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">Tên phòng</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Mục đích</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Lưu lượng(m³/h)</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">Cột áp(Pa)</th>
-              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">Model quạt đề xuất</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">SL</th>
-              <th style="border:1px solid #334155;padding:4px;color:#fff;">H.suất SD</th>
+              <th style="border:1px solid #334155;padding:4px 6px;text-align:left;color:#fff;">${App.ui.t('Tên phòng')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Mục đích')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Lưu lượng(m³/h)')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('Cột áp(Pa)')}</th>
+              <th style="border:1px solid #334155;padding:4px;text-align:left;color:#fff;">${App.ui.t('Model quạt đề xuất')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('SL')}</th>
+              <th style="border:1px solid #334155;padding:4px;color:#fff;">${App.ui.t('H.suất SD')}</th>
             </tr></thead>
             <tbody>${rowsHtml}</tbody>
             <tfoot><tr style="background:#f8fafc;font-weight:bold;color:#111;">
-              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">Tổng lưu lượng quạt</td>
+              <td style="border:1px solid #ddd;padding:4px 6px;color:#111;" colspan="2">${App.ui.t('Tổng lưu lượng quạt')}</td>
               <td style="border:1px solid #ddd;padding:4px;text-align:right;color:#b45309;">${totalFlow.toFixed(0)} m³/h</td>
               <td style="border:1px solid #ddd;padding:4px;color:#111;" colspan="4"></td>
             </tr></tfoot>
           </table>
-          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ Model quạt tham khảo catalog thị trường VN, cột áp là giá trị mặc định/ước tính (chưa tính tổn thất ma sát ống gió chi tiết) — kỹ sư cần xác nhận cột áp thực tế theo bảng nhánh ống gió và xác nhận model với nhà sản xuất trước khi chọn thiết bị chính thức.</p>`;
+          <p style="font-size:9px;color:#64748b;margin:0 0 10px;">⚠ ${App.ui.t('Model quạt tham khảo catalog thị trường VN, cột áp là giá trị mặc định/ước tính (chưa tính tổn thất ma sát ống gió chi tiết) — kỹ sư cần xác nhận cột áp thực tế theo bảng nhánh ống gió và xác nhận model với nhà sản xuất trước khi chọn thiết bị chính thức.')}</p>`;
         })()}
         ${(App.state.branches||[]).length?`
         <!-- Bảng nhánh ống gió -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Bảng nhánh ống gió</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('branch_table_title')}</h3>
         <table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:10px;color:#111;">
-          <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px;color:#111;">Tên nhánh</th><th style="border:1px solid #ddd;padding:4px;color:#111;">Q(m³/h)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">v(m/s)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">Kích thước</th><th style="border:1px solid #ddd;padding:4px;color:#111;">ΔP ma sát(Pa)</th></tr></thead>
+          <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px;color:#111;">${App.ui.t('Tên nhánh')}</th><th style="border:1px solid #ddd;padding:4px;color:#111;">Q(m³/h)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">v(m/s)</th><th style="border:1px solid #ddd;padding:4px;color:#111;">${App.ui.t('Kích thước')}</th><th style="border:1px solid #ddd;padding:4px;color:#111;">${App.ui.t('ΔP ma sát(Pa)')}</th></tr></thead>
           <tbody>${branchRows}</tbody>
         </table>`:''}
         <!-- Chẩn đoán — bảng checklist đầy đủ (hiện MỌI hạng mục kiểm tra, không chỉ
@@ -5434,7 +5453,7 @@
              tham khảo: mỗi hạng mục luôn có 1 dòng, cột "Kết quả" hiện ✓Đạt / ⚠/✗ kèm chi
              tiết cụ thể — giúp người thẩm định thấy rõ ĐàCÓ kiểm tra hạng mục đó, không
              chỉ suy đoán từ việc "không thấy báo lỗi". -->
-        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">Chẩn đoán &amp; Kiểm tra</h3>
+        <h3 style="margin:8px 0 5px;font-size:12px;color:#0f172a;">${App.ui.t('report_diagnostics')}</h3>
         ${(()=>{
           const allFlags = [...d.flags];
           // FIX: cảnh báo từ calcBuildingTypeAirflow() (vd ACH_FRESH_MIN) chỉ được gộp vào
@@ -5450,26 +5469,26 @@
           const byCode = code => allFlags.filter(f=>f.code===code || (code==='PARTITION'&&f.code==='PARTITION'));
           const rowFor = (label, code, passMsg) => {
             const hits = byCode(code);
-            if(!hits.length) return `<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;color:#059669;">✓ Đạt${passMsg?' — '+passMsg:''}</td></tr>`;
+            if(!hits.length) return `<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;color:#059669;">✓ ${App.ui.t('Đạt')}${passMsg?' — '+passMsg:''}</td></tr>`;
             return hits.map(f=>`<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${label}</td><td style="border:1px solid #ddd;padding:4px 8px;color:${f.level==='red'?'#dc2626':'#d97706'};">${f.level==='red'?'✗':'⚠'} ${f.msg}</td></tr>`).join('');
           };
           const knownCodes = ['MISS_AREA','RETURN_NEG','ACH_OUT','ACH_LOW','MOTOR_LOW_FL','FRESH_MIN','ACH_FRESH_MIN','PARTITION'];
           const rowsHtml = [
-            rowFor('Diện tích sàn hợp lệ (đã nhập L×W hoặc diện tích tuỳ chỉnh)', 'MISS_AREA'),
-            rowFor('Gió hồi không âm (Q_hồi ≥ 0)', 'RETURN_NEG'),
-            rowFor('ACH nằm trong dải khuyến nghị theo loại phòng', 'ACH_OUT'),
-            rowFor('ACH áp dụng ≥ khuyến nghị tối thiểu', 'ACH_LOW'),
-            rowFor('ACH gió tươi đạt yêu cầu riêng (phòng y tế theo ASHRAE 170, nếu có)', 'ACH_FRESH_MIN'),
-            rowFor('Gió tươi đạt yêu cầu tối thiểu ASHRAE 62.1 (theo người/diện tích)', 'FRESH_MIN'),
-            rowFor('Motor không chạy non tải (FL ≥ 0.5)', 'MOTOR_LOW_FL'),
-            rowFor('Vách ngăn nội bộ — đủ dữ liệu U/nhiệt độ phòng kề (không dùng mặc định)', 'PARTITION'),
+            rowFor(App.ui.t('Diện tích sàn hợp lệ (đã nhập L×W hoặc diện tích tuỳ chỉnh)'), 'MISS_AREA'),
+            rowFor(App.ui.t('Gió hồi không âm (Q_hồi ≥ 0)'), 'RETURN_NEG'),
+            rowFor(App.ui.t('ACH nằm trong dải khuyến nghị theo loại phòng'), 'ACH_OUT'),
+            rowFor(App.ui.t('ACH áp dụng ≥ khuyến nghị tối thiểu'), 'ACH_LOW'),
+            rowFor(App.ui.t('ACH gió tươi đạt yêu cầu riêng (phòng y tế theo ASHRAE 170, nếu có)'), 'ACH_FRESH_MIN'),
+            rowFor(App.ui.t('Gió tươi đạt yêu cầu tối thiểu ASHRAE 62.1 (theo người/diện tích)'), 'FRESH_MIN'),
+            rowFor(App.ui.t('Motor không chạy non tải (FL ≥ 0.5)'), 'MOTOR_LOW_FL'),
+            rowFor(App.ui.t('Vách ngăn nội bộ — đủ dữ liệu U/nhiệt độ phòng kề (không dùng mặc định)'), 'PARTITION'),
           ].join('');
           // Các cảnh báo khác không nằm trong danh sách mã đã biết (đề phòng thêm code mới
           // sau này mà quên cập nhật bảng checklist) — vẫn hiện đầy đủ, không bị bỏ sót.
           const otherFlags = allFlags.filter(f=>!knownCodes.includes(f.code));
-          const otherRows = otherFlags.map(f=>`<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${f.code||'Khác'}</td><td style="border:1px solid #ddd;padding:4px 8px;color:${f.level==='red'?'#dc2626':'#d97706'};">${f.level==='red'?'✗':'⚠'} ${f.msg}</td></tr>`).join('');
+          const otherRows = otherFlags.map(f=>`<tr><td style="border:1px solid #ddd;padding:4px 8px;color:#111;">${f.code||App.ui.t('Khác')}</td><td style="border:1px solid #ddd;padding:4px 8px;color:${f.level==='red'?'#dc2626':'#d97706'};">${f.level==='red'?'✗':'⚠'} ${f.msg}</td></tr>`).join('');
           return `<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:10px;color:#111;">
-            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;width:55%;color:#111;">Hạng mục</th><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">Kết quả</th></tr></thead>
+            <thead><tr style="background:#f1f5f9;color:#111;"><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;width:55%;color:#111;">${App.ui.t('Hạng mục')}</th><th style="border:1px solid #ddd;padding:4px 8px;text-align:left;color:#111;">${App.ui.t('Kết quả')}</th></tr></thead>
             <tbody>${rowsHtml}${otherRows}</tbody>
           </table>`;
         })()}
@@ -5477,26 +5496,26 @@
         <table style="width:100%;margin-top:24px;border-collapse:collapse;page-break-inside:avoid;color:#111;">
           <tr>
             <td style="width:33%;text-align:center;padding:0 8px;color:#111;">
-              <div style="font-size:10px;font-weight:bold;color:#0f172a;">NGƯỜI LẬP</div>
-              <div style="font-size:9px;color:#64748b;">(Ký, ghi rõ họ tên)</div>
+              <div style="font-size:10px;font-weight:bold;color:#0f172a;">${App.ui.t('report_signoff_prepared')}</div>
+              <div style="font-size:9px;color:#64748b;">${App.ui.t('(Ký, ghi rõ họ tên)')}</div>
               <div style="height:60px;color:#111;"></div>
               <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:10px;color:#111;">${repEngineer!=='—'?repEngineer:'.....................'}</div>
             </td>
             <td style="width:33%;text-align:center;padding:0 8px;color:#111;">
-              <div style="font-size:10px;font-weight:bold;color:#0f172a;">KIỂM TRA</div>
-              <div style="font-size:9px;color:#64748b;">(Ký, ghi rõ họ tên)</div>
+              <div style="font-size:10px;font-weight:bold;color:#0f172a;">${App.ui.t('report_signoff_checked')}</div>
+              <div style="font-size:9px;color:#64748b;">${App.ui.t('(Ký, ghi rõ họ tên)')}</div>
               <div style="height:60px;color:#111;"></div>
               <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:10px;color:#111;">.....................</div>
             </td>
             <td style="width:33%;text-align:center;padding:0 8px;color:#111;">
-              <div style="font-size:10px;font-weight:bold;color:#0f172a;">PHÊ DUYỆT</div>
-              <div style="font-size:9px;color:#64748b;">(Ký, ghi rõ họ tên)</div>
+              <div style="font-size:10px;font-weight:bold;color:#0f172a;">${App.ui.t('report_signoff_approved')}</div>
+              <div style="font-size:9px;color:#64748b;">${App.ui.t('(Ký, ghi rõ họ tên)')}</div>
               <div style="height:60px;color:#111;"></div>
               <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:10px;color:#111;">.....................</div>
             </td>
           </tr>
         </table>
-        <div style="margin-top:14px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:9px;color:#6b7f96;">Tạo bởi: MultiHVAC Calculator · Created by Quocde · Ver 2606.22.01 — Kết quả tính toán tham khảo, kỹ sư chịu trách nhiệm xác nhận trước khi thi công.</div>
+        <div style="margin-top:14px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:9px;color:#6b7f96;">${App.ui.t('Tạo bởi:')} MultiHVAC Calculator · Created by Quocde · Ver 2606.22.01 — ${App.ui.t('report_footer_note')}</div>
       </div>`;
     },
 
@@ -5512,16 +5531,16 @@
         const rid=scope.slice(5);
         rooms=allRooms.filter(r=>r.id===rid);
       } else { rooms=allRooms; }
-      const scopeLabel=scope==='all'?'Toàn bộ dự án':scope.startsWith('floor:')?
-        (App.state.floors||[]).find(f=>f.id===scope.slice(6))?.name||'Tầng':
-        allRooms.find(r=>r.id===scope.slice(5))?.name||'Phòng';
+      const scopeLabel=scope==='all'?App.ui.t('Toàn bộ dự án'):scope.startsWith('floor:')?
+        (App.state.floors||[]).find(f=>f.id===scope.slice(6))?.name||App.ui.t('Tầng'):
+        allRooms.find(r=>r.id===scope.slice(5))?.name||App.ui.t('Phòng');
       App.state._exportRooms=rooms; App.state._exportScopeLabel=scopeLabel;
       return this._exportPDF_impl();
     },
     async _exportPDF_impl(){
       const preview = document.getElementById('report-preview');
       preview.innerHTML = this.buildPreviewHtml();
-      App.ui.toast('info','Đang tạo PDF...');
+      App.ui.toast('info',App.ui.t('Đang tạo PDF...'));
       try{
         // FIX (nguyên nhân THẬT của lỗi "chữ nhạt/trắng" trong PDF — xác nhận qua debug file
         // PDF thực tế người dùng gửi): html2canvas được gọi NGAY LẬP TỨC sau khi set
@@ -5554,8 +5573,8 @@
           y += pageH;
         }
         pdf.save(`BaoCao_HVAC_${App.state.inputs.projectName||'Draft'}_${new Date().toISOString().slice(0,10)}.pdf`);
-        App.ui.toast('ok','Đã xuất PDF.');
-      }catch(err){ App.ui.toast('err','Lỗi xuất PDF: '+err.message); }
+        App.ui.toast('ok',App.ui.t('Đã xuất PDF.'));
+      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi xuất PDF:')+' '+err.message); }
     },
 
     exportXLSX(scope='all'){
@@ -5581,11 +5600,11 @@
         const flaggedRooms=rooms.filter(r=>r._flags&&r._flags.length>0);
         if(flaggedRooms.length>0){
           const flagSheet=[
-            ['* THÔNG SỐ CẦN KIỂM TRA (vượt ngưỡng tiêu chuẩn)'],
-            ['Phòng','Mức độ','Thông số','Chi tiết','Tiêu chuẩn tham chiếu'],
+            [App.ui.t('* THÔNG SỐ CẦN KIỂM TRA (vượt ngưỡng tiêu chuẩn)')],
+            [App.ui.t('Phòng'),App.ui.t('Mức độ'),App.ui.t('Thông số'),App.ui.t('Chi tiết'),App.ui.t('Tiêu chuẩn tham chiếu')],
             ...flaggedRooms.flatMap(r=>r._flags.map(f=>[
               r.name||'—',
-              f.severity==='error'||f.level==='red'?'⛔ LỖI':'⚠ CẢNH BÁO',
+              f.severity==='error'||f.level==='red'?'⛔ '+App.ui.t('LỖI'):'⚠ '+App.ui.t('CẢNH BÁO'),
               f.field||'—',
               f.msg||f.code||'—',
               'ASHRAE 62.1-2022 / ISO 14644-1:2015'
@@ -5610,22 +5629,22 @@
         if((App.state.branches||[]).length>0) methodSet.add('Duct sizing: Darcy-Weisbach (SMACNA HVAC Duct Design)');
         const cosBasis=[
           ['CƠ SỞ THIẾT KẾ — BASIS OF DESIGN'],[''],
-          ['I. TIÊU CHUẨN ÁP DỤNG'],
+          [App.ui.t('I. TIÊU CHUẨN ÁP DỤNG')],
           ...[...stdSet].sort().map(s=>['• '+s]),
           [''],
-          ['II. PHƯƠNG PHÁP TÍNH TOÁN'],
+          [App.ui.t('II. PHƯƠNG PHÁP TÍNH TOÁN')],
           ...[...methodSet].sort().map(m=>['• '+m]),
           [''],
-          ['III. THÔNG SỐ THAM KHẢO THỰC TẾ (không có giá trị pháp lý)'],
-          ['• FCU/AHU catalog — dải công suất tham khảo thị trường VN 2024, xác nhận với nhà sản xuất'],
-          ['• Đơn giá BOM (VND) — tham khảo thị trường 2024, sai số ±30-50%'],
-          ['• Hệ số ζ phụ kiện ống gió — giá trị trung bình SMACNA, tra đồ thị để chính xác'],
-          ['• Mật độ tải IT kW/m² DC Rack — ước tính, đo thực tế để thiết kế chính xác'],
+          [App.ui.t('III. THÔNG SỐ THAM KHẢO THỰC TẾ (không có giá trị pháp lý)')],
+          ['• '+App.ui.t('FCU/AHU catalog — dải công suất tham khảo thị trường VN 2024, xác nhận với nhà sản xuất')],
+          ['• '+App.ui.t('Đơn giá BOM (VND) — tham khảo thị trường 2024, sai số ±30-50%')],
+          ['• '+App.ui.t('Hệ số ζ phụ kiện ống gió — giá trị trung bình SMACNA, tra đồ thị để chính xác')],
+          ['• '+App.ui.t('Mật độ tải IT kW/m² DC Rack — ước tính, đo thực tế để thiết kế chính xác')],
           [''],
-          ['III. LƯU Ý PHÁP LÝ'],
-          ['• Thông số tham khảo thực tế (FCU catalog, đơn giá VND) không có giá trị pháp lý.'],
-          ['• Kỹ sư phải xác nhận với catalog nhà sản xuất trước khi chọn thiết bị.'],
-          ['• Số liệu khí hậu: QCVN 02:2022/BXD. Một số tỉnh dùng trạm gần nhất.'],
+          [App.ui.t('III. LƯU Ý PHÁP LÝ')],
+          ['• '+App.ui.t('Thông số tham khảo thực tế (FCU catalog, đơn giá VND) không có giá trị pháp lý.')],
+          ['• '+App.ui.t('Kỹ sư phải xác nhận với catalog nhà sản xuất trước khi chọn thiết bị.')],
+          ['• '+App.ui.t('Số liệu khí hậu: QCVN 02:2022/BXD. Một số tỉnh dùng trạm gần nhất.')],
         ];
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cosBasis), 'Co_So_Thiet_Ke');
 
@@ -5635,23 +5654,23 @@
         const totalFresh = rooms.reduce((s,r)=>s+(r._af?.L_fresh||0),0);
         const totalFloor = rooms.reduce((s,r)=>s+((r.L||0)*(r.W||0)),0);
         const summary = [
-          ['MultiHVAC Calculator — Báo cáo tính toán phụ tải nhiệt'],
-          ['Tên dự án', I.projectName||'—'],
-          ['Khách hàng', I.client||I.customer||'—'],
-          ['Địa chỉ', I.address||'—'],
-          ['Kỹ sư thiết kế', I.engineer||I.performer||'—'],
-          ['Ngày thực hiện', I.date||I.execDate||'—'],
-          ['Mã dự án', I.projectCode||'—'],
+          [App.ui.t('MultiHVAC Calculator — Báo cáo tính toán phụ tải nhiệt')],
+          [App.ui.t('Tên dự án'), I.projectName||'—'],
+          [App.ui.t('Khách hàng'), I.client||I.customer||'—'],
+          [App.ui.t('Địa chỉ'), I.address||'—'],
+          [App.ui.t('Kỹ sư thiết kế'), I.engineer||I.performer||'—'],
+          [App.ui.t('Ngày thực hiện'), I.date||I.execDate||'—'],
+          [App.ui.t('Mã dự án'), I.projectCode||'—'],
           [],
-          ['KPI Tổng hợp', 'Giá trị', 'Đơn vị'],
-          ['Số phòng', rooms.length, 'phòng'],
-          ['Diện tích sàn tổng', totalFloor.toFixed(0), 'm²'],
-          ['Tổng lạnh coil', totalCoil.toFixed(2), 'kW'],
-          ['Tổng lạnh coil', (totalCoil/3.517).toFixed(2), 'TR'],
-          ['Tổng gió cấp', totalSupply.toFixed(0), 'm³/h'],
-          ['Tổng gió tươi', totalFresh.toFixed(0), 'm³/h'],
-          ['% Gió tươi / Cấp', totalSupply>0?((totalFresh/totalSupply)*100).toFixed(1):0, '%'],
-          ['W/m² sàn', totalFloor>0?(totalCoil*1000/totalFloor).toFixed(0):'-', 'W/m²'],
+          [App.ui.t('KPI Tổng hợp'), App.ui.t('Giá trị'), App.ui.t('Đơn vị')],
+          [App.ui.t('Số phòng'), rooms.length, App.ui.t('phòng')],
+          [App.ui.t('Diện tích sàn tổng'), totalFloor.toFixed(0), 'm²'],
+          [App.ui.t('Tổng lạnh coil'), totalCoil.toFixed(2), 'kW'],
+          [App.ui.t('Tổng lạnh coil'), (totalCoil/3.517).toFixed(2), 'TR'],
+          [App.ui.t('Tổng gió cấp'), totalSupply.toFixed(0), 'm³/h'],
+          [App.ui.t('Tổng gió tươi'), totalFresh.toFixed(0), 'm³/h'],
+          [App.ui.t('% Gió tươi / Cấp'), totalSupply>0?((totalFresh/totalSupply)*100).toFixed(1):0, '%'],
+          [App.ui.t('W/m² sàn'), totalFloor>0?(totalCoil*1000/totalFloor).toFixed(0):'-', 'W/m²'],
         ];
         const wsSum = XLSX.utils.aoa_to_sheet(summary);
         XLSX.utils.book_append_sheet(wb, wsSum, 'Tong_Quan');
@@ -5659,13 +5678,13 @@
         // Sheet 2: Chi tiết từng phòng (per-room heat load)
         if(rooms.length > 0){
           const roomHeader = [
-            'Tên phòng','Loại TB','Dài(m)','Rộng(m)','Cao(m)','S.sàn(m²)','Thể tích(m³)',
-            'ACH(h⁻¹)','Số người','T cấp(°C)',
-            'L_cấp(m³/h)','L_hồi(m³/h)','L_tươi(m³/h)','Warn',
-            'Q_vách(kW)','Q_mái(kW)','Q_sàn(kW)','Q_vách_ngăn(kW)',
-            'Q_kính(kW)','Q_người_s(kW)','Q_đèn(kW)','Q_fr_s(kW)',
-            'Q_hiện_tổng(kW)','Q_ẩn(kW)','SHR',
-            'Q_coil(kW)','Q_coil(TR)','Reheat(kW)','Loại TB'
+            App.ui.t('Tên phòng'),App.ui.t('Loại TB'),App.ui.t('Dài(m)'),App.ui.t('Rộng(m)'),App.ui.t('Cao(m)'),App.ui.t('S.sàn(m²)'),App.ui.t('Thể tích(m³)'),
+            App.ui.t('ACH(h⁻¹)'),App.ui.t('Số người'),App.ui.t('T cấp(°C)'),
+            App.ui.t('L_cấp(m³/h)'),App.ui.t('L_hồi(m³/h)'),'L_tươi(m³/h)','Warn',
+            App.ui.t('Q_vách(kW)'),App.ui.t('Q_mái(kW)'),App.ui.t('Q_sàn(kW)'),App.ui.t('Q_vách_ngăn(kW)'),
+            App.ui.t('Q_kính(kW)'),App.ui.t('Q_người_s(kW)'),App.ui.t('Q_đèn(kW)'),'Q_fr_s(kW)',
+            App.ui.t('Q_hiện_tổng(kW)'),App.ui.t('Q_ẩn(kW)'),'SHR',
+            'Q_coil(kW)','Q_coil(TR)','Reheat(kW)',App.ui.t('Loại TB')
           ];
           const roomData = rooms.map(r=>{
             const hl=App.ui.heatload;
@@ -5703,45 +5722,45 @@
 
         // Sheet: Equipment Schedule
         if(rooms.filter(r=>r._coil?.qCoilKW>0).length>0){
-          const eqHeader=['Phòng','Loại phòng','Phương pháp gió','Q_coil(kW)','Model đề xuất','SL','Tổng CS(kW)','Hiệu suất sử dụng(%)','Lưu lượng(m³/h)','Ghi chú'];
+          const eqHeader=[App.ui.t('Phòng'),App.ui.t('Loại phòng'),App.ui.t('Phương pháp gió'),'Q_coil(kW)',App.ui.t('Model đề xuất'),App.ui.t('SL'),App.ui.t('Tổng CS(kW)'),App.ui.t('Hiệu suất sử dụng(%)'),App.ui.t('Lưu lượng(m³/h)'),App.ui.t('Ghi chú')];
           const eqData=rooms.filter(r=>r._coil?.qCoilKW>0).map(r=>{
             // FCU_OA: chọn model theo phần coil FCU riêng (qCoilFcuKW), không theo tổng qCoilKW
             // (đã gồm cả phần thiết bị xử lý gió tươi riêng — không nằm trong catalog FCU/AHU/PAU)
             const qSel = r.equipType==='FCU_OA' ? (r._coil.qCoilFcuKW??r._coil.qCoilKW) : r._coil.qCoilKW;
             const sel=App.calc.selectEquipAuto({qCoilKW:qSel,equipType:r.equipType,designMarginPct:10});
-            if(!sel) return [r.name,'VENT','—','Không cần coil','','','','',''];
+            if(!sel) return [r.name,'VENT','—',App.ui.t('Không cần coil'),'','','','',''];
             return [r.name,r.buildingType||'—',(r._airflow?.modeNote||'general').slice(0,40),(r._coil.qCoilKW).toFixed(2),sel.model.name,sel.qty,(sel.totalCapKW).toFixed(1),sel.utilization,(sel.model.airflowM3h*(sel.qty||1)).toString(),sel.warning||sel.model.note||''];
           });
-          eqData.push(['','','','','','','','','⚠ Catalog tham chiếu thị trường VN 2024. Xác nhận với nhà sản xuất trước khi chọn thiết bị.']);
+          eqData.push(['','','','','','','','','⚠ '+App.ui.t('Catalog tham chiếu thị trường VN 2024. Xác nhận với nhà sản xuất trước khi chọn thiết bị.')]);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([eqHeader,...eqData]), 'Equipment_Schedule');
         }
 
         // Sheet: BOM sơ bộ
         const bom=App.calc.generateBOM(rooms, App.state.ductBranches||App.state.branches||[], App.state.hlEquipGroups||[]);
         if(bom?.items?.length>0){
-          const bomHeader=['Hạng mục','Mô tả','Đơn vị','Khối lượng','Đơn giá (VND)','Thành tiền (VND)'];
+          const bomHeader=[App.ui.t('Hạng mục'),App.ui.t('Mô tả'),App.ui.t('Đơn vị'),App.ui.t('Khối lượng'),App.ui.t('Đơn giá (VND)'),App.ui.t('Thành tiền (VND)')];
           const bomData=bom.items.map(b=>[b.cat,b.item,b.unit,b.qty.toFixed(0),b.rate.toLocaleString(),b.cost.toLocaleString()]);
-          bomData.push(['','','','','TỔNG CỘNG (VND):',bom.totalVND.toLocaleString()]);
-          bomData.push(['','','','','TỔNG CỘNG (triệu VND):',bom.totalMVND]);
-          bomData.push(['GHI CHÚ',bom.note,'','','','']);
+          bomData.push(['','','','',App.ui.t('TỔNG CỘNG (VND):'),bom.totalVND.toLocaleString()]);
+          bomData.push(['','','','',App.ui.t('TỔNG CỘNG (triệu VND):'),bom.totalMVND]);
+          bomData.push([App.ui.t('GHI CHÚ'),bom.note,'','','','']);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([bomHeader,...bomData]), 'BOM_So_Bo');
         }
         }
 
         // Sheet 3: Motor heat gain
         if((App.state.hlMotors||[]).length > 0){
-          const motHeader = ['Tên motor','P(kW)','SL','Phương pháp','Vị trí TH','FL','FU','VFD','Q tỏa(kW)'];
-          const motData = App.state.hlMotors.map(m=>[m.name||'',m.pKw||0,m.qty||1,m.method||'A',m.position||'TH1',m.FL||1,m.FU||1,m.hasVFD?'Có':'Không',m._qKW?.toFixed(3)||'']);
+          const motHeader = [App.ui.t('Tên motor'),'P(kW)',App.ui.t('SL'),App.ui.t('Phương pháp'),App.ui.t('Vị trí TH'),'FL','FU','VFD',App.ui.t('Q tỏa(kW)')];
+          const motData = App.state.hlMotors.map(m=>[m.name||'',m.pKw||0,m.qty||1,m.method||'A',m.position||'TH1',m.FL||1,m.FU||1,m.hasVFD?App.ui.t('Có'):App.ui.t('Không'),m._qKW?.toFixed(3)||'']);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([motHeader,...motData]), 'Motor_Heat');
         }
 
         // Sheet 4b: Tải ký sinh
         if((App.state.hlParasitic||[]).length > 0){
-          const paraHeader=['Tên','Loại','Phòng gán','Q tỏa/hút(kW)','Ghi chú'];
+          const paraHeader=[App.ui.t('Tên'),App.ui.t('Loại'),App.ui.t('Phòng gán'),App.ui.t('Q tỏa/hút(kW)'),App.ui.t('Ghi chú')];
           const paraData=(App.state.hlParasitic||[]).map(p=>{
-            const rName=App.state.hlRooms?.find(r=>r.id===p.roomId)?.name||'Chưa gán';
+            const rName=App.state.hlRooms?.find(r=>r.id===p.roomId)?.name||App.ui.t('Chưa gán phòng');
             const qKW=p._qW!=null?(p._qW/1000).toFixed(3):'—';
-            const sign=(p._qW||0)<0?'Hút lạnh (âm)':'Tỏa nhiệt (dương)';
+            const sign=(p._qW||0)<0?App.ui.t('Hút lạnh (âm)'):App.ui.t('Tỏa nhiệt (dương)');
             return [p.name||'',p.type||'',rName,qKW,sign];
           });
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([paraHeader,...paraData]), 'Tai_Ky_Sinh');
@@ -5749,17 +5768,17 @@
 
         // Sheet 5: Ống gió
         if((App.state.branches||[]).length > 0){
-          const ductHeader = ['Tên nhánh','Q(m³/h)','v(m/s)','Hình dạng','Vật liệu','Cách nhiệt','L(m)','Kích thước','ΔP ma sát(Pa)','NC','Đọng sương'];
+          const ductHeader = [App.ui.t('Tên nhánh'),'Q(m³/h)','v(m/s)',App.ui.t('Hình dạng'),App.ui.t('Vật liệu ống'),App.ui.t('Cách nhiệt'),'L(m)',App.ui.t('Kích thước'),App.ui.t('ΔP ma sát(Pa)'),'NC',App.ui.t('Đọng sương')];
           const ductData = (App.state.branches||[]).map(b=>[
             b.name||'',b.qM3h||0,b.vMs||0,b.shape||'',b.materialId||'',b.insulationId||'',b.lengthM||0,
-            b._result?.dimsLabel||'',b._result?.frictionPa.toFixed(0)||'',b._result?.nc||'',b._result?.condensationRisk?'Có nguy cơ':'Không'
+            b._result?.dimsLabel||'',b._result?.frictionPa.toFixed(0)||'',b._result?.nc||'',b._result?.condensationRisk?App.ui.t('Có nguy cơ'):App.ui.t('Không')
           ]);
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([ductHeader,...ductData]), 'Ong_Gio');
         }
 
         XLSX.writeFile(wb, `BaoCao_HVAC_${I.projectName||'Draft'}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        App.ui.toast('ok',`Đã xuất Excel: ${rooms.length} phòng, ${(App.state.branches||[]).length} nhánh ống.`);
-      }catch(err){ App.ui.toast('err','Lỗi xuất Excel: '+err.message); }
+        App.ui.toast('ok',App.ui.t('Đã xuất Excel: {n} phòng, {b} nhánh ống.',{n:rooms.length,b:(App.state.branches||[]).length}));
+      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi xuất Excel:')+' '+err.message); }
     }
   };
 
