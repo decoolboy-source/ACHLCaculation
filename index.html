@@ -175,8 +175,17 @@ header {
   font-weight:600 !important;
 }
 
-/* ── Tables ── */
-th {
+/* ── Tables ──
+   :not(#report-preview *) loại trừ mọi bảng bên trong báo cáo xuất (#report-preview) —
+   báo cáo tự set màu nền/chữ riêng qua inline style (nền trắng/xám nhạt, chữ đen) để in ấn/PDF,
+   nhưng "th{...!important}"/"td{...!important}" ở đây (thiết kế cho giao diện nền tối của app)
+   có độ ưu tiên CSS cao hơn inline style thường — nên trước khi loại trừ, MỌI <th>/<td> trong
+   báo cáo bị ép về màu nền tối #071325 / chữ sáng gần trắng (--text-hi, --text-mid), đè lên màu
+   báo cáo tự đặt. Kết quả: chữ báo cáo (đặc biệt các ô <td> dữ liệu) hoá ra gần-trắng-trên-nền-
+   trắng — vô hình — dù code báo cáo đã set color:#111 rõ ràng trên từng phần tử. Đây là NGUYÊN
+   NHÂN THẬT của lỗi "chữ trùng màu nền" tái diễn nhiều lần trước đây; các lần sửa trước chỉ thêm
+   inline color tường minh (đúng nhưng không đủ, vì !important của rule này vẫn đè lên trên). */
+th:not(#report-preview *) {
   background:#071325 !important;
   color:var(--text-mid) !important;
   font-size:10px !important;
@@ -187,7 +196,7 @@ th {
   border-bottom:1px solid var(--border-def) !important;
   white-space:nowrap !important;
 }
-td { border-bottom:1px solid rgba(26,48,80,.5) !important; color:var(--text-hi) !important; }
+td:not(#report-preview *) { border-bottom:1px solid rgba(26,48,80,.5) !important; color:var(--text-hi) !important; }
 tbody tr:hover td { background:rgba(16,185,129,.03) !important; }
 .zebra > tbody > tr:nth-child(even) td { background:rgba(7,19,37,.7) !important; }
 

@@ -32,6 +32,7 @@ const testFiles = [
   './cases/pc-scroll-and-equip-group',
   './cases/import-equip-group',
   './cases/report-text-color',
+  './cases/report-preview-css-scope',
   './cases/deep-followup-fixes',
   './cases/fan-equipment-schedule',
 ];
