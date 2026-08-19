@@ -322,14 +322,28 @@
       {code:'D1200x2200-STD', name:'Cửa kho lạnh 1200×2200',      wMm:1200, hMm:2200, seal:'Standard',    gapFloorMm:5, gapFrameMm:3, aKheM2:0.02280},
     ],
 
-    // MOTOR_IE3 — Hiệu suất motor chuẩn IE3. Nguồn: IEC 60034-30-1
+    // MOTOR_IE3 — Hiệu suất motor chuẩn IE3. Nguồn: catalog kỹ thuật WEG W22 Premium
+    // Efficiency IE3 (thị trường Châu Âu), bảng IV pole - 1500 rpm - 50Hz - 400V,
+    // hiệu suất tại 100% tải định mức (tr.45-46 brochure "W22 three phase motor
+    // technical - European market"). Thay cho bảng mức tối thiểu IEC 60034-30-1
+    // trước đây bằng dữ liệu catalog thực tế của nhà sản xuất (thường cao hơn mức
+    // tối thiểu), mở rộng dải từ 0,12kW đến 500kW.
     // Nội suy tuyến tính nếu P_kW không khớp đúng mức bảng (xem calcMotorEta)
     motorIE3: [
-      {pKw:0.75,eta:0.825}, {pKw:1.1, eta:0.841}, {pKw:1.5, eta:0.853},
-      {pKw:2.2, eta:0.867}, {pKw:3.0, eta:0.877}, {pKw:4.0, eta:0.886},
-      {pKw:5.5, eta:0.896}, {pKw:7.5, eta:0.904}, {pKw:11.0,eta:0.914},
-      {pKw:15.0,eta:0.921}, {pKw:18.5,eta:0.926}, {pKw:22.0,eta:0.930},
-      {pKw:30.0,eta:0.936}, {pKw:37.0,eta:0.939}, {pKw:45.0,eta:0.942},
+      {pKw:0.12, eta:0.648}, {pKw:0.18, eta:0.699}, {pKw:0.25, eta:0.735},
+      {pKw:0.37, eta:0.773}, {pKw:0.55, eta:0.808}, {pKw:0.75, eta:0.825},
+      {pKw:1.1,  eta:0.845}, {pKw:1.5,  eta:0.855}, {pKw:2.2,  eta:0.870},
+      {pKw:3.0,  eta:0.880}, {pKw:4.0,  eta:0.888}, {pKw:5.5,  eta:0.897},
+      {pKw:7.5,  eta:0.906}, {pKw:9.2,  eta:0.910}, {pKw:11.0, eta:0.916},
+      {pKw:15.0, eta:0.923}, {pKw:18.5, eta:0.928}, {pKw:22.0, eta:0.932},
+      {pKw:30.0, eta:0.937}, {pKw:37.0, eta:0.941}, {pKw:45.0, eta:0.944},
+      {pKw:55.0, eta:0.947}, {pKw:75.0, eta:0.952}, {pKw:90.0, eta:0.954},
+      {pKw:110.0,eta:0.956}, {pKw:132.0,eta:0.958}, {pKw:150.0,eta:0.959},
+      {pKw:160.0,eta:0.960}, {pKw:185.0,eta:0.960}, {pKw:200.0,eta:0.960},
+      {pKw:220.0,eta:0.962}, {pKw:250.0,eta:0.962}, {pKw:260.0,eta:0.962},
+      {pKw:280.0,eta:0.962}, {pKw:300.0,eta:0.962}, {pKw:315.0,eta:0.963},
+      {pKw:330.0,eta:0.962}, {pKw:355.0,eta:0.965}, {pKw:400.0,eta:0.962},
+      {pKw:450.0,eta:0.962}, {pKw:500.0,eta:0.963},
     ],
 
     // U_PANEL — Hệ số truyền nhiệt vách cách nhiệt PU. Nguồn: ASHRAE Fundamentals Ch.27 (k_PU=0.022 W/m.K)
@@ -1022,9 +1036,12 @@ MATERIAL_RATES:{
       {id:'airgap_refl',   cat:'airgap',   name:'Khe KK 40mm + lá nhôm phản xạ',lambda:null,rho:0,Rfixed:0.50,note:'ASHRAE HOF 2021 Table 3'},
     ],
 
-    // ─── CATALOG FCU / AHU (tham khảo thị trường VN 2024) ──────────────────
-    // QUAN TRỌNG: Đây là dải công suất thông dụng, KHÔNG phải model cụ thể.
-    // Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn.
+    // ─── CATALOG FCU / AHU ───────────────────────────────────────────────────
+    // QUAN TRỌNG: nhóm 'cassette'/'vertical' vẫn là dải công suất thông dụng tham khảo
+    // thị trường VN 2024, KHÔNG phải model cụ thể. Nhóm 'ducted' (DAIKIN FWW/FUW-A) và
+    // 'AHU'/'PAU' (DAIKIN DDM-AHU) đã cập nhật bằng model + thông số thật từ catalog nhà
+    // sản xuất (xem ghi chú tại từng nhóm bên dưới). Kỹ sư vẫn cần xác nhận với catalog
+    // nhà sản xuất thực tế trước khi chọn.
     FCU_CATALOG:[
       // Cassette âm trần 4 chiều (phổ biến nhất)
       {id:'cas_0p75',type:'cassette', name:'FCU Cassette 0.75 kW',  capKW:0.75,  airflowM3h:300,  note:'≈ 2,560 BTU/h'},
@@ -1036,38 +1053,100 @@ MATERIAL_RATES:{
       {id:'cas_5p0', type:'cassette', name:'FCU Cassette 5.0 kW',   capKW:5.0,   airflowM3h:1600, note:'≈ 17,060 BTU/h'},
       {id:'cas_7p0', type:'cassette', name:'FCU Cassette 7.0 kW',   capKW:7.0,   airflowM3h:2200, note:'≈ 23,884 BTU/h'},
       {id:'cas_10p0',type:'cassette', name:'FCU Cassette 10.0 kW',  capKW:10.0,  airflowM3h:3000, note:'≈ 34,120 BTU/h'},
-      // Âm trần nối ống (ducted)
-      {id:'duc_2p0', type:'ducted',   name:'FCU Ducted 2.0 kW',     capKW:2.0,   airflowM3h:700},
-      {id:'duc_4p0', type:'ducted',   name:'FCU Ducted 4.0 kW',     capKW:4.0,   airflowM3h:1400},
-      {id:'duc_6p0', type:'ducted',   name:'FCU Ducted 6.0 kW',     capKW:6.0,   airflowM3h:2100},
-      {id:'duc_8p0', type:'ducted',   name:'FCU Ducted 8.0 kW',     capKW:8.0,   airflowM3h:2800},
-      {id:'duc_12p0',type:'ducted',   name:'FCU Ducted 12.0 kW',    capKW:12.0,  airflowM3h:4200},
-      {id:'duc_16p0',type:'ducted',   name:'FCU Ducted 16.0 kW',    capKW:16.0,  airflowM3h:5600},
+      // Âm trần nối ống (ducted) — catalog thật DAIKIN "Horizontal Type Chilled Water
+      // Fan Coil Unit" (FWW-V/T/FUW-A series, 50Hz market, China). Công suất lạnh (W/kW)
+      // và lưu lượng gió (tốc High) lấy từ bảng thông số kỹ thuật chuẩn 2-pipe/4 hàng ống,
+      // ESP 50Pa (FWW-VF/TF) — kỹ sư vẫn cần xác nhận model cụ thể với nhà phân phối DAIKIN.
+      {id:'fww200vf', type:'ducted', name:'DAIKIN FWW200VF',  capKW:2.50,  airflowM3h:340,  note:'ESP 50Pa'},
+      {id:'fww300vf', type:'ducted', name:'DAIKIN FWW300VF',  capKW:3.60,  airflowM3h:510,  note:'ESP 50Pa'},
+      {id:'fww400vf', type:'ducted', name:'DAIKIN FWW400VF',  capKW:4.30,  airflowM3h:640,  note:'ESP 50Pa'},
+      {id:'fww500vf', type:'ducted', name:'DAIKIN FWW500VF',  capKW:5.10,  airflowM3h:850,  note:'ESP 50Pa'},
+      {id:'fww600vf', type:'ducted', name:'DAIKIN FWW600VF',  capKW:6.20,  airflowM3h:960,  note:'ESP 50Pa'},
+      {id:'fww700vf', type:'ducted', name:'DAIKIN FWW700VF',  capKW:7.10,  airflowM3h:1170, note:'ESP 50Pa'},
+      {id:'fww800vf', type:'ducted', name:'DAIKIN FWW800VF',  capKW:8.90,  airflowM3h:1360, note:'ESP 50Pa'},
+      {id:'fww1000vf',type:'ducted', name:'DAIKIN FWW1000VF', capKW:10.50, airflowM3h:1680, note:'ESP 50Pa'},
+      {id:'fww1200vf',type:'ducted', name:'DAIKIN FWW1200VF', capKW:11.10, airflowM3h:1900, note:'ESP 50Pa'},
+      {id:'fww1400vf',type:'ducted', name:'DAIKIN FWW1400VF', capKW:12.20, airflowM3h:2180, note:'ESP 50Pa'},
+      {id:'fww1000tf',type:'ducted', name:'DAIKIN FWW1000TF', capKW:10.00, airflowM3h:1670, note:'ESP 50Pa'},
+      {id:'fww1400tf',type:'ducted', name:'DAIKIN FWW1400TF', capKW:12.90, airflowM3h:2180, note:'ESP 50Pa'},
+      {id:'fww1600tf',type:'ducted', name:'DAIKIN FWW1600TF', capKW:14.70, airflowM3h:2700, note:'ESP 50Pa'},
+      {id:'fww1800tf',type:'ducted', name:'DAIKIN FWW1800TF', capKW:17.50, airflowM3h:3150, note:'ESP 50Pa'},
+      {id:'fww2000tf',type:'ducted', name:'DAIKIN FWW2000TF', capKW:20.60, airflowM3h:3600, note:'ESP 50Pa'},
+      // FUW-A — dòng ESP cao (ceiling unit siêu mỏng), cùng catalog DAIKIN, công suất lạnh
+      // "4 Rows (return air)" theo bảng nominal capacity, kèm ESP thiết kế của từng size.
+      {id:'fuw015a', type:'ducted', name:'DAIKIN FUW015A (ESP cao)', capKW:7,  airflowM3h:1500, note:'ESP 70Pa'},
+      {id:'fuw020a', type:'ducted', name:'DAIKIN FUW020A (ESP cao)', capKW:12, airflowM3h:2000, note:'ESP 100Pa'},
+      {id:'fuw025a', type:'ducted', name:'DAIKIN FUW025A (ESP cao)', capKW:13, airflowM3h:2500, note:'ESP 100Pa'},
+      {id:'fuw030a', type:'ducted', name:'DAIKIN FUW030A (ESP cao)', capKW:17, airflowM3h:3000, note:'ESP 120Pa'},
+      {id:'fuw035a', type:'ducted', name:'DAIKIN FUW035A (ESP cao)', capKW:20, airflowM3h:3500, note:'ESP 120Pa'},
+      {id:'fuw040a', type:'ducted', name:'DAIKIN FUW040A (ESP cao)', capKW:23, airflowM3h:4000, note:'ESP 150Pa'},
+      {id:'fuw050a', type:'ducted', name:'DAIKIN FUW050A (ESP cao)', capKW:30, airflowM3h:5000, note:'ESP 150Pa'},
       // Đứng (vertical floor-standing)
       {id:'vrt_7p5', type:'vertical', name:'FCU Đứng 7.5 kW',       capKW:7.5,   airflowM3h:2500},
       {id:'vrt_15p0',type:'vertical', name:'FCU Đứng 15.0 kW',      capKW:15.0,  airflowM3h:5000},
       {id:'vrt_20p0',type:'vertical', name:'FCU Đứng 20.0 kW',      capKW:20.0,  airflowM3h:6500},
-      // AHU (Air Handling Unit) — dải công suất
-      {id:'ahu_8',   type:'AHU',      name:'AHU 8 kW (nhỏ)',        capKW:8,     airflowM3h:3000,  note:'Văn phòng nhỏ'},
-      {id:'ahu_15',  type:'AHU',      name:'AHU 15 kW',             capKW:15,    airflowM3h:5500},
-      {id:'ahu_20',  type:'AHU',      name:'AHU 20 kW',             capKW:20,    airflowM3h:7000},
-      {id:'ahu_30',  type:'AHU',      name:'AHU 30 kW',             capKW:30,    airflowM3h:10000},
-      {id:'ahu_40',  type:'AHU',      name:'AHU 40 kW',             capKW:40,    airflowM3h:14000},
-      {id:'ahu_50',  type:'AHU',      name:'AHU 50 kW',             capKW:50,    airflowM3h:17000},
-      {id:'ahu_60',  type:'AHU',      name:'AHU 60 kW',             capKW:60,    airflowM3h:20000},
-      {id:'ahu_80',  type:'AHU',      name:'AHU 80 kW',             capKW:80,    airflowM3h:27000},
-      {id:'ahu_100', type:'AHU',      name:'AHU 100 kW',            capKW:100,   airflowM3h:33000},
-      {id:'ahu_120', type:'AHU',      name:'AHU 120 kW',            capKW:120,   airflowM3h:40000},
-      {id:'ahu_150', type:'AHU',      name:'AHU 150 kW',            capKW:150,   airflowM3h:50000},
-      {id:'ahu_200', type:'AHU',      name:'AHU 200 kW',            capKW:200,   airflowM3h:65000},
-      {id:'ahu_250', type:'AHU',      name:'AHU 250 kW',            capKW:250,   airflowM3h:80000},
-      {id:'ahu_300', type:'AHU',      name:'AHU 300 kW',            capKW:300,   airflowM3h:100000},
-      // PAU
-      {id:'pau_20',  type:'PAU',      name:'PAU 20 kW (100% OA)',   capKW:20,    airflowM3h:5000},
-      {id:'pau_40',  type:'PAU',      name:'PAU 40 kW (100% OA)',   capKW:40,    airflowM3h:10000},
-      {id:'pau_60',  type:'PAU',      name:'PAU 60 kW (100% OA)',   capKW:60,    airflowM3h:15000},
-      {id:'pau_80',  type:'PAU',      name:'PAU 80 kW (100% OA)',   capKW:80,    airflowM3h:20000},
-      {id:'pau_100', type:'PAU',      name:'PAU 100 kW (100% OA)',  capKW:100,   airflowM3h:25000},
+      // AHU (Air Handling Unit) — catalog thật DAIKIN DDM-AHU (Double Skin Modular, Round
+      // Edge), bảng "Standard Units Quick Selection — Table 5: Return Air", coil 4 hàng
+      // ống, ESP 500Pa. T.C.C (kW) và Air Flow (LPS→m³/h ×3.6) lấy theo từng UNIT SIZE.
+      {id:'ddm_ahu_0404', type:'AHU', name:'DDM-AHU 0404', capKW:8.66,   airflowM3h:2326,  note:'Motor 1.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_0407', type:'AHU', name:'DDM-AHU 0407', capKW:16.64,  airflowM3h:3697,  note:'Motor 2.2kW · ESP 500Pa'},
+      {id:'ddm_ahu_0410', type:'AHU', name:'DDM-AHU 0410', capKW:25.3,   airflowM3h:5069,  note:'Motor 3kW · ESP 500Pa'},
+      {id:'ddm_ahu_0413', type:'AHU', name:'DDM-AHU 0413', capKW:33.99,  airflowM3h:6440,  note:'Motor 4kW · ESP 500Pa'},
+      {id:'ddm_ahu_0707', type:'AHU', name:'DDM-AHU 0707', capKW:27.06,  airflowM3h:6012,  note:'Motor 3kW · ESP 500Pa'},
+      {id:'ddm_ahu_0710', type:'AHU', name:'DDM-AHU 0710', capKW:41.13,  airflowM3h:8240,  note:'Motor 5.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_0713', type:'AHU', name:'DDM-AHU 0713', capKW:55.25,  airflowM3h:10469, note:'Motor 5.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_0715', type:'AHU', name:'DDM-AHU 0715', capKW:64.57,  airflowM3h:11956, note:'Motor 7.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_1010', type:'AHU', name:'DDM-AHU 1010', capKW:56.95,  airflowM3h:11408, note:'Motor 7.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_1013', type:'AHU', name:'DDM-AHU 1013', capKW:76.5,   airflowM3h:14494, note:'Motor 7.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_1015', type:'AHU', name:'DDM-AHU 1015', capKW:89.4,   airflowM3h:16553, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_ahu_1019', type:'AHU', name:'DDM-AHU 1019', capKW:116.69, airflowM3h:20668, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_ahu_1021', type:'AHU', name:'DDM-AHU 1021', capKW:130.16, airflowM3h:22723, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_ahu_1315', type:'AHU', name:'DDM-AHU 1315', capKW:109.25, airflowM3h:20228, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_ahu_1319', type:'AHU', name:'DDM-AHU 1319', capKW:142.61, airflowM3h:25258, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_ahu_1321', type:'AHU', name:'DDM-AHU 1321', capKW:159.09, airflowM3h:27774, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_ahu_1519', type:'AHU', name:'DDM-AHU 1519', capKW:155.58, airflowM3h:27554, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_ahu_1521', type:'AHU', name:'DDM-AHU 1521', capKW:173.54, airflowM3h:30298, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_ahu_1819', type:'AHU', name:'DDM-AHU 1819', capKW:194.48, airflowM3h:34445, note:'Motor 18.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_1821', type:'AHU', name:'DDM-AHU 1821', capKW:216.93, airflowM3h:37872, note:'Motor 18.5kW · ESP 500Pa'},
+      {id:'ddm_ahu_1823', type:'AHU', name:'DDM-AHU 1823', capKW:236.58, airflowM3h:41303, note:'Motor 22kW · ESP 500Pa'},
+      {id:'ddm_ahu_1827', type:'AHU', name:'DDM-AHU 1827', capKW:254.19, airflowM3h:48161, note:'Motor 22kW · ESP 500Pa'},
+      {id:'ddm_ahu_2027', type:'AHU', name:'DDM-AHU 2027', capKW:271.14, airflowM3h:51372, note:'Motor 30kW · ESP 500Pa'},
+      {id:'ddm_ahu_2033', type:'AHU', name:'DDM-AHU 2033', capKW:338.9,  airflowM3h:62280, note:'Motor 30kW · ESP 500Pa'},
+      {id:'ddm_ahu_2035', type:'AHU', name:'DDM-AHU 2035', capKW:361.84, airflowM3h:65999, note:'Motor 30kW · ESP 500Pa'},
+      {id:'ddm_ahu_2039', type:'AHU', name:'DDM-AHU 2039', capKW:412.3,  airflowM3h:73022, note:'Motor 37kW · ESP 500Pa'},
+      {id:'ddm_ahu_2233', type:'AHU', name:'DDM-AHU 2233', capKW:381.65, airflowM3h:70135, note:'Motor 37kW · ESP 500Pa'},
+      {id:'ddm_ahu_2539', type:'AHU', name:'DDM-AHU 2539', capKW:465.47, airflowM3h:89280, note:'Motor 37kW · ESP 500Pa'},
+      // PAU (100% Outdoor Air) — cùng catalog DAIKIN DDM-AHU, bảng "Table 6: Fresh Air"
+      // (điều kiện 100% gió tươi EDB=35°C/EWB=28°C — công suất lớn hơn nhiều so với Table 5
+      // ở cùng UNIT SIZE/lưu lượng vì xử lý toàn bộ nhiệt ẩn từ khí trời, không có hồi gió).
+      {id:'ddm_pau_0404', type:'PAU', name:'DDM-AHU 0404 (100% OA)', capKW:23.64,   airflowM3h:2326,  note:'Motor 1.5kW · ESP 500Pa'},
+      {id:'ddm_pau_0407', type:'PAU', name:'DDM-AHU 0407 (100% OA)', capKW:43.12,   airflowM3h:3697,  note:'Motor 2.2kW · ESP 500Pa'},
+      {id:'ddm_pau_0410', type:'PAU', name:'DDM-AHU 0410 (100% OA)', capKW:62.5,    airflowM3h:5069,  note:'Motor 3kW · ESP 500Pa'},
+      {id:'ddm_pau_0413', type:'PAU', name:'DDM-AHU 0413 (100% OA)', capKW:72.97,   airflowM3h:6440,  note:'Motor 4kW · ESP 500Pa'},
+      {id:'ddm_pau_0707', type:'PAU', name:'DDM-AHU 0707 (100% OA)', capKW:70.12,   airflowM3h:6012,  note:'Motor 3kW · ESP 500Pa'},
+      {id:'ddm_pau_0710', type:'PAU', name:'DDM-AHU 0710 (100% OA)', capKW:86.5,    airflowM3h:8240,  note:'Motor 5.5kW · ESP 500Pa'},
+      {id:'ddm_pau_0713', type:'PAU', name:'DDM-AHU 0713 (100% OA)', capKW:118.62,  airflowM3h:10469, note:'Motor 5.5kW · ESP 500Pa'},
+      {id:'ddm_pau_0715', type:'PAU', name:'DDM-AHU 0715 (100% OA)', capKW:139.45,  airflowM3h:11956, note:'Motor 7.5kW · ESP 500Pa'},
+      {id:'ddm_pau_1010', type:'PAU', name:'DDM-AHU 1010 (100% OA)', capKW:119.76,  airflowM3h:11408, note:'Motor 7.5kW · ESP 500Pa'},
+      {id:'ddm_pau_1013', type:'PAU', name:'DDM-AHU 1013 (100% OA)', capKW:164.22,  airflowM3h:14494, note:'Motor 7.5kW · ESP 500Pa'},
+      {id:'ddm_pau_1015', type:'PAU', name:'DDM-AHU 1015 (100% OA)', capKW:193.07,  airflowM3h:16553, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_pau_1019', type:'PAU', name:'DDM-AHU 1019 (100% OA)', capKW:251.4,   airflowM3h:20668, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_pau_1021', type:'PAU', name:'DDM-AHU 1021 (100% OA)', capKW:280.19,  airflowM3h:22723, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_pau_1315', type:'PAU', name:'DDM-AHU 1315 (100% OA)', capKW:235.94,  airflowM3h:20228, note:'Motor 11kW · ESP 500Pa'},
+      {id:'ddm_pau_1319', type:'PAU', name:'DDM-AHU 1319 (100% OA)', capKW:307.23,  airflowM3h:25258, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_pau_1321', type:'PAU', name:'DDM-AHU 1321 (100% OA)', capKW:342.46,  airflowM3h:27774, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_pau_1519', type:'PAU', name:'DDM-AHU 1519 (100% OA)', capKW:335.17,  airflowM3h:27554, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_pau_1521', type:'PAU', name:'DDM-AHU 1521 (100% OA)', capKW:373.58,  airflowM3h:30298, note:'Motor 15kW · ESP 500Pa'},
+      {id:'ddm_pau_1819', type:'PAU', name:'DDM-AHU 1819 (100% OA)', capKW:418.98,  airflowM3h:34445, note:'Motor 18.5kW · ESP 500Pa'},
+      {id:'ddm_pau_1821', type:'PAU', name:'DDM-AHU 1821 (100% OA)', capKW:466.98,  airflowM3h:37872, note:'Motor 18.5kW · ESP 500Pa'},
+      {id:'ddm_pau_1823', type:'PAU', name:'DDM-AHU 1823 (100% OA)', capKW:516.16,  airflowM3h:41303, note:'Motor 22kW · ESP 500Pa'},
+      {id:'ddm_pau_1827', type:'PAU', name:'DDM-AHU 1827 (100% OA)', capKW:617.92,  airflowM3h:48161, note:'Motor 22kW · ESP 500Pa'},
+      {id:'ddm_pau_2027', type:'PAU', name:'DDM-AHU 2027 (100% OA)', capKW:659.12,  airflowM3h:51372, note:'Motor 30kW · ESP 500Pa'},
+      {id:'ddm_pau_2033', type:'PAU', name:'DDM-AHU 2033 (100% OA)', capKW:819.82,  airflowM3h:62280, note:'Motor 30kW · ESP 500Pa'},
+      {id:'ddm_pau_2035', type:'PAU', name:'DDM-AHU 2035 (100% OA)', capKW:879.77,  airflowM3h:65999, note:'Motor 30kW · ESP 500Pa'},
+      {id:'ddm_pau_2039', type:'PAU', name:'DDM-AHU 2039 (100% OA)', capKW:979.48,  airflowM3h:73022, note:'Motor 37kW · ESP 500Pa'},
+      {id:'ddm_pau_2233', type:'PAU', name:'DDM-AHU 2233 (100% OA)', capKW:923.23,  airflowM3h:70135, note:'Motor 37kW · ESP 500Pa'},
+      {id:'ddm_pau_2239', type:'PAU', name:'DDM-AHU 2239 (100% OA)', capKW:1105.81, airflowM3h:82440, note:'Motor 37kW · ESP 500Pa'},
     ],
 
     // FAN_CATALOG — quạt thông gió/hút thải, dùng cho phòng loại VENT (thông gió thuần,
@@ -1100,7 +1179,7 @@ MATERIAL_RATES:{
 
     i18n: {
       vi: {
-        app_title:'MultiHVAC Calculator', app_subtitle:'Cleanroom · Data Center · Phòng điện',
+        app_title:'MultiHVAC Calculator', app_subtitle:'Phòng sạch · Trung tâm dữ liệu · Phòng điện',
         search_hint:'Tìm nhanh',
         tab_calc:'Tính Toán', tab_admin:'Quản Lý Dự Án & DB', tab_settings:'Cài Đặt', tab_database:'Database',
         tab_ai:'Hỗ Trợ Nhanh', tab_about:'Thông Tin', tab_report:'Xuất Báo Cáo', tab_guide:'Hướng Dẫn', tab_project:'Dự Án', tab_heatload:'Phụ Tải Nhiệt',
@@ -1155,6 +1234,7 @@ MATERIAL_RATES:{
       en: {
         app_title:'MultiHVAC Calculator', app_subtitle:'Cleanroom · Data Center · Electrical Room',
         search_hint:'Quick search',
+        'Điều hướng':'Navigation', 'Đóng menu':'Close menu',
         tab_calc:'Calc', tab_admin:'Projects & Database', tab_settings:'Settings', tab_database:'Database',
         tab_ai:'Quick Help', tab_about:'About', tab_report:'Export Report', tab_guide:'User Guide', tab_project:'Project', tab_heatload:'Heat Load',
         project_info:'Project info', import_from_hl:'Import airflow from Heat Load tab',
