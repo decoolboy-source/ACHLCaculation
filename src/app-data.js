@@ -1036,9 +1036,11 @@ MATERIAL_RATES:{
       {id:'airgap_refl',   cat:'airgap',   name:'Khe KK 40mm + lá nhôm phản xạ',lambda:null,rho:0,Rfixed:0.50,note:'ASHRAE HOF 2021 Table 3'},
     ],
 
-    // ─── CATALOG FCU / AHU (tham khảo thị trường VN 2024) ──────────────────
-    // QUAN TRỌNG: Đây là dải công suất thông dụng, KHÔNG phải model cụ thể.
-    // Kỹ sư cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn.
+    // ─── CATALOG FCU / AHU ───────────────────────────────────────────────────
+    // QUAN TRỌNG: nhóm 'cassette'/'vertical'/'AHU'/'PAU' vẫn là dải công suất thông
+    // dụng tham khảo thị trường VN 2024, KHÔNG phải model cụ thể. Riêng nhóm 'ducted'
+    // đã cập nhật bằng model + thông số thật từ catalog DAIKIN (xem ghi chú bên dưới).
+    // Kỹ sư vẫn cần xác nhận với catalog nhà sản xuất thực tế trước khi chọn.
     FCU_CATALOG:[
       // Cassette âm trần 4 chiều (phổ biến nhất)
       {id:'cas_0p75',type:'cassette', name:'FCU Cassette 0.75 kW',  capKW:0.75,  airflowM3h:300,  note:'≈ 2,560 BTU/h'},
@@ -1050,13 +1052,34 @@ MATERIAL_RATES:{
       {id:'cas_5p0', type:'cassette', name:'FCU Cassette 5.0 kW',   capKW:5.0,   airflowM3h:1600, note:'≈ 17,060 BTU/h'},
       {id:'cas_7p0', type:'cassette', name:'FCU Cassette 7.0 kW',   capKW:7.0,   airflowM3h:2200, note:'≈ 23,884 BTU/h'},
       {id:'cas_10p0',type:'cassette', name:'FCU Cassette 10.0 kW',  capKW:10.0,  airflowM3h:3000, note:'≈ 34,120 BTU/h'},
-      // Âm trần nối ống (ducted)
-      {id:'duc_2p0', type:'ducted',   name:'FCU Ducted 2.0 kW',     capKW:2.0,   airflowM3h:700},
-      {id:'duc_4p0', type:'ducted',   name:'FCU Ducted 4.0 kW',     capKW:4.0,   airflowM3h:1400},
-      {id:'duc_6p0', type:'ducted',   name:'FCU Ducted 6.0 kW',     capKW:6.0,   airflowM3h:2100},
-      {id:'duc_8p0', type:'ducted',   name:'FCU Ducted 8.0 kW',     capKW:8.0,   airflowM3h:2800},
-      {id:'duc_12p0',type:'ducted',   name:'FCU Ducted 12.0 kW',    capKW:12.0,  airflowM3h:4200},
-      {id:'duc_16p0',type:'ducted',   name:'FCU Ducted 16.0 kW',    capKW:16.0,  airflowM3h:5600},
+      // Âm trần nối ống (ducted) — catalog thật DAIKIN "Horizontal Type Chilled Water
+      // Fan Coil Unit" (FWW-V/T/FUW-A series, 50Hz market, China). Công suất lạnh (W/kW)
+      // và lưu lượng gió (tốc High) lấy từ bảng thông số kỹ thuật chuẩn 2-pipe/4 hàng ống,
+      // ESP 50Pa (FWW-VF/TF) — kỹ sư vẫn cần xác nhận model cụ thể với nhà phân phối DAIKIN.
+      {id:'fww200vf', type:'ducted', name:'DAIKIN FWW200VF',  capKW:2.50,  airflowM3h:340,  note:'ESP 50Pa'},
+      {id:'fww300vf', type:'ducted', name:'DAIKIN FWW300VF',  capKW:3.60,  airflowM3h:510,  note:'ESP 50Pa'},
+      {id:'fww400vf', type:'ducted', name:'DAIKIN FWW400VF',  capKW:4.30,  airflowM3h:640,  note:'ESP 50Pa'},
+      {id:'fww500vf', type:'ducted', name:'DAIKIN FWW500VF',  capKW:5.10,  airflowM3h:850,  note:'ESP 50Pa'},
+      {id:'fww600vf', type:'ducted', name:'DAIKIN FWW600VF',  capKW:6.20,  airflowM3h:960,  note:'ESP 50Pa'},
+      {id:'fww700vf', type:'ducted', name:'DAIKIN FWW700VF',  capKW:7.10,  airflowM3h:1170, note:'ESP 50Pa'},
+      {id:'fww800vf', type:'ducted', name:'DAIKIN FWW800VF',  capKW:8.90,  airflowM3h:1360, note:'ESP 50Pa'},
+      {id:'fww1000vf',type:'ducted', name:'DAIKIN FWW1000VF', capKW:10.50, airflowM3h:1680, note:'ESP 50Pa'},
+      {id:'fww1200vf',type:'ducted', name:'DAIKIN FWW1200VF', capKW:11.10, airflowM3h:1900, note:'ESP 50Pa'},
+      {id:'fww1400vf',type:'ducted', name:'DAIKIN FWW1400VF', capKW:12.20, airflowM3h:2180, note:'ESP 50Pa'},
+      {id:'fww1000tf',type:'ducted', name:'DAIKIN FWW1000TF', capKW:10.00, airflowM3h:1670, note:'ESP 50Pa'},
+      {id:'fww1400tf',type:'ducted', name:'DAIKIN FWW1400TF', capKW:12.90, airflowM3h:2180, note:'ESP 50Pa'},
+      {id:'fww1600tf',type:'ducted', name:'DAIKIN FWW1600TF', capKW:14.70, airflowM3h:2700, note:'ESP 50Pa'},
+      {id:'fww1800tf',type:'ducted', name:'DAIKIN FWW1800TF', capKW:17.50, airflowM3h:3150, note:'ESP 50Pa'},
+      {id:'fww2000tf',type:'ducted', name:'DAIKIN FWW2000TF', capKW:20.60, airflowM3h:3600, note:'ESP 50Pa'},
+      // FUW-A — dòng ESP cao (ceiling unit siêu mỏng), cùng catalog DAIKIN, công suất lạnh
+      // "4 Rows (return air)" theo bảng nominal capacity, kèm ESP thiết kế của từng size.
+      {id:'fuw015a', type:'ducted', name:'DAIKIN FUW015A (ESP cao)', capKW:7,  airflowM3h:1500, note:'ESP 70Pa'},
+      {id:'fuw020a', type:'ducted', name:'DAIKIN FUW020A (ESP cao)', capKW:12, airflowM3h:2000, note:'ESP 100Pa'},
+      {id:'fuw025a', type:'ducted', name:'DAIKIN FUW025A (ESP cao)', capKW:13, airflowM3h:2500, note:'ESP 100Pa'},
+      {id:'fuw030a', type:'ducted', name:'DAIKIN FUW030A (ESP cao)', capKW:17, airflowM3h:3000, note:'ESP 120Pa'},
+      {id:'fuw035a', type:'ducted', name:'DAIKIN FUW035A (ESP cao)', capKW:20, airflowM3h:3500, note:'ESP 120Pa'},
+      {id:'fuw040a', type:'ducted', name:'DAIKIN FUW040A (ESP cao)', capKW:23, airflowM3h:4000, note:'ESP 150Pa'},
+      {id:'fuw050a', type:'ducted', name:'DAIKIN FUW050A (ESP cao)', capKW:30, airflowM3h:5000, note:'ESP 150Pa'},
       // Đứng (vertical floor-standing)
       {id:'vrt_7p5', type:'vertical', name:'FCU Đứng 7.5 kW',       capKW:7.5,   airflowM3h:2500},
       {id:'vrt_15p0',type:'vertical', name:'FCU Đứng 15.0 kW',      capKW:15.0,  airflowM3h:5000},
