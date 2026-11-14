@@ -8,7 +8,8 @@
 // và muốn người dùng nhận bản mới. Nếu không đổi, trình duyệt sẽ tiếp tục dùng bản
 // cache cũ vô thời hạn (vì đây chính là mục đích của cache — chạy offline được).
 const CACHE_VERSION = 'v12';
-const CACHE_NAME = `multihvac-${CACHE_VERSION}`;
+const CACHE_PREFIX = 'multihvac-';
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 // "App shell" — các file gốc của app, PHẢI có để app chạy được ít nhất là giao diện
 // (dù các thư viện ngoài như PDF/Excel export có tải được hay không).
@@ -55,9 +56,9 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Xóa cache của phiên bản cũ (khi CACHE_VERSION đã đổi)
+    // Xóa cache phiên bản cũ của app này; không đụng cache của PWA khác cùng origin
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
