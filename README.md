@@ -172,3 +172,13 @@ Chuẩn hóa để chạy chung origin `decoolboy-source.github.io` với các P
 - Tên cache đổi sang `ACHLCaculation-v<số>` (trước là `multihvac-v<số>`). Khi kích hoạt chỉ xóa cache của chính app này (cả tiền tố mới và cũ), không đụng cache của app khác.
 - Khóa localStorage có tiền tố `ACHLCaculation:` (`multihvac_settings`, `multihvac_db_*`). Lần đầu mở bản mới, app tự chép dữ liệu từ khóa cũ sang khóa mới nếu khóa mới chưa có. Khóa cũ được giữ nguyên.
 - CSDL IndexedDB đổi tên sang `ACHLCaculation:multihvac_db_v1`. Lần đầu mở, app chép toàn bộ bảng và bản ghi từ CSDL cũ `multihvac_db_v1` sang. CSDL cũ được giữ nguyên.
+
+#### Xuất/Nhập dữ liệu (cùng bản)
+
+Tab Quản trị → Export/Import: file `ACHLCaculation_YYYYMMDD.json` chứa toàn bộ dự án và cài đặt. **API key không được ghi ra file.** Vẫn nhận file `multihvac_backup_*.json` kiểu cũ.
+
+- File gồm các trường `app`, `schemaVersion` (= 1), `exportedAt`, `projectCount`, `data`.
+- Khi nhập: kiểm tra định dạng JSON, đúng `app` và `schemaVersion` **trước khi ghi**; báo số dự án; hỏi **Gộp** hay
+  **Thay thế**; xác nhận lần cuối. File sai định dạng thì báo lỗi tiếng Việt và không ghi gì.
+- Xử lý hoàn toàn trên trình duyệt, không gửi dữ liệu đi đâu.
+- Gộp: dự án trùng mã được thay bằng bản trong file, cài đặt giữ nguyên. Thay thế: xóa hết dự án rồi ghi theo file, cài đặt lấy theo file (giữ API key trên máy).

@@ -22,6 +22,7 @@ const APP_SHELL = [
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
+  './data-io.js',
   './src/app-data.js',
   './src/app-calc.js',
   './src/app-ui.js',

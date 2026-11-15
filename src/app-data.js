@@ -1755,7 +1755,7 @@ MATERIAL_RATES:{
         'Đã nạp dự án: {name} · {n} phòng nhiệt tải':'Loaded project: {name} · {n} heat-load room(s)',
         'Xoá dự án?':'Delete project?', 'Hành động này không thể hoàn tác.':'This action cannot be undone.',
         'Xoá':'Delete', 'Đã xoá dự án.':'Project deleted.', 'Đã export dữ liệu .json':'Exported .json data',
-        'Đã nhập {n} dự án.':'Imported {n} project(s).', 'Lỗi import:':'Import error:',
+        'Đã nhập {n} dự án.':'Imported {n} project(s).', 'Lỗi import:':'Import error:', 'Nhập dữ liệu':'Import data', 'Xuất dữ liệu':'Export data',
         'Không đọc được dòng dữ liệu hợp lệ.':'No valid data rows could be read.',
         'Đã nhập {n} dòng dữ liệu khí hậu.':'Imported {n} climate data row(s).',
         'Lỗi đọc file:':'File read error:', 'Đã xuất PDF.':'PDF exported.', 'Lỗi xuất PDF:':'PDF export error:',
@@ -1986,6 +1986,24 @@ MATERIAL_RATES:{
       return new Promise((resolve, reject)=>{
         const tx = this._idb.transaction('projects','readwrite');
         tx.objectStore('projects').delete(id);
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror = (e)=> reject(e);
+      });
+    },
+    // Ghi nguyên trạng dự án từ file nhập (giữ updatedAt). mode 'replace' xóa hết dự án hiện có trước.
+    async importProjectsRaw(list, mode){
+      if(this._useFallback || !this._idb){
+        return this._tx('projects', 'readwrite', (arr)=>{
+          if(mode === 'replace') arr.splice(0, arr.length);
+          list.forEach(p=>{ const i = arr.findIndex(x=>x.id===p.id); if(i>=0) arr[i]=p; else arr.push(p); });
+          return true;
+        });
+      }
+      return new Promise((resolve, reject)=>{
+        const tx = this._idb.transaction('projects','readwrite');
+        const st = tx.objectStore('projects');
+        if(mode === 'replace') st.clear();
+        list.forEach(p=> st.put(p));
         tx.oncomplete = ()=> resolve(true);
         tx.onerror = (e)=> reject(e);
       });

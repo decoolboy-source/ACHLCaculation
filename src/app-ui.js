@@ -916,11 +916,8 @@
         ${App.ui.panelShell('exportimport','Export / Import dữ liệu dự án','file-down', `
           <p style="font-size:11px;color:#4a6680;margin-bottom:8px">${App.ui.t('Tạo/quản lý dự án trong')} <b style="color:#34d399">${App.ui.t('tab_project')}</b>. ${App.ui.t('Dùng Export/Import để sao lưu hoặc chuyển dự án hiện tại giữa các máy.')}</p>
           <div class="flex gap-2">
-            <button id="btn-export-json" class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i> Export .json</button>
-            <label class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/></svg> Import .json
-              <input id="input-import-json" type="file" accept=".json" class="hidden">
-            </label>
+            <button id="btn-export-json" class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></i> ${App.ui.t('Xuất dữ liệu')}</button>
+            <button id="btn-import-json" class="border border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> ${App.ui.t('Nhập dữ liệu')}</button>
           </div>
         `)}
         ${App.ui.panelShell('elecdb','elec_ref_db','database', this.elecRefTableHtml())}
@@ -1287,8 +1284,8 @@
       root.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=> App.admin.confirmDeleteProject(b.getAttribute('data-del'))));
       const exportBtn = root.querySelector('#btn-export-json');
       if(exportBtn) exportBtn.addEventListener('click', ()=> App.admin.exportJSON());
-      const importInput = root.querySelector('#input-import-json');
-      if(importInput) importInput.addEventListener('change', (e)=> App.admin.importJSON(e.target.files[0]));
+      const importBtn = root.querySelector('#btn-import-json');
+      if(importBtn) importBtn.addEventListener('click', ()=> App.admin.importJSON());
       // Toggle elecRef edit mode
       root.querySelector('#btn-toggle-eref-edit')?.addEventListener('click',btn=>{
         const inputs=root.querySelectorAll('.eref-input');
@@ -5098,24 +5095,40 @@
       });
     },
 
-    async exportJSON(){
-      const json = await App.db.exportAllJSON();
-      const blob = new Blob([json], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'multihvac_backup_'+Date.now()+'.json'; a.click();
-      URL.revokeObjectURL(url);
-      App.ui.toast('ok',App.ui.t('Đã export dữ liệu .json'));
+    // Xuất/Nhập dữ liệu theo chuẩn chung (data-io.js): file ACHLCaculation_YYYYMMDD.json.
+    // API key KHÔNG được ghi ra file; khi thay thế cài đặt vẫn giữ API key đang có trên máy.
+    DATA_IO: {
+      app: 'ACHLCaculation', schemaVersion: 1,
+      async collect(){
+        const projects = await App.db.listProjects();
+        const settings = JSON.parse(localStorage.getItem('ACHLCaculation:multihvac_settings')||'{}');
+        delete settings.apiKey;
+        return { data: { projects, settings }, projectCount: projects.length };
+      },
+      legacy(o){ // file multihvac_backup_*.json kiểu cũ: { version, exportedAt, projects, settings }
+        return (Array.isArray(o.projects) && typeof o.version === 'string') ? { projects: o.projects, settings: o.settings } : null;
+      },
+      describe(d){
+        if(!Array.isArray(d.projects)) throw new Error('File thiếu danh sách dự án (projects).');
+        if(d.projects.some(p=> !p || typeof p !== 'object' || !p.id)) throw new Error('Có dự án trong file thiếu mã (id).');
+        if(d.settings != null && (typeof d.settings !== 'object' || Array.isArray(d.settings))) throw new Error('Phần cài đặt (settings) trong file không đúng định dạng.');
+        return { count: d.projects.length, text: d.projects.length + ' dự án' };
+      },
+      mergeNote: 'thêm dự án trong file vào danh sách hiện có; dự án trùng mã được thay bằng bản trong file. Cài đặt hiện tại giữ nguyên.',
+      replaceNote: 'toàn bộ dự án hiện có bị xóa và thay bằng dự án trong file; cài đặt lấy theo file (giữ API key trên máy).',
+      async apply(d, mode){
+        await App.db.importProjectsRaw(d.projects, mode);
+        if(mode === 'replace' && d.settings){
+          const cur = JSON.parse(localStorage.getItem('ACHLCaculation:multihvac_settings')||'{}');
+          const next = Object.assign({}, d.settings);
+          delete next.apiKey; if(cur.apiKey) next.apiKey = cur.apiKey;
+          localStorage.setItem('ACHLCaculation:multihvac_settings', JSON.stringify(next));
+        }
+      },
+      after(){ location.reload(); }
     },
-    async importJSON(file){
-      if(!file) return;
-      try{
-        const text = await file.text();
-        const count = await App.db.importAllJSON(text);
-        App.ui.toast('ok', App.ui.t('Đã nhập {n} dự án.',{n:count}));
-        App.ui.admin.render();
-      }catch(err){ App.ui.toast('err',App.ui.t('Lỗi import:')+' '+err.message); }
-    },
+    async exportJSON(){ await DataIO.exportData(App.admin.DATA_IO); },
+    async importJSON(){ await DataIO.importData(App.admin.DATA_IO); },
     importClimateFile(file){
       if(!file) return;
       const reader = new FileReader();
