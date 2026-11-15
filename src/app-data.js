@@ -1,3 +1,64 @@
+/* [ACHLCaculation] localStorage dùng chung origin với các PWA khác: mọi khóa của app này có tiền tố "ACHLCaculation:".
+   Lần đầu mở bản mới: chép dữ liệu từ khóa cũ sang khóa mới (nếu khóa mới chưa có). Giữ nguyên khóa cũ. */
+(function(){try{var P="ACHLCaculation:",E=["multihvac_settings"],F=["multihvac_db_"],i,k,K=[];
+for(i=0;i<localStorage.length;i++){k=localStorage.key(i);if(k&&k.indexOf(P)!==0)K.push(k);}
+K.forEach(function(k){var hit=E.indexOf(k)>=0||F.some(function(f){return k.indexOf(f)===0;});
+if(hit&&localStorage.getItem(P+k)===null)localStorage.setItem(P+k,localStorage.getItem(k));});
+}catch(e){}})();
+/* Chép CSDL IndexedDB tên cũ sang tên mới có tiền tố (một lần, giữ nguyên CSDL cũ).
+   Bỏ qua nếu CSDL mới đã có hoặc CSDL cũ không tồn tại. Không bao giờ báo lỗi ra ngoài. */
+window.__idbMigrateOnce = window.__idbMigrateOnce || function(oldName, newName){
+  var memo = window.__idbMigrateMemo = window.__idbMigrateMemo || {};
+  if (memo[newName]) return memo[newName];
+  return memo[newName] = new Promise(function(done){
+    if (typeof indexedDB === 'undefined' || oldName === newName) return done();
+    function exists(name, cb){
+      var r; try { r = indexedDB.open(name); } catch (e) { return cb(false); }
+      r.onupgradeneeded = function(e){ e.target.transaction.abort(); }; // chưa có: hủy để không tạo CSDL rỗng
+      r.onsuccess = function(){ r.result.close(); cb(true); };
+      r.onerror = function(ev){ if (ev && ev.preventDefault) ev.preventDefault(); cb(false); };
+    }
+    exists(newName, function(hasNew){ if (hasNew) return done();
+      exists(oldName, function(hasOld){ if (!hasOld) return done();
+        var ro = indexedDB.open(oldName);
+        ro.onerror = function(ev){ if (ev && ev.preventDefault) ev.preventDefault(); done(); };
+        ro.onsuccess = function(){
+          var src = ro.result, names = [].slice.call(src.objectStoreNames), schema = [], data = {};
+          if (!names.length) { src.close(); return done(); }
+          var tx = src.transaction(names, 'readonly');
+          names.forEach(function(n){
+            var s = tx.objectStore(n), vals = null, keys = null;
+            schema.push({ name: n, keyPath: s.keyPath, autoIncrement: s.autoIncrement,
+              indexes: [].slice.call(s.indexNames).map(function(i){ var x = s.index(i);
+                return { name: i, keyPath: x.keyPath, unique: x.unique, multiEntry: x.multiEntry }; }) });
+            s.getAll().onsuccess = function(e){ vals = e.target.result; if (keys) data[n] = { v: vals, k: keys }; };
+            s.getAllKeys().onsuccess = function(e){ keys = e.target.result; if (vals) data[n] = { v: vals, k: keys }; };
+          });
+          tx.onerror = function(){ src.close(); done(); };
+          tx.oncomplete = function(){
+            var ver = src.version; src.close();
+            var rn = indexedDB.open(newName, ver);
+            rn.onupgradeneeded = function(e){
+              var db = e.target.result, t = e.target.transaction;
+              schema.forEach(function(sc){
+                var o = {}; if (sc.keyPath !== null) o.keyPath = sc.keyPath; if (sc.autoIncrement) o.autoIncrement = true;
+                var st = db.createObjectStore(sc.name, o);
+                sc.indexes.forEach(function(i){ st.createIndex(i.name, i.keyPath, { unique: i.unique, multiEntry: i.multiEntry }); });
+              });
+              schema.forEach(function(sc){
+                var st = t.objectStore(sc.name), d = data[sc.name]; if (!d) return;
+                d.v.forEach(function(v, i){ if (sc.keyPath === null) st.put(v, d.k[i]); else st.put(v); });
+              });
+            };
+            rn.onsuccess = function(){ rn.result.close(); done(); };
+            rn.onerror = function(ev){ if (ev && ev.preventDefault) ev.preventDefault(); done(); };
+          };
+        };
+      });
+    });
+  });
+};
+
 // app-data.js — Dữ liệu tra cứu kỹ thuật (App.data) + lớp lưu trữ IndexedDB (App.db)
 // Phần 1/3 của MultiHVAC Calculator — PHẢI load TRƯỚC app-calc.js và app-ui.js
 // (2 file sau mở rộng thêm vào window.AppMultiHVAC do file này tạo ra).
@@ -1837,7 +1898,8 @@ MATERIAL_RATES:{
   App.db = {
     _idb: null,
     _useFallback: false,
-    DB_NAME: 'multihvac_db_v1',
+    DB_NAME: 'ACHLCaculation:multihvac_db_v1',
+    LEGACY_DB_NAME: 'multihvac_db_v1',
     STORE: 'projects',
 
     async init(){
@@ -1847,6 +1909,7 @@ MATERIAL_RATES:{
         return;
       }
       try{
+        await window.__idbMigrateOnce(this.LEGACY_DB_NAME, this.DB_NAME);
         this._idb = await new Promise((resolve, reject)=>{
           const req = indexedDB.open(this.DB_NAME, 1);
           req.onupgradeneeded = (e)=>{
@@ -1871,7 +1934,7 @@ MATERIAL_RATES:{
       }
     },
 
-    _lsKey(store){ return 'multihvac_db_' + store; },
+    _lsKey(store){ return 'ACHLCaculation:multihvac_db_' + store; },
 
     async _tx(storeName, mode, fn){
       if(this._useFallback || !this._idb){
@@ -1929,14 +1992,14 @@ MATERIAL_RATES:{
     },
     async exportAllJSON(){
       const projects = await this.listProjects();
-      const settings = JSON.parse(localStorage.getItem('multihvac_settings')||'{}');
+      const settings = JSON.parse(localStorage.getItem('ACHLCaculation:multihvac_settings')||'{}');
       return JSON.stringify({ version:'2606.22.01', exportedAt:new Date().toISOString(), projects, settings }, null, 2);
     },
     async importAllJSON(jsonText){
       const data = JSON.parse(jsonText);
       if(!Array.isArray(data.projects)) throw new Error('File JSON không đúng cấu trúc (thiếu mảng projects).');
       for(const p of data.projects){ await this.saveProject(p); }
-      if(data.settings) localStorage.setItem('multihvac_settings', JSON.stringify(data.settings));
+      if(data.settings) localStorage.setItem('ACHLCaculation:multihvac_settings', JSON.stringify(data.settings));
       return data.projects.length;
     }
   };

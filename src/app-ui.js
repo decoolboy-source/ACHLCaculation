@@ -4995,7 +4995,7 @@
         };
         const saved = await App.db.saveProject(project);
         App.state.activeProjectId = saved.id;
-        localStorage.setItem('multihvac_settings', JSON.stringify({ lang:App.state.lang, unit:App.state.unit, apiKey:App.state.settings.apiKey, customBuildingTypes:App.state.customBuildingTypes||[], hiddenBuildingTypeIds:App.state.hiddenBuildingTypeIds||[] }));
+        localStorage.setItem('ACHLCaculation:multihvac_settings', JSON.stringify({ lang:App.state.lang, unit:App.state.unit, apiKey:App.state.settings.apiKey, customBuildingTypes:App.state.customBuildingTypes||[], hiddenBuildingTypeIds:App.state.hiddenBuildingTypeIds||[] }));
         App.ui.setStatus(App.ui.t('auto_saved')+' '+new Date().toLocaleTimeString());
         App.ui.setStatusProject();
       };
@@ -5007,13 +5007,13 @@
     // qua autoSave (autoSave chỉ lưu dữ liệu theo từng dự án cụ thể vào IndexedDB).
     saveRoomTypesSettings(){
       try{
-        const saved = JSON.parse(localStorage.getItem('multihvac_settings')||'{}');
+        const saved = JSON.parse(localStorage.getItem('ACHLCaculation:multihvac_settings')||'{}');
         saved.customBuildingTypes = App.state.customBuildingTypes||[];
         saved.hiddenBuildingTypeIds = App.state.hiddenBuildingTypeIds||[];
         saved.customMaterials = App.state.customMaterials||{};
         saved.hiddenMaterialIds = App.state.hiddenMaterialIds||{};
         saved.lang = App.state.lang; saved.unit = App.state.unit; saved.apiKey = App.state.settings.apiKey;
-        localStorage.setItem('multihvac_settings', JSON.stringify(saved));
+        localStorage.setItem('ACHLCaculation:multihvac_settings', JSON.stringify(saved));
       }catch(e){ console.warn('[MultiHVAC] saveRoomTypesSettings error:', e.message); }
     },
 
@@ -5788,7 +5788,7 @@
   // ============== INIT ==============
   App.bootstrap = async function(){
     try{
-      const saved = JSON.parse(localStorage.getItem('multihvac_settings')||'{}');
+      const saved = JSON.parse(localStorage.getItem('ACHLCaculation:multihvac_settings')||'{}');
       if(saved.lang) App.state.lang = saved.lang;
       if(saved.unit) App.state.unit = saved.unit;
       if(saved.apiKey) App.state.settings.apiKey = saved.apiKey;

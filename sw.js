@@ -7,8 +7,10 @@
 // QUAN TRỌNG khi cập nhật app: đổi số ở CACHE_VERSION bên dưới mỗi khi bạn sửa code
 // và muốn người dùng nhận bản mới. Nếu không đổi, trình duyệt sẽ tiếp tục dùng bản
 // cache cũ vô thời hạn (vì đây chính là mục đích của cache — chạy offline được).
-const CACHE_VERSION = 'v12';
-const CACHE_PREFIX = 'multihvac-';
+const CACHE_VERSION = 'v13';
+const CACHE_PREFIX = 'ACHLCaculation-';
+// Tiền tố cũ của chính app này (trước khi đổi sang tên repo): vẫn dọn để không để lại cache rác.
+const LEGACY_CACHE_PREFIX = 'multihvac-';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 // "App shell" — các file gốc của app, PHẢI có để app chạy được ít nhất là giao diện
@@ -58,7 +60,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     // Xóa cache phiên bản cũ của app này; không đụng cache của PWA khác cùng origin
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => (k.startsWith(CACHE_PREFIX) || k.startsWith(LEGACY_CACHE_PREFIX)) && k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });

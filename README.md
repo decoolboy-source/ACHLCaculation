@@ -160,3 +160,15 @@ Người dùng phản hồi 4 lỗi đã sửa ở các đợt trước vẫn t�
 - Catalog thiết bị (FCU/AHU) trong app là **dữ liệu tổng hợp tham khảo**, không phải catalog thật của hãng nào — không dùng để lên đơn hàng trực tiếp.
 - Mọi loại phòng/vật liệu tự thêm qua tab Database chưa qua review kỹ thuật — kỹ sư cần tự kiểm tra lại giá trị đã nhập.
 - Kết quả tính toán mang tính tham khảo, kỹ sư chịu trách nhiệm xác nhận trước khi đưa vào hồ sơ thiết kế chính thức.
+
+## Lịch sử phiên bản
+
+### 2026-11-15 — bản cache `ACHLCaculation-v13`
+
+Chuẩn hóa để chạy chung origin `decoolboy-source.github.io` với các PWA khác:
+
+- Service worker đăng ký bằng đường dẫn tương đối: `register('./sw.js', { scope: './' })`.
+- `manifest`: thêm `"id": "./index.html"` (giữ địa chỉ khởi động cũ để app đã cài không bị coi là app mới), `"start_url": "./"`, `"scope": "./"`.
+- Tên cache đổi sang `ACHLCaculation-v<số>` (trước là `multihvac-v<số>`). Khi kích hoạt chỉ xóa cache của chính app này (cả tiền tố mới và cũ), không đụng cache của app khác.
+- Khóa localStorage có tiền tố `ACHLCaculation:` (`multihvac_settings`, `multihvac_db_*`). Lần đầu mở bản mới, app tự chép dữ liệu từ khóa cũ sang khóa mới nếu khóa mới chưa có. Khóa cũ được giữ nguyên.
+- CSDL IndexedDB đổi tên sang `ACHLCaculation:multihvac_db_v1`. Lần đầu mở, app chép toàn bộ bảng và bản ghi từ CSDL cũ `multihvac_db_v1` sang. CSDL cũ được giữ nguyên.
