@@ -163,6 +163,14 @@ Người dùng phản hồi 4 lỗi đã sửa ở các đợt trước vẫn t�
 
 ## Lịch sử phiên bản
 
+### 2026-11-20 — bản cache `ACHLCaculation-v14`
+
+Bỏ hoàn toàn việc gọi CDN khi chạy (theo quy tắc "thư viện nhúng, không gọi CDN"):
+
+- Lucide, jsPDF 2.5.1, html2canvas 1.4.1, SheetJS 0.18.5 và font Inter, JetBrains Mono (bộ ký tự latin + tiếng Việt) nằm trong `vendor/`; nguồn, phiên bản, giấy phép ghi ở `vendor/README.md`.
+- Lucide trước đây tải `lucide@latest` (không ghim phiên bản, có thể đổi giao diện bất cứ lúc nào); nay ghim 1.77.0.
+- Toàn bộ `vendor/` nằm trong app shell của service worker: lần đầu mở có mạng là dùng offline đầy đủ cả icon, font, xuất PDF/Excel (trước đây phụ thuộc việc tải được CDN lúc cài).
+
 ### 2026-11-15 — bản cache `ACHLCaculation-v13`
 
 Chuẩn hóa để chạy chung origin `decoolboy-source.github.io` với các PWA khác:

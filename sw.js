@@ -7,7 +7,7 @@
 // QUAN TRỌNG khi cập nhật app: đổi số ở CACHE_VERSION bên dưới mỗi khi bạn sửa code
 // và muốn người dùng nhận bản mới. Nếu không đổi, trình duyệt sẽ tiếp tục dùng bản
 // cache cũ vô thời hạn (vì đây chính là mục đích của cache — chạy offline được).
-const CACHE_VERSION = 'v13';
+const CACHE_VERSION = 'v14';
 const CACHE_PREFIX = 'ACHLCaculation-';
 // Tiền tố cũ của chính app này (trước khi đổi sang tên repo): vẫn dọn để không để lại cache rác.
 const LEGACY_CACHE_PREFIX = 'multihvac-';
@@ -23,19 +23,24 @@ const APP_SHELL = [
   './icon-192.png',
   './icon-512.png',
   './data-io.js',
+  './vendor/lucide.min.js',
+  './vendor/jspdf.umd.min.js',
+  './vendor/html2canvas.min.js',
+  './vendor/xlsx.full.min.js',
+  './vendor/fonts/fonts.css',
+  './vendor/fonts/Inter-latin.woff2',
+  './vendor/fonts/Inter-latin-ext.woff2',
+  './vendor/fonts/Inter-vietnamese.woff2',
+  './vendor/fonts/JetBrainsMono-latin.woff2',
+  './vendor/fonts/JetBrainsMono-latin-ext.woff2',
+  './vendor/fonts/JetBrainsMono-vietnamese.woff2',
   './src/app-data.js',
   './src/app-calc.js',
   './src/app-ui.js',
 ];
 
-// Thư viện ngoài (CDN) — cần cho xuất PDF/Excel/icon. Vì đây là các URL đã ghim
-// đúng phiên bản (vd jspdf@2.5.1), nội dung sẽ không đổi — cache-first an toàn.
-const CDN_LIBS = [
-  'https://unpkg.com/lucide@latest/dist/umd/lucide.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-];
+// Thư viện ngoài: từ v14 đã nhúng trong vendor/ (nằm trong APP_SHELL), không tải từ CDN nữa.
+const CDN_LIBS = [];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
